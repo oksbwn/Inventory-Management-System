@@ -1,53 +1,57 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from '@/views/Dashboard.vue'
-import Stocks from '@/views/Stocks.vue'
-import Categories from '@/views/Categories.vue'
-import Boxes from '@/views/Boxes.vue'
-import Projects from '@/views/Projects.vue'
-import Vendors from '@/views/Vendors.vue'
-import Settings from '@/views/Settings.vue'
 
 const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: Dashboard
+    component: () => import('@/views/Dashboard.vue')
   },
   {
     path: '/stocks',
     name: 'Stocks',
-    component: Stocks
+    component: () => import('@/views/Stocks.vue')
   },
   {
     path: '/categories',
     name: 'Categories',
-    component: Categories
+    component: () => import('@/views/Categories.vue')
   },
   {
     path: '/boxes',
     name: 'Boxes',
-    component: Boxes
+    component: () => import('@/views/Boxes.vue')
   },
   {
     path: '/projects',
     name: 'Projects',
-    component: Projects
+    component: () => import('@/views/Projects.vue')
   },
   {
     path: '/vendors',
     name: 'Vendors',
-    component: Vendors
+    component: () => import('@/views/Vendors.vue')
   },
   {
     path: '/settings',
     name: 'Settings',
-    component: Settings
+    component: () => import('@/views/Settings.vue')
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFound.vue')
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    return { top: 0 }
+  }
 })
 
 export default router

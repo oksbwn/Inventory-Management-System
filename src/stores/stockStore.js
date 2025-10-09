@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import { useBaseStore } from '@/composables/useBaseStore'
 import stockService from '@/api/services/stockService'
-
+import { ref } from 'vue'
 // Service adapter with proper ES imports
 const stockServiceAdapter = {
   getItems: (params) => stockService.getStocks(params),
   createItem: (data) => stockService.createStock(data),
   updateItem: (id, data) => stockService.updateStock(id, data),
-  deleteItem: (id) => stockService.deleteStock(id)
+  deleteItem: (id) => stockService.deleteStock(id),
+  getGist: () => stockService.getStockGist()
 }
 
 export const useStockStore = defineStore('stock', () => {
@@ -18,12 +19,24 @@ export const useStockStore = defineStore('stock', () => {
     pluralItemName: 'stocks'
   })
 
+  const stockGist = ref({
+    total_items: 0,
+    in_stock: 0,
+    low_stock: 0,
+    no_stock: 0,
+  });
+
   // Rename for clarity
   const stocks = baseStore.items
   const fetchStocks = baseStore.fetchItems
   const createStock = baseStore.createItem
   const updateStock = baseStore.updateItem
   const deleteStock = baseStore.deleteItem
+
+  const fetchStockGist = async () => {
+    const res = await stockServiceAdapter.getGist();
+    stockGist.value = res[0];
+  };
 
   return {
     // State
@@ -43,6 +56,8 @@ export const useStockStore = defineStore('stock', () => {
     createStock,
     updateStock,
     deleteStock,
-    clearCache: baseStore.clearCache
+    clearCache: baseStore.clearCache,
+    stockGist,
+    fetchStockGist,
   }
 })

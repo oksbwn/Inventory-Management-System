@@ -69,7 +69,7 @@ export function useBaseStore(storeName, apiService, options = {}) {
       // Handle different response formats
       if (Array.isArray(data)) {
         items.value = data
-        totalItems.value = data.length
+        totalItems.value = data[0].totalitems
       } else {
         items.value = data.items || data.data || []
         totalItems.value = data.total || data.totalCount || items.value.length

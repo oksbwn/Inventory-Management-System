@@ -36,7 +36,7 @@
               <div>
                 <div class="text-caption text-blue-darken-2 mb-1">Total Items</div>
                 <div class="text-h5 font-weight-bold text-blue-darken-3">
-                  {{ stockStore.totalItems || 0 }}
+                  {{ stockStore.stockGist.total_items || 0 }}
                 </div>
               </div>
               <v-avatar size="48" color="blue-lighten-4">
@@ -54,7 +54,7 @@
               <div>
                 <div class="text-caption text-green-darken-2 mb-1">In Stock</div>
                 <div class="text-h5 font-weight-bold text-green-darken-3">
-                  {{ inStockCount }}
+                  {{ stockStore.stockGist.in_stock }}
                 </div>
               </div>
               <v-avatar size="48" color="green-lighten-4">
@@ -72,7 +72,7 @@
               <div>
                 <div class="text-caption text-orange-darken-2 mb-1">Low Stock</div>
                 <div class="text-h5 font-weight-bold text-orange-darken-3">
-                  {{ lowStockCount }}
+                  {{ stockStore.stockGist.in_stock }}
                 </div>
               </div>
               <v-avatar size="48" color="orange-lighten-4">
@@ -90,7 +90,7 @@
               <div>
                 <div class="text-caption text-red-darken-2 mb-1">Out of Stock</div>
                 <div class="text-h5 font-weight-bold text-red-darken-3">
-                  {{ outOfStockCount }}
+                  {{ stockStore.stockGist.no_stock }}
                 </div>
               </div>
               <v-avatar size="48" color="red-lighten-4">
@@ -189,15 +189,17 @@
 
         <!-- Name Column with Icon -->
         <template v-slot:item.name="{ item }">
-          <div class="d-flex align-center py-2">
-            <v-avatar size="40" color="primary-lighten-5" class="mr-3">
-              <v-icon color="primary" size="20">mdi-package-variant</v-icon>
-            </v-avatar>
-            <div>
-              <div class="font-weight-medium text-body-1">{{ item.name }}</div>
-              <div class="text-caption text-medium-emphasis">
-                SKU: {{ item.sku || 'N/A' }}
-              </div>
+          <div class="d-flex align-center py-2" style="gap: 12px;">
+            <v-img
+              :src="item.filename"
+              max-width="40"
+              max-height="40"
+              contain
+              alt="Item image"
+              class="flex-shrink-0"
+            />
+            <div style="min-width: 0; flex: 1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 500; font-size: 1rem; line-height: 1.3;">
+              {{ item.name }}
             </div>
           </div>
         </template>
@@ -205,28 +207,28 @@
         <!-- Category Column -->
         <template v-slot:item.category="{ item }">
           <v-chip size="small" variant="tonal" color="primary">
-            {{ item.category }}
+            {{ item.category_name }}
           </v-chip>
         </template>
 
         <!-- Quantity Column with Color Coding -->
         <template v-slot:item.quantity="{ item }">
           <v-chip
-            :color="getQuantityColor(item.quantity)"
+            :color="getQuantityColor(item.stock)"
             size="small"
             variant="flat"
             class="font-weight-bold"
           >
             <v-icon start size="x-small">
-              {{ getQuantityIcon(item.quantity) }}
+              {{ getQuantityIcon(item.stock) }}
             </v-icon>
-            {{ item.quantity }}
+            {{ item.stock }}
           </v-chip>
         </template>
 
         <!-- Price Column -->
         <template v-slot:item.price="{ item }">
-          <span class="font-weight-medium">{{ formatPrice(item.price) }}</span>
+          <span class="font-weight-medium">{{ formatPrice(item.avg_unit_price) }}</span>
         </template>
 
         <!-- Status Column -->
@@ -245,9 +247,13 @@
 
         <!-- Location Column -->
         <template v-slot:item.location="{ item }">
-          <div class="d-flex align-center">
-            <v-icon size="small" class="mr-2" color="grey">mdi-map-marker</v-icon>
-            <span class="text-body-2">{{ item.location }}</span>
+          <div class="d-flex align-center" style="gap: 12px;">
+            <v-avatar size="40" color="primary-lighten-5" class="elevation-2">
+              <v-icon color="primary" size="24">mdi-package-variant</v-icon>
+            </v-avatar>
+            <div style="font-weight: 500; font-size: 0.9rem; color: var(--v-theme-primary);">
+              {{ item.box_label || 'No location' }}
+            </div>
           </div>
         </template>
 
@@ -343,6 +349,10 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useStockStore } from '@/stores/stockStore'
 import StockFormDialog from '@/components/StockFormDialog.vue'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 
 const stockStore = useStockStore()
 
@@ -372,19 +382,6 @@ const headers = ref([
   { title: 'Actions', key: 'actions', align: 'center', sortable: false, width: '150px' },
 ])
 
-// Computed stats
-const inStockCount = computed(() => {
-  return stockStore.stocks.filter(item => item.status === 'In Stock').length
-})
-
-const lowStockCount = computed(() => {
-  return stockStore.stocks.filter(item => item.quantity > 0 && item.quantity < 10).length
-})
-
-const outOfStockCount = computed(() => {
-  return stockStore.stocks.filter(item => item.quantity === 0).length
-})
-
 // Load stocks function
 const loadStocks = async ({ page: p, itemsPerPage: ipp, sortBy: sb }) => {
   try {
@@ -394,6 +391,7 @@ const loadStocks = async ({ page: p, itemsPerPage: ipp, sortBy: sb }) => {
       sortBy: sb,
       search: searchQuery.value
     })
+    await stockStore.fetchStockGist();
   } catch (error) {
     console.error('Failed to load stocks:', error)
     showError.value = true
@@ -435,7 +433,7 @@ const getQuantityIcon = (quantity) => {
 }
 
 const formatPrice = (price) => {
-  return price ? `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'
+  return price ? `₹${parseFloat(price).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : 'N/A'
 }
 
 // CRUD Action handlers
@@ -445,9 +443,26 @@ const openAddDialog = () => {
 }
 
 const viewItem = (item) => {
-  console.log('View item:', item)
-  // TODO: Navigate to detail page or open view dialog
+  console.log('View item:', item) // Debug log to see structure
+  
+  // Try different possible ID properties
+  const itemId = item.id || item._id || item.stockId
+  
+  if (!itemId) {
+    console.error('Item has no ID:', item)
+    // Show error using existing stockStore error
+    stockStore.error = 'Cannot view item: Missing ID'
+    showError.value = true
+    return
+  }
+  
+  router.push({ 
+    name: 'StockDetail', 
+    params: { id: String(itemId) } // Convert to string for route params
+  })
 }
+
+
 
 const editItem = (item) => {
   selectedStock.value = { ...item }

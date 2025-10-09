@@ -19,5 +19,8 @@ export default {
 
   getStockById(id) {
     return apiClient.get(`/webhook/api/components/stocks/${id}`)
+  },
+  getStockGist(){
+    return apiClient.get('/webhook/api/components/gist');
   }
 }

@@ -1,309 +1,163 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Page Header -->
-    <v-row class="mb-4">
+    <v-row class="mb-6">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between mb-6">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div>
-            <h1 class="text-h4 font-weight-bold text-primary mb-1">
-              <v-icon size="32" class="mr-2">mdi-account-group</v-icon>
-              Vendors
-            </h1>
-            <p class="text-body-2 text-medium-emphasis ml-11">
-              Manage supplier and vendor relationships
-            </p>
+            <div class="d-flex align-center ga-3 mb-2">
+              <v-avatar size="40" color="primary" variant="tonal">
+                <v-icon size="24">mdi-store</v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h5 font-weight-bold mb-0">Vendors</h1>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ vendorStore.totalVendors }} total vendors
+                </p>
+              </div>
+            </div>
           </div>
-          <v-btn
-            color="primary"
-            size="large"
-            prepend-icon="mdi-plus"
-            elevation="2"
-            class="text-none"
-            @click="openAddDialog"
-          >
+          <v-btn color="primary" prepend-icon="mdi-plus" elevation="2" @click="openAddDialog">
             Add Vendor
           </v-btn>
         </div>
       </v-col>
     </v-row>
 
-    <!-- Stats Cards -->
-    <v-row class="mb-6">
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="teal-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-teal-darken-2 mb-1">Total Vendors</div>
-                <div class="text-h5 font-weight-bold text-teal-darken-3">
-                  {{ vendorStore.totalItems || 0 }}
-                </div>
-              </div>
-              <v-avatar size="48" color="teal-lighten-4">
-                <v-icon color="teal-darken-2" size="28">mdi-account-group</v-icon>
-              </v-avatar>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="green-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-green-darken-2 mb-1">Active</div>
-                <div class="text-h5 font-weight-bold text-green-darken-3">
-                  {{ activeCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="green-lighten-4">
-                <v-icon color="green-darken-2" size="28">mdi-check-circle</v-icon>
-              </v-avatar>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="amber-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-amber-darken-2 mb-1">Preferred</div>
-                <div class="text-h5 font-weight-bold text-amber-darken-3">
-                  {{ preferredCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="amber-lighten-4">
-                <v-icon color="amber-darken-2" size="28">mdi-star</v-icon>
-              </v-avatar>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="cyan-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-cyan-darken-2 mb-1">Avg Rating</div>
-                <div class="text-h5 font-weight-bold text-cyan-darken-3">
-                  {{ averageRating.toFixed(1) }}
-                </div>
-              </div>
-              <v-avatar size="48" color="cyan-lighten-4">
-                <v-icon color="cyan-darken-2" size="28">mdi-star-circle</v-icon>
-              </v-avatar>
-            </div>
+    <!-- Metadata Cards -->
+    <v-row class="mb-6" dense>
+      <v-col cols="12" sm="3">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon color="primary" size="35">mdi-store</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ vendorStore.totalVendors }}</div>
+            <div class="caption">Total Vendors</div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Main Data Table Card -->
-    <v-card elevation="2" class="rounded-lg">
-      <v-card-title class="pa-6 pb-4">
-        <v-row dense align="center">
-          <v-col cols="12" md="7">
-            <v-text-field
-              v-model="searchQuery"
-              density="comfortable"
-              placeholder="Search vendors..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              hide-details
-              clearable
-              @click:clear="onSearch"
-              @keyup.enter="onSearch"
-            >
-              <template v-slot:append-inner>
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  size="small"
-                  class="text-none"
-                  @click="onSearch"
-                >
-                  Search
-                </v-btn>
-              </template>
-            </v-text-field>
-          </v-col>
+    <!-- Filter/Search and View Toggle -->
+    <v-row class="mb-5" align="center">
+      <v-col cols="12" md="8">
+        <v-text-field
+          v-model="searchQuery"
+          label="Search vendors"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          density="comfortable"
+          outlined
+          @keyup.enter="onSearch"
+          @click:clear="onSearch"
+        />
+      </v-col>
+      <v-col cols="12" md="4" class="d-flex justify-end">
+        <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'" aria-label="Grid view">
+          <v-icon>mdi-view-grid</v-icon>
+        </v-btn>
+        <v-btn :color="viewMode === 'list' ? 'primary' : ''" icon @click="viewMode = 'list'" aria-label="List view">
+          <v-icon>mdi-view-list</v-icon>
+        </v-btn>
+        <v-btn icon @click="refreshData" :loading="vendorStore.loading" aria-label="Refresh">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
 
-          <v-col cols="12" md="5" class="d-flex justify-end align-center">
-            <v-chip
-              :color="vendorStore.isCacheValid ? 'success' : 'grey'"
-              variant="tonal"
-              size="small"
-              class="mr-3"
-            >
-              <v-icon start size="small">mdi-database</v-icon>
-              {{ vendorStore.isCacheValid ? 'Cached' : 'Live' }}
-            </v-chip>
+    <!-- Main Card -->
+    <v-card elevation="1" class="pa-4">
+      <!-- Loading State -->
+      <v-row v-if="vendorStore.loading && vendors.length === 0" justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular indeterminate size="48" color="primary" />
+          <div class="mt-3">Loading vendors...</div>
+        </v-col>
+      </v-row>
+      <!-- Empty State -->
+      <v-row v-else-if="vendors.length === 0">
+        <v-col cols="12" class="text-center">
+          <v-icon size="80" color="grey lighten-2">mdi-store-outline</v-icon>
+          <div class="mt-3">No vendors found</div>
+          <v-btn color="primary" class="mt-3" @click="openAddDialog" prepend-icon="mdi-plus">Add {{ vendors }}</v-btn>
+        </v-col>
+      </v-row>
 
-            <v-btn-group variant="outlined" density="comfortable">
-              <v-btn @click="refreshData" :loading="vendorStore.loading">
-                <v-icon>mdi-refresh</v-icon>
-                <v-tooltip activator="parent">Refresh</v-tooltip>
+      <!-- Grid View -->
+      <v-row v-else-if="viewMode === 'grid'" dense>
+        <v-col v-for="vendor in vendors" :key="vendor.vendor_id" cols="12" sm="6" md="4" lg="3">
+          <v-card elevation="2" class="vendor-card hoverable">
+            <v-card-text>
+              <div class="d-flex align-center mb-3">
+                <v-avatar color="indigo" size="48" class="mr-3">
+                  <v-icon size="28" color="white">mdi-store</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">{{ vendor.vendor_name }}</div>
+                  <div class="text-caption grey--text">Website: {{ vendor.website }}</div>
+                  <div class="text-caption grey--text">Email: {{ vendor.contact_email }}</div>
+                  <div class="text-caption grey--text">Phone: {{ vendor.phone_number }}</div>
+                </div>
+              </div>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editVendor(vendor)">
+                <v-icon size="22">mdi-pencil</v-icon>
               </v-btn>
-              <v-btn>
-                <v-icon>mdi-filter-variant</v-icon>
-                <v-tooltip activator="parent">Filters</v-tooltip>
+              <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteVendor(vendor)">
+                <v-icon size="22">mdi-delete</v-icon>
               </v-btn>
-              <v-btn>
-                <v-icon>mdi-download</v-icon>
-                <v-tooltip activator="parent">Export</v-tooltip>
-              </v-btn>
-            </v-btn-group>
-          </v-col>
-        </v-row>
-      </v-card-title>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
 
-      <v-divider></v-divider>
-
-      <!-- Data Table -->
-      <v-data-table-server
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        v-model:sort-by="sortBy"
-        :headers="headers"
-        :items="vendorStore.vendors"
-        :items-length="vendorStore.totalItems"
-        :loading="vendorStore.loading"
-        item-value="id"
-        @update:options="loadVendors"
-        class="elevation-0 professional-table"
-        hover
-      >
-        <!-- Company Name Column -->
-        <template v-slot:item.companyName="{ item }">
-          <div class="d-flex align-center py-2">
-            <v-avatar size="40" color="teal-lighten-5" class="mr-3">
-              <v-icon color="teal" size="20">mdi-domain</v-icon>
+      <!-- List View -->
+      <v-list v-else>
+        <v-list-item v-for="vendor in vendors" :key="vendor.vendor_id" class="vendor-list-item px-2 py-2">
+          <template #prepend>
+            <v-avatar color="indigo" size="48" class="mr-4">
+              <v-icon size="28" color="white">mdi-store</v-icon>
             </v-avatar>
-            <div>
-              <div class="font-weight-medium">{{ item.companyName }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.vendorCode }}</div>
-            </div>
-          </div>
-        </template>
-
-        <!-- Contact Column -->
-        <template v-slot:item.contact="{ item }">
-          <div class="contact-info">
-            <div class="text-body-2">
-              <v-icon size="small" class="mr-1">mdi-account</v-icon>
-              {{ item.contactPerson || 'N/A' }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              <v-icon size="small" class="mr-1">mdi-phone</v-icon>
-              {{ item.phone }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              <v-icon size="small" class="mr-1">mdi-email</v-icon>
-              {{ item.email }}
-            </div>
-          </div>
-        </template>
-
-        <!-- Business Type Column -->
-        <template v-slot:item.businessType="{ item }">
-          <v-chip size="small" variant="tonal" color="primary">
-            {{ item.businessType }}
-          </v-chip>
-        </template>
-
-        <!-- Rating Column -->
-        <template v-slot:item.rating="{ item }">
-          <v-rating
-            :model-value="item.rating"
-            readonly
-            density="compact"
-            size="small"
-            color="amber"
-          ></v-rating>
-        </template>
-
-        <!-- Status Column -->
-        <template v-slot:item.status="{ item }">
-          <v-chip
-            :color="getStatusColor(item.status)"
-            size="small"
-            variant="flat"
-          >
-            <v-icon start size="x-small">{{ getStatusIcon(item.status) }}</v-icon>
-            {{ item.status }}
-          </v-chip>
-        </template>
-
-        <!-- Preferred Column -->
-        <template v-slot:item.isPreferred="{ item }">
-          <v-icon v-if="item.isPreferred" color="amber" size="24">mdi-star</v-icon>
-          <v-icon v-else color="grey-lighten-1" size="24">mdi-star-outline</v-icon>
-        </template>
-
-        <!-- Actions Column -->
-        <template v-slot:item.actions="{ item }">
-          <div class="action-buttons">
-            <v-btn icon variant="text" size="small" color="info" @click="viewItem(item)">
-              <v-icon size="20">mdi-eye-outline</v-icon>
-              <v-tooltip activator="parent">View</v-tooltip>
+          </template>
+          <v-list-item-title>
+            <span class="font-weight-bold">{{ vendor.vendor_name }}</span>
+            <span class="text-caption grey--text ml-2">{{ vendor.website }}</span>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            <span class="text-caption grey--text">Email: {{ vendor.contact_email }}</span>
+            <span class="text-caption grey--text ml-3">Phone: {{ vendor.phone_number }}</span>
+          </v-list-item-subtitle>
+          <template #append>
+            <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editVendor(vendor)">
+              <v-icon size="22">mdi-pencil</v-icon>
             </v-btn>
-            <v-btn icon variant="text" size="small" color="primary" @click="editItem(item)">
-              <v-icon size="20">mdi-pencil-outline</v-icon>
-              <v-tooltip activator="parent">Edit</v-tooltip>
+            <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteVendor(vendor)">
+              <v-icon size="22">mdi-delete</v-icon>
             </v-btn>
-            <v-btn icon variant="text" size="small" color="error" @click="deleteItem(item)">
-              <v-icon size="20">mdi-delete-outline</v-icon>
-              <v-tooltip activator="parent">Delete</v-tooltip>
-            </v-btn>
-          </div>
-        </template>
-      </v-data-table-server>
+          </template>
+        </v-list-item>
+      </v-list>
+
+      <!-- Pagination -->
+      <v-row justify="center" v-if="totalPages > 1">
+        <v-pagination v-model="page" :length="totalPages" @update:model-value="onPageChange" :total-visible="7" />
+      </v-row>
     </v-card>
 
-    <!-- Vendor Form Dialog -->
-    <vendor-form-dialog
-      v-model="showFormDialog"
-      :vendor-item="selectedVendor"
-      @success="handleFormSuccess"
-    />
+    <!-- Dialogs -->
+    <VendorFormDialog v-model="showAddEditDialog" :vendor-item="selectedVendor" @success="handleVendorSuccess" @error="handleError" />
+    <DeleteConfirmDialog v-model="showDeleteDialog" :item-name="selectedVendor?.vendor_name" @confirm="handleVendorDelete" />
 
-    <!-- Delete Confirmation Dialog -->
-    <delete-confirm-dialog
-      v-model="showDeleteDialog"
-      :item-name="selectedVendor?.companyName"
-      @confirm="handleDeleteConfirm"
-    />
-
-    <!-- Success Snackbar -->
-    <v-snackbar
-      v-model="showSuccessSnackbar"
-      :timeout="3000"
-      color="success"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-check-circle</v-icon>
-        {{ successMessage }}
-      </div>
+    <!-- Notifications -->
+    <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" top right>
+      <v-icon left>mdi-check-circle</v-icon> {{ successMessage }}
     </v-snackbar>
-
-    <!-- Error Snackbar -->
-    <v-snackbar
-      v-model="showError"
-      :timeout="5000"
-      color="error"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-3">mdi-alert-circle</v-icon>
-        {{ vendorStore.error }}
-      </div>
+    <v-snackbar v-model="showError" color="error" :timeout="5000" top right>
+      <v-icon left>mdi-alert-circle</v-icon> {{ errorMessage }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="showError = false">Close</v-btn>
+        <v-btn text @click="showError = false">Close</v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -316,184 +170,157 @@ import VendorFormDialog from '@/components/VendorFormDialog.vue'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
 
 const vendorStore = useVendorStore()
-
 const page = ref(1)
-const itemsPerPage = ref(10)
-const sortBy = ref([])
+const itemsPerPage = ref(12)
 const searchQuery = ref('')
-const showError = ref(false)
+const viewMode = ref('grid')
 
-const showFormDialog = ref(false)
-const showDeleteDialog = ref(false)
+const showAddEditDialog = ref(false)
 const selectedVendor = ref(null)
-const successMessage = ref('')
+const showDeleteDialog = ref(false)
 const showSuccessSnackbar = ref(false)
+const successMessage = ref('')
+const showError = ref(false)
+const errorMessage = ref('')
 
-const headers = ref([
-  { title: 'Company Name', key: 'companyName', align: 'start', sortable: true },
-  { title: 'Contact', key: 'contact', align: 'start', sortable: false, width: '250px' },
-  { title: 'Business Type', key: 'businessType', align: 'center', sortable: true, width: '150px' },
-  { title: 'Rating', key: 'rating', align: 'center', sortable: true, width: '150px' },
-  { title: 'Status', key: 'status', align: 'center', sortable: true, width: '120px' },
-  { title: 'Preferred', key: 'isPreferred', align: 'center', sortable: true, width: '100px' },
-  { title: 'Actions', key: 'actions', align: 'center', sortable: false, width: '150px' },
-])
-
-const activeCount = computed(() => {
-  return vendorStore.vendors.filter(v => v.status === 'Active').length
+const vendors = computed(() => vendorStore.vendors || [])
+const totalPages = computed(() => {
+  const total = vendorStore.totalVendors || 0
+  return Math.ceil(total / itemsPerPage.value) || 1
 })
 
-const preferredCount = computed(() => {
-  return vendorStore.vendors.filter(v => v.isPreferred).length
-})
-
-const averageRating = computed(() => {
-  if (vendorStore.vendors.length === 0) return 0
-  const sum = vendorStore.vendors.reduce((acc, v) => acc + (v.rating || 0), 0)
-  return sum / vendorStore.vendors.length
-})
-
-const loadVendors = async ({ page: p, itemsPerPage: ipp, sortBy: sb }) => {
+const loadVendors = async () => {
   try {
     await vendorStore.fetchVendors({
-      page: p,
-      itemsPerPage: ipp,
-      sortBy: sb,
-      search: searchQuery.value
+      page: page.value,
+      pageSize: itemsPerPage.value,
+      search: searchQuery.value,
     })
-  } catch (error) {
-    console.error('Failed to load vendors:', error)
+  } catch (err) {
+    errorMessage.value = err.message || 'Failed to load vendors'
     showError.value = true
   }
 }
 
 const onSearch = async () => {
   page.value = 1
-  await loadVendors({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
+  await loadVendors()
+}
+
+const onPageChange = async () => {
+  await loadVendors()
 }
 
 const refreshData = async () => {
   vendorStore.clearCache()
-  await loadVendors({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    'Active': 'success',
-    'Inactive': 'grey',
-    'Pending': 'warning',
-    'Blacklisted': 'error'
-  }
-  return colors[status] || 'grey'
-}
-
-const getStatusIcon = (status) => {
-  const icons = {
-    'Active': 'mdi-check-circle',
-    'Inactive': 'mdi-minus-circle',
-    'Pending': 'mdi-clock-outline',
-    'Blacklisted': 'mdi-cancel'
-  }
-  return icons[status] || 'mdi-help-circle'
+  await loadVendors()
 }
 
 const openAddDialog = () => {
   selectedVendor.value = null
-  showFormDialog.value = true
+  showAddEditDialog.value = true
 }
 
-const viewItem = (item) => {
-  console.log('View vendor:', item)
+const editVendor = (vendor) => {
+  selectedVendor.value = vendor
+  showAddEditDialog.value = true
 }
 
-const editItem = (item) => {
-  selectedVendor.value = { ...item }
-  showFormDialog.value = true
-}
-
-const deleteItem = (item) => {
-  selectedVendor.value = item
+const deleteVendor = (vendor) => {
+  selectedVendor.value = vendor
   showDeleteDialog.value = true
 }
 
-const handleDeleteConfirm = async () => {
+const handleVendorDelete = async () => {
   try {
-    await vendorStore.deleteVendor(selectedVendor.value.id)
+    await vendorStore.deleteVendor(selectedVendor.value.vendor_id)
     showDeleteDialog.value = false
-    successMessage.value = 'Vendor deleted successfully!'
+    successMessage.value = 'Vendor deleted successfully'
     showSuccessSnackbar.value = true
-    await refreshData()
+    await loadVendors()
   } catch (error) {
-    console.error('Failed to delete vendor:', error)
+    errorMessage.value = error.message || 'Failed to delete vendor'
     showError.value = true
   }
 }
 
-const handleFormSuccess = async (data) => {
-  successMessage.value = data.message
+const handleVendorSuccess = ({ message }) => {
+  successMessage.value = message || 'Operation successful'
+  showAddEditDialog.value = false
   showSuccessSnackbar.value = true
-  await refreshData()
+  loadVendors()
 }
 
-watch(() => vendorStore.error, (newError) => {
-  if (newError) {
+const handleError = ({ message }) => {
+  errorMessage.value = message || 'An error occurred'
+  showError.value = true
+}
+
+watch(() => vendorStore.error, (val) => {
+  if (val) {
+    errorMessage.value = val
     showError.value = true
   }
 })
 
-onMounted(() => {
-  loadVendors({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
-})
+onMounted(() => loadVendors())
 </script>
 
 <style scoped>
-.stat-card {
+.metadata-card {
+  text-align: center;
   border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-}
-
-.professional-table :deep(thead th) {
-  background-color: rgb(var(--v-theme-surface-variant)) !important;
-  font-weight: 600 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.75rem;
-  padding: 16px 12px !important;
-}
-
-.professional-table :deep(tbody tr:hover) {
-  background-color: rgba(var(--v-theme-primary), 0.03) !important;
-}
-
-.professional-table :deep(tbody td) {
-  padding: 12px !important;
-}
-
-.action-buttons {
+  min-height: 110px;
   display: flex;
-  gap: 4px;
+  align-items: center;
   justify-content: center;
 }
 
-.contact-info {
-  max-width: 250px;
+.metadata-card .v-icon {
+  font-size: 32px;
+  margin-bottom: 5px;
+}
+
+.vendor-card {
+  cursor: pointer;
+  transition: box-shadow 0.3s, border-color 0.3s;
+  border-radius: 12px;
+  border: 1.2px solid #e3e6ed;
+}
+
+.vendor-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.11);
+  border-color: #1976d2;
+}
+
+.vendor-list-item {
+  border-radius: 6px;
+  border: 1px solid #ececec;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+}
+
+.vendor-list-item:hover {
+  background-color: #f3f8fa;
+}
+
+.action-btn {
+  margin-right: 6px;
+  background-color: #f2f4ff !important;
+  color: #1976d2 !important;
+  border-radius: 8px !important;
+  padding: 5px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.action-btn:last-child {
+  margin-right: 0;
+}
+
+.action-btn[aria-pressed='true'],
+.action-btn:hover {
+  background-color: #e3e0fa !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

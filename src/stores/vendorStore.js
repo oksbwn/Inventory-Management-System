@@ -1,41 +1,48 @@
-import { defineStore } from 'pinia'
-import { useBaseStore } from '@/composables/useBaseStore'
-import vendorService from '@/api/services/vendorService'
-
-const vendorServiceAdapter = {
-  getItems: (params) => vendorService.getVendors(params),
-  createItem: (data) => vendorService.createVendor(data),
-  updateItem: (id, data) => vendorService.updateVendor(id, data),
-  deleteItem: (id) => vendorService.deleteVendor(id)
-}
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import vendorService from '@/api/services/vendorService';
 
 export const useVendorStore = defineStore('vendor', () => {
-  const baseStore = useBaseStore('VendorStore', vendorServiceAdapter, {
-    cacheTimeout: 5 * 60 * 1000,
-    defaultItemsPerPage: 10,
-    itemName: 'vendor',
-    pluralItemName: 'vendors'
-  })
+  const vendors = ref([]);
+  const totalItems = ref(0);
+  const loading = ref(false);
+  const error = ref(null);
 
-  const vendors = baseStore.items
-  const fetchVendors = baseStore.fetchItems
-  const createVendor = baseStore.createItem
-  const updateVendor = baseStore.updateItem
-  const deleteVendor = baseStore.deleteItem
+  const totalVendors = ref(0);
+
+  const fetchVendors = async (params = {}) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await vendorService.getVendors(params);
+      vendors.value = response || [];
+      console.log(response)
+      totalItems.value = response || 0;
+      await fetchVendorsMeta();
+    } catch (err) {
+      error.value = err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchVendorsMeta = async () => {
+    try {
+      const response = await vendorService.getVendorsMeta();
+      const meta = response[0] || {};
+      totalVendors.value = meta.totalVendors || 0;
+    } catch {
+      totalVendors.value = 0;
+    }
+  };
 
   return {
     vendors,
-    loading: baseStore.loading,
-    error: baseStore.error,
-    totalItems: baseStore.totalItems,
-    itemsPerPage: baseStore.itemsPerPage,
-    currentPage: baseStore.currentPage,
-    search: baseStore.search,
-    isCacheValid: baseStore.isCacheValid,
+    totalItems,
+    loading,
+    error,
+    totalVendors,
     fetchVendors,
-    createVendor,
-    updateVendor,
-    deleteVendor,
-    clearCache: baseStore.clearCache
-  }
-})
+    fetchVendorsMeta,
+  };
+});

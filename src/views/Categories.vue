@@ -1,24 +1,26 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Page Header -->
-    <v-row class="mb-4">
+    <v-row class="mb-6">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between mb-6">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div>
-            <h1 class="text-h4 font-weight-bold text-primary mb-1">
-              <v-icon size="32" class="mr-2">mdi-shape</v-icon>
-              Categories
-            </h1>
-            <p class="text-body-2 text-medium-emphasis ml-11">
-              Organize your inventory with categories
-            </p>
+            <div class="d-flex align-center ga-3 mb-2">
+              <v-avatar size="40" color="primary" variant="tonal">
+                <v-icon size="24">mdi-shape</v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h5 font-weight-bold mb-0">Categories</h1>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ categoryMetaStore.totalCategories }} total categories
+                </p>
+              </div>
+            </div>
           </div>
-          <v-btn
-            color="primary"
-            size="large"
+          <v-btn 
+            color="primary" 
             prepend-icon="mdi-plus"
             elevation="2"
-            class="text-none"
             @click="openAddDialog"
           >
             Add Category
@@ -27,296 +29,204 @@
       </v-col>
     </v-row>
 
-    <!-- Stats Cards -->
+    <!-- Metadata Cards -->
     <v-row class="mb-6">
-      <v-col cols="6" sm="4">
-        <v-card class="stat-card" elevation="0" color="purple-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-purple-darken-2 mb-1">Total Categories</div>
-                <div class="text-h5 font-weight-bold text-purple-darken-3">
-                  {{ categoryStore.totalItems || 0 }}
-                </div>
-              </div>
-              <v-avatar size="48" color="purple-lighten-4">
-                <v-icon color="purple-darken-2" size="28">mdi-shape-outline</v-icon>
-              </v-avatar>
-            </div>
+      <v-col cols="6" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="primary">mdi-format-list-bulleted</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ categoryMetaStore.totalCategories }}</div>
+            <div class="caption">Categories</div>
           </v-card-text>
         </v-card>
       </v-col>
-
-      <v-col cols="6" sm="4">
-        <v-card class="stat-card" elevation="0" color="green-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-green-darken-2 mb-1">Active</div>
-                <div class="text-h5 font-weight-bold text-green-darken-3">
-                  {{ activeCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="green-lighten-4">
-                <v-icon color="green-darken-2" size="28">mdi-check-circle</v-icon>
-              </v-avatar>
-            </div>
+      <v-col cols="6" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="success">mdi-check-circle</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ categoryMetaStore.activeCategories }}</div>
+            <div class="caption">Active</div>
           </v-card-text>
         </v-card>
       </v-col>
-
-      <v-col cols="12" sm="4">
-        <v-card class="stat-card" elevation="0" color="grey-lighten-4">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-grey-darken-2 mb-1">Inactive</div>
-                <div class="text-h5 font-weight-bold text-grey-darken-3">
-                  {{ inactiveCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="grey-lighten-3">
-                <v-icon color="grey-darken-2" size="28">mdi-close-circle</v-icon>
-              </v-avatar>
-            </div>
+      <v-col cols="6" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="grey">mdi-package-variant-closed</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ categoryMetaStore.emptyCategories }}</div>
+            <div class="caption">Empty</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="6" sm="3">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="blue">mdi-database</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ categoryMetaStore.totalComponents }}</div>
+            <div class="caption">Components</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="6" sm="3">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="orange">mdi-trending-up</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ categoryMetaStore.recentAdditions }}</div>
+            <div class="caption">New (30d)</div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Categories Grid -->
-    <v-card elevation="2" class="rounded-lg">
-      <v-card-title class="pa-6 pb-4">
-        <v-row dense align="center">
-          <v-col cols="12" md="7">
-            <v-text-field
-              v-model="searchQuery"
-              density="comfortable"
-              placeholder="Search categories..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              hide-details
-              clearable
-              @click:clear="onSearch"
-              @keyup.enter="onSearch"
-            >
-              <template v-slot:append-inner>
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  size="small"
-                  class="text-none"
-                  @click="onSearch"
-                >
-                  Search
-                </v-btn>
-              </template>
-            </v-text-field>
-          </v-col>
+    <!-- Filter Bar and View Toggle -->
+    <v-row class="mb-5" align="center">
+      <v-col cols="12" md="8">
+        <v-text-field
+          v-model="searchQuery"
+          label="Search categories"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          density="comfortable"
+          outlined
+          @keyup.enter="onSearch"
+          @click:clear="onSearch"
+        />
+      </v-col>
+      <v-col cols="12" md="4" class="d-flex justify-end">
+        <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'">
+          <v-icon>mdi-view-grid</v-icon>
+        </v-btn>
+        <v-btn :color="viewMode === 'list' ? 'primary' : ''" icon @click="viewMode = 'list'">
+          <v-icon>mdi-view-list</v-icon>
+        </v-btn>
+        <v-btn icon @click="refreshData" :loading="categoryStore.loading">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
 
-          <v-col cols="12" md="5" class="d-flex justify-end">
-            <v-btn-group variant="outlined" density="comfortable">
-              <v-btn @click="refreshData" :loading="categoryStore.loading">
-                <v-icon>mdi-refresh</v-icon>
-                <v-tooltip activator="parent" location="top">Refresh</v-tooltip>
-              </v-btn>
-              <v-btn @click="viewMode = 'grid'" :variant="viewMode === 'grid' ? 'flat' : 'outlined'">
-                <v-icon>mdi-view-grid</v-icon>
-                <v-tooltip activator="parent" location="top">Grid View</v-tooltip>
-              </v-btn>
-              <v-btn @click="viewMode = 'list'" :variant="viewMode === 'list' ? 'flat' : 'outlined'">
-                <v-icon>mdi-view-list</v-icon>
-                <v-tooltip activator="parent" location="top">List View</v-tooltip>
-              </v-btn>
-            </v-btn-group>
-          </v-col>
-        </v-row>
-      </v-card-title>
+    <!-- Main Card -->
+    <v-card elevation="1" class="pa-4">
+      <!-- Loading State -->
+      <v-row v-if="categoryStore.loading && categories.length === 0" justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular indeterminate size="48" color="primary"/>
+          <div class="mt-3">Loading categories...</div>
+        </v-col>
+      </v-row>
 
-      <v-divider></v-divider>
+      <!-- Empty -->
+      <v-row v-else-if="categories.length === 0">
+        <v-col cols="12" class="text-center">
+          <v-icon size="80" color="grey lighten-2">mdi-shape-outline</v-icon>
+          <div class="mt-3">No categories found</div>
+          <v-btn color="primary" class="mt-3" @click="openAddDialog" prepend-icon="mdi-plus">
+            Add Category
+          </v-btn>
+        </v-col>
+      </v-row>
 
       <!-- Grid View -->
-      <div v-if="viewMode === 'grid'" class="pa-6">
-        <v-row v-if="categoryStore.loading && categoryStore.categories.length === 0">
-          <v-col cols="12" class="text-center pa-12">
-            <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-            <p class="mt-4 text-medium-emphasis">Loading categories...</p>
-          </v-col>
-        </v-row>
-
-        <v-row v-else-if="!categoryStore.loading && categoryStore.categories.length === 0">
-          <v-col cols="12" class="text-center pa-12">
-            <v-icon size="80" color="grey-lighten-1">mdi-shape-outline</v-icon>
-            <p class="mt-4 text-h6 text-medium-emphasis">No categories found</p>
-          </v-col>
-        </v-row>
-
-        <v-row v-else>
-          <v-col 
-            v-for="category in categoryStore.categories" 
-            :key="category.id"
-            cols="12" 
-            sm="6" 
-            md="4" 
-            lg="3"
-          >
-            <v-card class="category-card" elevation="1" hover>
-              <v-card-text class="pa-5">
-                <div class="d-flex align-center mb-3">
-                  <v-avatar :color="category.color || 'primary'" size="48" class="mr-3">
-                    <v-icon color="white" size="28">{{ category.icon || 'mdi-shape' }}</v-icon>
-                  </v-avatar>
-                  <div class="flex-grow-1">
-                    <h3 class="text-h6 font-weight-bold">{{ category.name }}</h3>
-                    <v-chip 
-                      :color="category.isActive ? 'success' : 'grey'" 
-                      size="x-small" 
-                      variant="flat"
-                      class="mt-1"
-                    >
-                      {{ category.isActive ? 'Active' : 'Inactive' }}
-                    </v-chip>
-                  </div>
+      <v-row v-else-if="viewMode === 'grid'">
+        <v-col v-for="category in categories" :key="category.category_id" cols="12" sm="6" md="4" lg="3">
+          <v-card elevation="2" class="category-card" hover>
+            <v-card-text>
+              <div class="d-flex align-center mb-3">
+                <v-avatar color="primary" size="48" class="mr-3">
+                  <v-icon size="28" color="white">mdi-shape</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">{{ category.category_name }}</div>
+                  <v-chip :color="category.component_count > 0 ? 'success' : 'grey'" size="small" class="mt-1" flat>
+                    {{ category.component_count || 0 }} items
+                  </v-chip>
                 </div>
-
-                <p class="text-body-2 text-medium-emphasis mb-0">
-                  {{ category.description || 'No description' }}
-                </p>
-              </v-card-text>
-
-              <v-divider></v-divider>
-
-              <v-card-actions class="pa-3">
-                <v-spacer></v-spacer>
-                <v-btn
-                  icon
-                  variant="text"
-                  size="small"
-                  color="primary"
-                  @click="editItem(category)"
-                >
-                  <v-icon size="20">mdi-pencil-outline</v-icon>
-                  <v-tooltip activator="parent">Edit</v-tooltip>
-                </v-btn>
-                <v-btn
-                  icon
-                  variant="text"
-                  size="small"
-                  color="error"
-                  @click="deleteItem(category)"
-                >
-                  <v-icon size="20">mdi-delete-outline</v-icon>
-                  <v-tooltip activator="parent">Delete</v-tooltip>
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-      </div>
+              </div>
+              <div class="caption mb-1">
+                <v-icon size="16" color="green" v-if="category.recent_additions > 0">mdi-plus-circle</v-icon> 
+                {{ category.recent_additions || 0 }} new (last 30d)
+              </div>
+              <div class="caption" v-if="category.first_component_date">Added since: {{ formatDate(category.first_component_date) }}</div>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn
+                color="primary"
+                class="action-btn"
+                variant="flat"
+                icon
+                size="large"
+                @click="editItem(category)"
+              >
+                <v-icon size="22">mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn
+                color="error"
+                class="action-btn"
+                variant="flat"
+                icon
+                size="large"
+                @click="deleteItem(category)"
+              >
+                <v-icon size="22">mdi-delete</v-icon>
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <!-- List View -->
-      <v-list v-else class="pa-4">
-        <v-list-item
-          v-for="category in categoryStore.categories"
-          :key="category.id"
-          class="mb-2 rounded"
-        >
-          <template v-slot:prepend>
-            <v-avatar :color="category.color || 'primary'" size="56">
-              <v-icon color="white" size="32">{{ category.icon || 'mdi-shape' }}</v-icon>
+      <v-list v-else>
+        <v-list-item v-for="category in categories" :key="category.category_id" class="category-list-item px-2 py-2">
+          <template #prepend>
+            <v-avatar color="primary" size="48" class="mr-4">
+              <v-icon size="28" color="white">mdi-shape</v-icon>
             </v-avatar>
           </template>
-
-          <v-list-item-title class="font-weight-bold">
-            {{ category.name }}
+          <v-list-item-title>
+            <span class="font-weight-bold">{{ category.category_name }}</span>
           </v-list-item-title>
           <v-list-item-subtitle>
-            {{ category.description || 'No description' }}
-          </v-list-item-subtitle>
-
-          <template v-slot:append>
-            <v-chip 
-              :color="category.isActive ? 'success' : 'grey'" 
-              size="small" 
-              class="mr-4"
-            >
-              {{ category.isActive ? 'Active' : 'Inactive' }}
+            <v-chip :color="category.component_count > 0 ? 'success' : 'grey'" size="small" flat class="mr-2">
+              {{ category.component_count || 0 }} items
             </v-chip>
-            <v-btn
-              icon
-              variant="text"
-              size="small"
-              color="primary"
-              @click="editItem(category)"
-            >
-              <v-icon>mdi-pencil</v-icon>
+            <span v-if="category.recent_additions > 0" class="caption green--text">+{{ category.recent_additions }} new</span>
+          </v-list-item-subtitle>
+          <template #append>
+            <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editItem(category)">
+              <v-icon size="22">mdi-pencil</v-icon>
             </v-btn>
-            <v-btn
-              icon
-              variant="text"
-              size="small"
-              color="error"
-              @click="deleteItem(category)"
-            >
-              <v-icon>mdi-delete</v-icon>
+            <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteItem(category)">
+              <v-icon size="22">mdi-delete</v-icon>
             </v-btn>
           </template>
         </v-list-item>
       </v-list>
 
       <!-- Pagination -->
-      <v-divider></v-divider>
-      <v-card-actions class="justify-center pa-4">
+      <v-row justify="center" v-if="totalPages > 1">
         <v-pagination
           v-model="page"
           :length="totalPages"
-          :total-visible="7"
-          rounded="circle"
           @update:model-value="onPageChange"
-        ></v-pagination>
-      </v-card-actions>
+          :total-visible="7"
+        />
+      </v-row>
     </v-card>
 
-    <!-- Category Form Dialog -->
-    <category-form-dialog
-      v-model="showFormDialog"
-      :category-item="selectedCategory"
-      @success="handleFormSuccess"
-    />
+    <!-- Dialogs -->
+    <category-form-dialog v-model="showAddEditDialog" :category-item="selectedCategory" @success="handleSuccess"/>
+    <delete-confirm-dialog v-model="showDeleteDialog" :item-name="selectedCategory?.category_name" @confirm="handleDelete"/>
 
-    <!-- Delete Confirmation Dialog -->
-    <delete-confirm-dialog
-      v-model="showDeleteDialog"
-      :item-name="selectedCategory?.name"
-      @confirm="handleDeleteConfirm"
-    />
-
-    <!-- Success Snackbar -->
-    <v-snackbar
-      v-model="showSuccessSnackbar"
-      :timeout="3000"
-      color="success"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-check-circle</v-icon>
-        {{ successMessage }}
-      </div>
+    <!-- Notifications -->
+    <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" top right>
+      <v-icon left>mdi-check-circle</v-icon> {{ successMessage }}
     </v-snackbar>
-
-    <!-- Error Snackbar -->
-    <v-snackbar
-      v-model="showError"
-      :timeout="5000"
-      color="error"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-3">mdi-alert-circle</v-icon>
-        {{ categoryStore.error }}
-      </div>
+    <v-snackbar v-model="showError" color="error" :timeout="5000" top right>
+      <v-icon left>mdi-alert-circle</v-icon> {{ categoryStore.error }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="showError = false">Close</v-btn>
+        <v-btn text @click="showError = false">Close</v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -325,44 +235,48 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useCategoryMetaStore } from '@/stores/categoryMetaStore'
 import CategoryFormDialog from '@/components/CategoryFormDialog.vue'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
 
 const categoryStore = useCategoryStore()
+const categoryMetaStore = useCategoryMetaStore()
 
 const page = ref(1)
 const itemsPerPage = ref(12)
 const searchQuery = ref('')
-const showError = ref(false)
 const viewMode = ref('grid')
 
-const showFormDialog = ref(false)
-const showDeleteDialog = ref(false)
+const showAddEditDialog = ref(false)
 const selectedCategory = ref(null)
-const successMessage = ref('')
+const showDeleteDialog = ref(false)
 const showSuccessSnackbar = ref(false)
+const successMessage = ref('')
+const showError = ref(false)
 
-const activeCount = computed(() => {
-  return categoryStore.categories.filter(c => c.isActive).length
-})
-
-const inactiveCount = computed(() => {
-  return categoryStore.categories.filter(c => !c.isActive).length
-})
+const categories = computed(() => categoryStore.categories || [])
 
 const totalPages = computed(() => {
-  return Math.ceil(categoryStore.totalItems / itemsPerPage.value) || 1
+  // Use metadata for pagination count!
+  const total = categoryMetaStore.totalCategories || 0
+  return Math.ceil(total / itemsPerPage.value) || 1
 })
+
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString()
+}
 
 const loadCategories = async () => {
   try {
     await categoryStore.fetchCategories({
       page: page.value,
-      itemsPerPage: itemsPerPage.value,
+      pageSize: itemsPerPage.value,
       search: searchQuery.value
     })
-  } catch (error) {
-    console.error('Failed to load categories:', error)
+    // Now metadata is always refreshed with category list
+    await categoryMetaStore.fetchMetadata()
+  } catch (err) {
     showError.value = true
   }
 }
@@ -372,80 +286,118 @@ const onSearch = async () => {
   await loadCategories()
 }
 
+const onPageChange = async () => {
+  await loadCategories()
+}
+
 const refreshData = async () => {
   categoryStore.clearCache()
   await loadCategories()
 }
 
-const onPageChange = async () => {
-  await loadCategories()
-}
-
 const openAddDialog = () => {
   selectedCategory.value = null
-  showFormDialog.value = true
+  showAddEditDialog.value = true
 }
 
-const editItem = (item) => {
-  selectedCategory.value = { ...item }
-  showFormDialog.value = true
+const editItem = (category) => {
+  selectedCategory.value = category
+  showAddEditDialog.value = true
 }
 
-const deleteItem = (item) => {
-  selectedCategory.value = item
+const deleteItem = (category) => {
+  selectedCategory.value = category
   showDeleteDialog.value = true
 }
 
-const handleDeleteConfirm = async () => {
+const handleDelete = async () => {
   try {
-    await categoryStore.deleteCategory(selectedCategory.value.id)
+    await categoryStore.deleteCategory(selectedCategory.value.category_id)
     showDeleteDialog.value = false
-    successMessage.value = 'Category deleted successfully!'
+    successMessage.value = 'Category deleted successfully'
     showSuccessSnackbar.value = true
-    await refreshData()
+    await loadCategories()
   } catch (error) {
-    console.error('Failed to delete category:', error)
     showError.value = true
   }
 }
 
-const handleFormSuccess = async (data) => {
-  successMessage.value = data.message
-  showSuccessSnackbar.value = true
-  await refreshData()
-}
-
-watch(() => categoryStore.error, (newError) => {
-  if (newError) {
+const handleSuccess = async ({ data, isEdit }) => {
+  try {
+    if (isEdit) {
+      await categoryStore.updateCategory(selectedCategory.value.category_id, data)
+      successMessage.value = 'Category updated successfully'
+    } else {
+      await categoryStore.createCategory(data)
+      successMessage.value = 'Category created successfully'
+    }
+    showAddEditDialog.value = false
+    showSuccessSnackbar.value = true
+    await loadCategories()
+  } catch (error) {
     showError.value = true
   }
+}
+
+watch(() => categoryStore.error, (val) => {
+  if (val) showError.value = true
 })
 
-onMounted(() => {
-  loadCategories()
-})
+onMounted(() => loadCategories())
 </script>
 
 <style scoped>
-.stat-card {
+.metadata-card {
+  text-align: center;
   border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+.metadata-card .v-icon {
+  font-size: 32px;
+  margin-bottom: 5px;
 }
 
 .category-card {
-  height: 100%;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  transition: box-shadow 0.3s, border-color 0.3s;
   border-radius: 12px;
+  border: 1.2px solid #e3e6ed;
 }
 
 .category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+  border-color: #1976d2;
+}
+
+.category-list-item {
+  border-radius: 6px;
+  border: 1px solid #ececec;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+}
+
+.category-list-item:hover {
+  background-color: #f3f8fa;
+}
+
+.action-btn {
+  margin-right: 6px;
+  background-color: #f2f4ff !important;
+  color: #1976d2 !important;
+  border-radius: 8px !important;
+  padding: 5px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.action-btn:last-child {
+  margin-right: 0;
+}
+.action-btn[aria-pressed='true'], .action-btn:hover {
+  background-color: #e3e0fa !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10) !important;
 }
 </style>

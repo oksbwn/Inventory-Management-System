@@ -1,302 +1,206 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Page Header -->
-    <v-row class="mb-4">
+    <v-row class="mb-6">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between mb-6">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div>
-            <h1 class="text-h4 font-weight-bold text-primary mb-1">
-              <v-icon size="32" class="mr-2">mdi-package-variant</v-icon>
-              Storage Boxes
-            </h1>
-            <p class="text-body-2 text-medium-emphasis ml-11">
-              Manage warehouse storage locations and boxes
-            </p>
+            <div class="d-flex align-center ga-3 mb-2">
+              <v-avatar size="40" color="primary" variant="tonal">
+                <v-icon size="24">mdi-shape</v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h5 font-weight-bold mb-0">Storage Boxes</h1>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ boxMetaStore.totalBoxes }} total boxes
+                </p>
+              </div>
+            </div>
           </div>
-          <v-btn
-            color="primary"
-            size="large"
+          <v-btn 
+            color="primary" 
             prepend-icon="mdi-plus"
             elevation="2"
-            class="text-none"
             @click="openAddDialog"
           >
-            Add Storage Box
+            Add Box
           </v-btn>
         </div>
       </v-col>
     </v-row>
 
-    <!-- Stats Cards -->
+    <!-- Metadata Cards -->
     <v-row class="mb-6">
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="indigo-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-indigo-darken-2 mb-1">Total Boxes</div>
-                <div class="text-h5 font-weight-bold text-indigo-darken-3">
-                  {{ boxStore.totalItems || 0 }}
-                </div>
-              </div>
-              <v-avatar size="48" color="indigo-lighten-4">
-                <v-icon color="indigo-darken-2" size="28">mdi-package-variant</v-icon>
-              </v-avatar>
-            </div>
+      <v-col cols="6" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="primary">mdi-shape</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.totalBoxes }}</div>
+            <div class="caption">Total</div>
           </v-card-text>
         </v-card>
       </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="green-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-green-darken-2 mb-1">Active</div>
-                <div class="text-h5 font-weight-bold text-green-darken-3">
-                  {{ activeCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="green-lighten-4">
-                <v-icon color="green-darken-2" size="28">mdi-check-circle</v-icon>
-              </v-avatar>
-            </div>
+      <v-col cols="6" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="success">mdi-check-circle</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.activeBoxes }}</div>
+            <div class="caption">Active</div>
           </v-card-text>
         </v-card>
       </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="orange-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-orange-darken-2 mb-1">Near Full</div>
-                <div class="text-h5 font-weight-bold text-orange-darken-3">
-                  {{ nearFullCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="orange-lighten-4">
-                <v-icon color="orange-darken-2" size="28">mdi-alert</v-icon>
-              </v-avatar>
-            </div>
+      <v-col cols="6" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="grey">mdi-package-variant-closed</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.emptyBoxes }}</div>
+            <div class="caption">Empty</div>
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="red-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-red-darken-2 mb-1">Full</div>
-                <div class="text-h5 font-weight-bold text-red-darken-3">
-                  {{ fullCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="red-lighten-4">
-                <v-icon color="red-darken-2" size="28">mdi-package-variant-closed</v-icon>
-              </v-avatar>
-            </div>
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="blue">mdi-database</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.totalComponents }}</div>
+            <div class="caption">Components</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="6" sm="3">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon size="35" color="orange">mdi-trending-up</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.recentAdditions }}</div>
+            <div class="caption">New (30d)</div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Main Data Table Card -->
-    <v-card elevation="2" class="rounded-lg">
-      <v-card-title class="pa-6 pb-4">
-        <v-row dense align="center">
-          <v-col cols="12" md="7">
-            <v-text-field
-              v-model="searchQuery"
-              density="comfortable"
-              placeholder="Search by box name, number, location..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              hide-details
-              clearable
-              @click:clear="onSearch"
-              @keyup.enter="onSearch"
-            >
-              <template v-slot:append-inner>
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  size="small"
-                  class="text-none"
-                  @click="onSearch"
-                >
-                  Search
-                </v-btn>
-              </template>
-            </v-text-field>
-          </v-col>
+    <!-- Filter/Search and View Toggle -->
+    <v-row class="mb-5" align="center">
+      <v-col cols="12" md="8">
+        <v-text-field
+          v-model="searchQuery"
+          label="Search boxes"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          density="comfortable"
+          outlined
+          @keyup.enter="onSearch"
+          @click:clear="onSearch"
+        />
+      </v-col>
+      <v-col cols="12" md="4" class="d-flex justify-end">
+        <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'">
+          <v-icon>mdi-view-grid</v-icon>
+        </v-btn>
+        <v-btn :color="viewMode === 'list' ? 'primary' : ''" icon @click="viewMode = 'list'">
+          <v-icon>mdi-view-list</v-icon>
+        </v-btn>
+        <v-btn icon @click="refreshData" :loading="boxStore.loading">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
 
-          <v-col cols="12" md="5" class="d-flex justify-end align-center">
-            <v-chip
-              :color="boxStore.isCacheValid ? 'success' : 'grey'"
-              variant="tonal"
-              size="small"
-              class="mr-3"
-            >
-              <v-icon start size="small">mdi-database</v-icon>
-              {{ boxStore.isCacheValid ? 'Cached' : 'Live Data' }}
-            </v-chip>
-
-            <v-btn-group variant="outlined" density="comfortable">
-              <v-btn @click="refreshData" :loading="boxStore.loading">
-                <v-icon>mdi-refresh</v-icon>
-                <v-tooltip activator="parent" location="top">Refresh</v-tooltip>
+    <!-- Main Card -->
+    <v-card elevation="1" class="pa-4">
+      <!-- Loading State -->
+      <v-row v-if="boxStore.loading && boxes.length === 0" justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular indeterminate size="48" color="primary"/>
+          <div class="mt-3">Loading boxes...</div>
+        </v-col>
+      </v-row>
+      <!-- Empty -->
+      <v-row v-else-if="boxes.length === 0">
+        <v-col cols="12" class="text-center">
+          <v-icon size="80" color="grey lighten-2">mdi-shape-outline</v-icon>
+          <div class="mt-3">No boxes found</div>
+          <v-btn color="primary" class="mt-3" @click="openAddDialog" prepend-icon="mdi-plus">Add Box</v-btn>
+        </v-col>
+      </v-row>
+      <!-- Grid View -->
+      <v-row v-else-if="viewMode === 'grid'">
+        <v-col v-for="box in boxes" :key="box.box_id" cols="12" sm="6" md="4" lg="3">
+          <v-card elevation="2" class="box-card" hover>
+            <v-card-text>
+              <div class="d-flex align-center mb-3">
+                <v-avatar color="indigo" size="48" class="mr-3">
+                  <v-icon size="28" color="white">mdi-package-variant</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">{{ box.box_label }}</div>
+                  <div class="text-caption grey--text">{{ box.box_code }}</div>
+                  <v-chip :color="box.component_count > 0 ? 'success' : 'grey'" size="small" class="mt-2" flat>
+                    {{ box.component_count || 0 }} components
+                  </v-chip>
+                </div>
+              </div>
+              <div class="caption mb-1">
+                <v-icon size="16" color="green" v-if="box.recent_additions > 0">mdi-plus-circle</v-icon>
+                {{ box.recent_additions || 0 }} new (last 30d)
+              </div>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editBox(box)">
+                <v-icon size="22">mdi-pencil</v-icon>
               </v-btn>
-              <v-btn>
-                <v-icon>mdi-filter-variant</v-icon>
-                <v-tooltip activator="parent" location="top">Filters</v-tooltip>
+              <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteBox(box)">
+                <v-icon size="22">mdi-delete</v-icon>
               </v-btn>
-              <v-btn>
-                <v-icon>mdi-download</v-icon>
-                <v-tooltip activator="parent" location="top">Export</v-tooltip>
-              </v-btn>
-            </v-btn-group>
-          </v-col>
-        </v-row>
-      </v-card-title>
-
-      <v-divider></v-divider>
-
-      <!-- Data Table -->
-      <v-data-table-server
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        v-model:sort-by="sortBy"
-        :headers="headers"
-        :items="boxStore.boxes"
-        :items-length="boxStore.totalItems"
-        :loading="boxStore.loading"
-        item-value="id"
-        @update:options="loadBoxes"
-        class="elevation-0 professional-table"
-        hover
-      >
-        <!-- Box Name Column -->
-        <template v-slot:item.name="{ item }">
-          <div class="d-flex align-center py-2">
-            <v-avatar size="40" color="indigo-lighten-5" class="mr-3">
-              <v-icon color="indigo" size="20">mdi-package-variant</v-icon>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+      <!-- List View -->
+      <v-list v-else>
+        <v-list-item v-for="box in boxes" :key="box.box_id" class="box-list-item px-2 py-2">
+          <template #prepend>
+            <v-avatar color="indigo" size="48" class="mr-4">
+              <v-icon size="28" color="white">mdi-package-variant</v-icon>
             </v-avatar>
-            <div>
-              <div class="font-weight-medium">{{ item.name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.boxNumber }}</div>
-            </div>
-          </div>
-        </template>
-
-        <!-- Location Column -->
-        <template v-slot:item.location="{ item }">
-          <div class="location-info">
-            <div class="text-body-2">
-              <v-icon size="small" class="mr-1">mdi-warehouse</v-icon>
-              {{ item.warehouse }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ [item.zone, item.row, item.shelf, item.bin].filter(Boolean).join(' / ') || 'No specific location' }}
-            </div>
-          </div>
-        </template>
-
-        <!-- Capacity Column -->
-        <template v-slot:item.capacity="{ item }">
-          <div class="capacity-info">
-            <div class="d-flex align-center mb-1">
-              <span class="font-weight-medium">{{ item.currentOccupancy || 0 }} / {{ item.capacity }}</span>
-            </div>
-            <v-progress-linear
-              :model-value="getOccupancyPercentage(item)"
-              :color="getOccupancyColor(item)"
-              height="6"
-              rounded
-            ></v-progress-linear>
-          </div>
-        </template>
-
-        <!-- Status Column -->
-        <template v-slot:item.status="{ item }">
-          <v-chip
-            :color="getStatusColor(item.status)"
-            size="small"
-            variant="flat"
-          >
-            <v-icon start size="x-small">{{ getStatusIcon(item.status) }}</v-icon>
-            {{ item.status }}
-          </v-chip>
-        </template>
-
-        <!-- Box Type Column -->
-        <template v-slot:item.boxType="{ item }">
-          <v-chip size="small" variant="tonal">
-            {{ item.boxType }}
-          </v-chip>
-        </template>
-
-        <!-- Actions Column -->
-        <template v-slot:item.actions="{ item }">
-          <div class="action-buttons">
-            <v-btn icon variant="text" size="small" color="info" @click="viewItem(item)">
-              <v-icon size="20">mdi-eye-outline</v-icon>
-              <v-tooltip activator="parent">View</v-tooltip>
+          </template>
+          <v-list-item-title>
+            <span class="font-weight-bold">{{ box.box_label }}</span>
+            <span class="text-caption grey--text ml-2">{{ box.box_code }}</span>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            <v-chip :color="box.component_count > 0 ? 'success' : 'grey'" size="small" flat class="mr-2">
+              {{ box.component_count || 0 }} components
+            </v-chip>
+            <span v-if="box.recent_additions > 0" class="caption green--text">+{{ box.recent_additions }} new</span>
+          </v-list-item-subtitle>
+          <template #append>
+            <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editBox(box)">
+              <v-icon size="22">mdi-pencil</v-icon>
             </v-btn>
-            <v-btn icon variant="text" size="small" color="primary" @click="editItem(item)">
-              <v-icon size="20">mdi-pencil-outline</v-icon>
-              <v-tooltip activator="parent">Edit</v-tooltip>
+            <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteBox(box)">
+              <v-icon size="22">mdi-delete</v-icon>
             </v-btn>
-            <v-btn icon variant="text" size="small" color="error" @click="deleteItem(item)">
-              <v-icon size="20">mdi-delete-outline</v-icon>
-              <v-tooltip activator="parent">Delete</v-tooltip>
-            </v-btn>
-          </div>
-        </template>
-      </v-data-table-server>
+          </template>
+        </v-list-item>
+      </v-list>
+      <!-- Pagination -->
+      <v-row justify="center" v-if=" boxMetaStore.totalBoxes > 1">
+        <v-pagination v-model="page" :length=" boxMetaStore.totalBoxes" @update:model-value="onPageChange" :total-visible="7" />
+      </v-row>
     </v-card>
-
-    <!-- Box Form Dialog -->
-    <box-form-dialog
-      v-model="showFormDialog"
-      :box-item="selectedBox"
-      @success="handleFormSuccess"
-    />
-
-    <!-- Delete Confirmation Dialog -->
-    <delete-confirm-dialog
-      v-model="showDeleteDialog"
-      :item-name="selectedBox?.name"
-      @confirm="handleDeleteConfirm"
-    />
-
-    <!-- Success Snackbar -->
-    <v-snackbar
-      v-model="showSuccessSnackbar"
-      :timeout="3000"
-      color="success"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-check-circle</v-icon>
-        {{ successMessage }}
-      </div>
+    <!-- Dialogs -->
+    <BoxFormDialog v-model="showAddEditDialog" :box-item="selectedBox" @success="handleBoxSuccess" />
+    <DeleteConfirmDialog v-model="showDeleteDialog" :item-name="selectedBox?.box_label" @confirm="handleBoxDelete" />
+    <!-- Notifications -->
+    <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" top right>
+      <v-icon left>mdi-check-circle</v-icon> {{ successMessage }}
     </v-snackbar>
-
-    <!-- Error Snackbar -->
-    <v-snackbar
-      v-model="showError"
-      :timeout="5000"
-      color="error"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-3">mdi-alert-circle</v-icon>
-        {{ boxStore.error }}
-      </div>
+    <v-snackbar v-model="showError" color="error" :timeout="5000" top right>
+      <v-icon left>mdi-alert-circle</v-icon> {{ boxStore.error }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="showError = false">Close</v-btn>
+        <v-btn text @click="showError = false">Close</v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -309,203 +213,134 @@ import BoxFormDialog from '@/components/BoxFormDialog.vue'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
 
 const boxStore = useBoxStore()
-
+const boxMetaStore = useBoxStore()
 const page = ref(1)
-const itemsPerPage = ref(10)
-const sortBy = ref([])
+const itemsPerPage = ref(12)
 const searchQuery = ref('')
+const viewMode = ref('grid')
+
+const showAddEditDialog = ref(false)
+const selectedBox = ref(null)
+const showDeleteDialog = ref(false)
+const showSuccessSnackbar = ref(false)
+const successMessage = ref('')
 const showError = ref(false)
 
-const showFormDialog = ref(false)
-const showDeleteDialog = ref(false)
-const selectedBox = ref(null)
-const successMessage = ref('')
-const showSuccessSnackbar = ref(false)
+const boxes = computed(() => boxStore.boxes || [])
 
-const headers = ref([
-  { title: 'Box Name', key: 'name', align: 'start', sortable: true },
-  { title: 'Location', key: 'location', align: 'start', sortable: false },
-  { title: 'Capacity', key: 'capacity', align: 'start', sortable: true, width: '200px' },
-  { title: 'Status', key: 'status', align: 'center', sortable: true, width: '130px' },
-  { title: 'Type', key: 'boxType', align: 'center', sortable: true, width: '150px' },
-  { title: 'Actions', key: 'actions', align: 'center', sortable: false, width: '150px' },
-])
-
-const activeCount = computed(() => {
-  return boxStore.boxes.filter(b => b.status === 'Active').length
-})
-
-const nearFullCount = computed(() => {
-  return boxStore.boxes.filter(b => {
-    const percentage = (b.currentOccupancy / b.capacity) * 100
-    return percentage >= 80 && percentage < 100
-  }).length
-})
-
-const fullCount = computed(() => {
-  return boxStore.boxes.filter(b => b.status === 'Full' || b.currentOccupancy >= b.capacity).length
-})
-
-const loadBoxes = async ({ page: p, itemsPerPage: ipp, sortBy: sb }) => {
+// Load boxes and metadata
+const loadBoxes = async () => {
   try {
-    await boxStore.fetchBoxes({
-      page: p,
-      itemsPerPage: ipp,
-      sortBy: sb,
-      search: searchQuery.value
-    })
-  } catch (error) {
-    console.error('Failed to load boxes:', error)
+    await boxStore.fetchBoxes({ page: page.value, pageSize: itemsPerPage.value, search: searchQuery.value })
+    await boxStore.fetchBoxesMeta()
+  } catch (err) {
     showError.value = true
   }
 }
 
 const onSearch = async () => {
   page.value = 1
-  await loadBoxes({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
+  await loadBoxes()
 }
-
+const onPageChange = async () => {
+  await loadBoxes()
+}
 const refreshData = async () => {
   boxStore.clearCache()
-  await loadBoxes({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
-}
-
-const getOccupancyPercentage = (item) => {
-  if (!item.capacity) return 0
-  return Math.min((item.currentOccupancy / item.capacity) * 100, 100)
-}
-
-const getOccupancyColor = (item) => {
-  const percentage = getOccupancyPercentage(item)
-  if (percentage >= 100) return 'error'
-  if (percentage >= 80) return 'warning'
-  if (percentage >= 50) return 'info'
-  return 'success'
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    'Active': 'success',
-    'Inactive': 'grey',
-    'Maintenance': 'warning',
-    'Full': 'error',
-    'Reserved': 'info'
-  }
-  return colors[status] || 'grey'
-}
-
-const getStatusIcon = (status) => {
-  const icons = {
-    'Active': 'mdi-check-circle',
-    'Inactive': 'mdi-minus-circle',
-    'Maintenance': 'mdi-wrench',
-    'Full': 'mdi-package-variant-closed',
-    'Reserved': 'mdi-lock'
-  }
-  return icons[status] || 'mdi-help-circle'
+  await loadBoxes()
 }
 
 const openAddDialog = () => {
   selectedBox.value = null
-  showFormDialog.value = true
+  showAddEditDialog.value = true
 }
-
-const viewItem = (item) => {
-  console.log('View box:', item)
+const editBox = (box) => {
+  selectedBox.value = box
+  showAddEditDialog.value = true
 }
-
-const editItem = (item) => {
-  selectedBox.value = { ...item }
-  showFormDialog.value = true
-}
-
-const deleteItem = (item) => {
-  selectedBox.value = item
+const deleteBox = (box) => {
+  selectedBox.value = box
   showDeleteDialog.value = true
 }
-
-const handleDeleteConfirm = async () => {
+const handleBoxDelete = async () => {
   try {
-    await boxStore.deleteBox(selectedBox.value.id)
+    await boxStore.deleteBox(selectedBox.value.box_id)
     showDeleteDialog.value = false
-    successMessage.value = 'Storage box deleted successfully!'
+    successMessage.value = 'Box deleted successfully'
     showSuccessSnackbar.value = true
-    await refreshData()
+    await loadBoxes()
   } catch (error) {
-    console.error('Failed to delete box:', error)
     showError.value = true
   }
 }
-
-const handleFormSuccess = async (data) => {
-  successMessage.value = data.message
-  showSuccessSnackbar.value = true
-  await refreshData()
-}
-
-watch(() => boxStore.error, (newError) => {
-  if (newError) {
+const handleBoxSuccess = async ({ data, isEdit }) => {
+  try {
+    if (isEdit) {
+      await boxStore.updateBox(selectedBox.value.box_id, data)
+      successMessage.value = 'Box updated successfully'
+    } else {
+      await boxStore.createBox(data)
+      successMessage.value = 'Box created successfully'
+    }
+    showAddEditDialog.value = false
+    showSuccessSnackbar.value = true
+    await loadBoxes()
+  } catch (error) {
     showError.value = true
   }
+}
+watch(() => boxStore.error, (val) => {
+  if (val) showError.value = true
 })
-
-onMounted(() => {
-  loadBoxes({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
-})
+onMounted(() => loadBoxes())
 </script>
 
 <style scoped>
-.stat-card {
+.metadata-card {
+  text-align: center;
   border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-}
-
-.professional-table :deep(thead th) {
-  background-color: rgb(var(--v-theme-surface-variant)) !important;
-  font-weight: 600 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.75rem;
-  padding: 16px 12px !important;
-}
-
-.professional-table :deep(tbody tr:hover) {
-  background-color: rgba(var(--v-theme-primary), 0.03) !important;
-}
-
-.professional-table :deep(tbody td) {
-  padding: 12px !important;
-}
-
-.action-buttons {
+  min-height: 110px;
   display: flex;
-  gap: 4px;
+  align-items: center;
   justify-content: center;
 }
-
-.capacity-info {
-  min-width: 150px;
+.metadata-card .v-icon {
+  font-size: 32px;
+  margin-bottom: 5px;
 }
-
-.location-info {
-  max-width: 300px;
+.box-card {
+  cursor: pointer;
+  transition: box-shadow 0.3s, border-color 0.3s;
+  border-radius: 12px;
+  border: 1.2px solid #e3e6ed;
+}
+.box-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+  border-color: #1976d2;
+}
+.box-list-item {
+  border-radius: 6px;
+  border: 1px solid #ececec;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+}
+.box-list-item:hover {
+  background-color: #f3f8fa;
+}
+.action-btn {
+  margin-right: 6px;
+  background-color: #f2f4ff !important;
+  color: #1976d2 !important;
+  border-radius: 8px !important;
+  padding: 5px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.action-btn:last-child {
+  margin-right: 0;
+}
+.action-btn[aria-pressed='true'], .action-btn:hover {
+  background-color: #e3e0fa !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10) !important;
 }
 </style>

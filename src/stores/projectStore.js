@@ -1,41 +1,58 @@
-import { defineStore } from 'pinia'
-import { useBaseStore } from '@/composables/useBaseStore'
-import projectService from '@/api/services/projectService'
-
-const projectServiceAdapter = {
-  getItems: (params) => projectService.getProjects(params),
-  createItem: (data) => projectService.createProject(data),
-  updateItem: (id, data) => projectService.updateProject(id, data),
-  deleteItem: (id) => projectService.deleteProject(id)
-}
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import projectService from '@/api/services/projectService';
 
 export const useProjectStore = defineStore('project', () => {
-  const baseStore = useBaseStore('ProjectStore', projectServiceAdapter, {
-    cacheTimeout: 5 * 60 * 1000,
-    defaultItemsPerPage: 10,
-    itemName: 'project',
-    pluralItemName: 'projects'
-  })
+  const projects = ref([]);
+  const totalItems = ref(0);
+  const loading = ref(false);
+  const error = ref(null);
 
-  const projects = baseStore.items
-  const fetchProjects = baseStore.fetchItems
-  const createProject = baseStore.createItem
-  const updateProject = baseStore.updateItem
-  const deleteProject = baseStore.deleteItem
+  // Metadata
+  const totalProjects = ref(0);
+  const activeProjects = ref(0);
+  const completedProjects = ref(0);
+
+  // Fetch project list with pagination and search params
+  const fetchProjects = async (params = {}) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await projectService.getProjects(params);
+      projects.value = response || [];
+      totalItems.value = response[0].total || 0;
+      await fetchProjectsMeta();
+    } catch (err) {
+      error.value = err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Fetch projects metadata summary
+  const fetchProjectsMeta = async () => {
+    try {
+      const response = await projectService.getProjectsMeta();
+      const meta = response[0] || {};
+      totalProjects.value = meta.totalProjects || 0;
+      activeProjects.value = meta.activeProjects || 0;
+      completedProjects.value = meta.completedProjects || 0;
+    } catch {
+      totalProjects.value = 0;
+      activeProjects.value = 0;
+      completedProjects.value = 0;
+    }
+  };
 
   return {
     projects,
-    loading: baseStore.loading,
-    error: baseStore.error,
-    totalItems: baseStore.totalItems,
-    itemsPerPage: baseStore.itemsPerPage,
-    currentPage: baseStore.currentPage,
-    search: baseStore.search,
-    isCacheValid: baseStore.isCacheValid,
+    totalItems,
+    loading,
+    error,
+    totalProjects,
+    activeProjects,
+    completedProjects,
     fetchProjects,
-    createProject,
-    updateProject,
-    deleteProject,
-    clearCache: baseStore.clearCache
-  }
-})
+    fetchProjectsMeta,
+  };
+});

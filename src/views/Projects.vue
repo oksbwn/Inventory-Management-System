@@ -1,313 +1,163 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Page Header -->
-    <v-row class="mb-4">
+    <v-row class="mb-6">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between mb-6">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div>
-            <h1 class="text-h4 font-weight-bold text-primary mb-1">
-              <v-icon size="32" class="mr-2">mdi-briefcase</v-icon>
-              Projects
-            </h1>
-            <p class="text-body-2 text-medium-emphasis ml-11">
-              Track and manage inventory-related projects
-            </p>
+            <div class="d-flex align-center ga-3 mb-2">
+              <v-avatar size="40" color="primary" variant="tonal">
+                <v-icon size="24">mdi-briefcase</v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h5 font-weight-bold mb-0">Projects</h1>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ projectStore.totalProjects }} total projects
+                </p>
+              </div>
+            </div>
           </div>
-          <v-btn
-            color="primary"
-            size="large"
-            prepend-icon="mdi-plus"
-            elevation="2"
-            class="text-none"
-            @click="openAddDialog"
-          >
-            New Project
+          <v-btn color="primary" prepend-icon="mdi-plus" elevation="2" @click="openAddDialog">
+            Add Project
           </v-btn>
         </div>
       </v-col>
     </v-row>
 
-    <!-- Stats Cards -->
-    <v-row class="mb-6">
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="blue-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-blue-darken-2 mb-1">Total Projects</div>
-                <div class="text-h5 font-weight-bold text-blue-darken-3">
-                  {{ projectStore.totalItems || 0 }}
-                </div>
-              </div>
-              <v-avatar size="48" color="blue-lighten-4">
-                <v-icon color="blue-darken-2" size="28">mdi-briefcase</v-icon>
-              </v-avatar>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="green-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-green-darken-2 mb-1">Active</div>
-                <div class="text-h5 font-weight-bold text-green-darken-3">
-                  {{ activeCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="green-lighten-4">
-                <v-icon color="green-darken-2" size="28">mdi-progress-check</v-icon>
-              </v-avatar>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="orange-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-orange-darken-2 mb-1">On Hold</div>
-                <div class="text-h5 font-weight-bold text-orange-darken-3">
-                  {{ onHoldCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="orange-lighten-4">
-                <v-icon color="orange-darken-2" size="28">mdi-pause-circle</v-icon>
-              </v-avatar>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="6" sm="3">
-        <v-card class="stat-card" elevation="0" color="cyan-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-caption text-cyan-darken-2 mb-1">Completed</div>
-                <div class="text-h5 font-weight-bold text-cyan-darken-3">
-                  {{ completedCount }}
-                </div>
-              </div>
-              <v-avatar size="48" color="cyan-lighten-4">
-                <v-icon color="cyan-darken-2" size="28">mdi-check-circle</v-icon>
-              </v-avatar>
-            </div>
+    <!-- Metadata Cards -->
+    <v-row class="mb-6" dense>
+      <v-col v-for="item in stats" :key="item.label" cols="12" sm="2">
+        <v-card class="metadata-card" elevation="2">
+          <v-card-text class="text-center">
+            <v-icon :color="item.color" size="35">{{ item.icon }}</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ item.value }}</div>
+            <div class="caption">{{ item.label }}</div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Main Data Table Card -->
-    <v-card elevation="2" class="rounded-lg">
-      <v-card-title class="pa-6 pb-4">
-        <v-row dense align="center">
-          <v-col cols="12" md="7">
-            <v-text-field
-              v-model="searchQuery"
-              density="comfortable"
-              placeholder="Search projects..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              hide-details
-              clearable
-              @click:clear="onSearch"
-              @keyup.enter="onSearch"
-            >
-              <template v-slot:append-inner>
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  size="small"
-                  class="text-none"
-                  @click="onSearch"
-                >
-                  Search
-                </v-btn>
-              </template>
-            </v-text-field>
-          </v-col>
+    <!-- Filter/Search and View Toggle -->
+    <v-row class="mb-5" align="center">
+      <v-col cols="12" md="8">
+        <v-text-field
+          v-model="searchQuery"
+          label="Search projects"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          density="comfortable"
+          outlined
+          @keyup.enter="onSearch"
+          @click:clear="onSearch"
+        />
+      </v-col>
+      <v-col cols="12" md="4" class="d-flex justify-end">
+        <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'" aria-label="Grid view">
+          <v-icon>mdi-view-grid</v-icon>
+        </v-btn>
+        <v-btn :color="viewMode === 'list' ? 'primary' : ''" icon @click="viewMode = 'list'" aria-label="List view">
+          <v-icon>mdi-view-list</v-icon>
+        </v-btn>
+        <v-btn icon @click="refreshData" :loading="projectStore.loading" aria-label="Refresh">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
 
-          <v-col cols="12" md="5" class="d-flex justify-end align-center">
-            <v-chip
-              :color="projectStore.isCacheValid ? 'success' : 'grey'"
-              variant="tonal"
-              size="small"
-              class="mr-3"
-            >
-              <v-icon start size="small">mdi-database</v-icon>
-              {{ projectStore.isCacheValid ? 'Cached' : 'Live' }}
-            </v-chip>
+    <!-- Main Card -->
+    <v-card elevation="1" class="pa-4">
+      <!-- Loading State -->
+      <v-row v-if="projectStore.loading && projects.length === 0" justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular indeterminate size="48" color="primary" />
+          <div class="mt-3">Loading projects...</div>
+        </v-col>
+      </v-row>
+      <!-- Empty State -->
+      <v-row v-else-if="projects.length === 0">
+        <v-col cols="12" class="text-center">
+          <v-icon size="80" color="grey lighten-2">mdi-briefcase-outline</v-icon>
+          <div class="mt-3">No projects found</div>
+          <v-btn color="primary" class="mt-3" @click="openAddDialog" prepend-icon="mdi-plus">Add Project</v-btn>
+        </v-col>
+      </v-row>
 
-            <v-btn-group variant="outlined" density="comfortable">
-              <v-btn @click="refreshData" :loading="projectStore.loading">
-                <v-icon>mdi-refresh</v-icon>
-                <v-tooltip activator="parent">Refresh</v-tooltip>
+      <!-- Grid View -->
+      <v-row v-else-if="viewMode === 'grid'" dense>
+        <v-col v-for="project in projects" :key="project.projectid" cols="12" sm="6" md="4" lg="3">
+          <v-card elevation="2" class="project-card hoverable">
+            <v-card-text>
+              <div class="d-flex align-center mb-3">
+                <v-avatar color="indigo" size="48" class="mr-3">
+                  <v-icon size="28" color="white">mdi-briefcase</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">{{ project.project_name}}</div>
+                  <div class="text-caption grey--text">Status: {{ project.status }}</div>
+                  <div class="text-caption grey--text">Start: {{ project.start_date}}</div>
+                  <div class="text-caption grey--text">End: {{ project.end_date }}</div>
+                </div>
+              </div>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editProject(project)">
+                <v-icon size="22">mdi-pencil</v-icon>
               </v-btn>
-              <v-btn>
-                <v-icon>mdi-filter-variant</v-icon>
-                <v-tooltip activator="parent">Filters</v-tooltip>
+              <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteProject(project)">
+                <v-icon size="22">mdi-delete</v-icon>
               </v-btn>
-              <v-btn>
-                <v-icon>mdi-download</v-icon>
-                <v-tooltip activator="parent">Export</v-tooltip>
-              </v-btn>
-            </v-btn-group>
-          </v-col>
-        </v-row>
-      </v-card-title>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
 
-      <v-divider></v-divider>
-
-      <!-- Data Table -->
-      <v-data-table-server
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        v-model:sort-by="sortBy"
-        :headers="headers"
-        :items="projectStore.projects"
-        :items-length="projectStore.totalItems"
-        :loading="projectStore.loading"
-        item-value="id"
-        @update:options="loadProjects"
-        class="elevation-0 professional-table"
-        hover
-      >
-        <!-- Project Name Column -->
-        <template v-slot:item.name="{ item }">
-          <div class="d-flex align-center py-2">
-            <v-avatar size="40" color="blue-lighten-5" class="mr-3">
-              <v-icon color="blue" size="20">mdi-briefcase</v-icon>
+      <!-- List View -->
+      <v-list v-else>
+        <v-list-item v-for="project in projects" :key="project.projectid" class="project-list-item px-2 py-2">
+          <template #prepend>
+            <v-avatar color="indigo" size="48" class="mr-4">
+              <v-icon size="28" color="white">mdi-briefcase</v-icon>
             </v-avatar>
-            <div>
-              <div class="font-weight-medium">{{ item.name }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.code }}</div>
-            </div>
-          </div>
-        </template>
-
-        <!-- Priority Column -->
-        <template v-slot:item.priority="{ item }">
-          <v-chip
-            :color="getPriorityColor(item.priority)"
-            size="small"
-            variant="flat"
-          >
-            <v-icon start size="x-small">mdi-flag</v-icon>
-            {{ item.priority }}
-          </v-chip>
-        </template>
-
-        <!-- Status Column -->
-        <template v-slot:item.status="{ item }">
-          <v-chip
-            :color="getStatusColor(item.status)"
-            size="small"
-            variant="flat"
-          >
-            <v-icon start size="x-small">{{ getStatusIcon(item.status) }}</v-icon>
-            {{ item.status }}
-          </v-chip>
-        </template>
-
-        <!-- Progress Column -->
-        <template v-slot:item.completionPercentage="{ item }">
-          <div class="progress-cell">
-            <div class="d-flex align-center mb-1">
-              <span class="text-body-2 font-weight-medium">{{ item.completionPercentage }}%</span>
-            </div>
-            <v-progress-linear
-              :model-value="item.completionPercentage"
-              :color="getProgressColor(item.completionPercentage)"
-              height="6"
-              rounded
-            ></v-progress-linear>
-          </div>
-        </template>
-
-        <!-- Dates Column -->
-        <template v-slot:item.dates="{ item }">
-          <div class="dates-cell">
-            <div class="text-body-2">
-              <v-icon size="small" class="mr-1">mdi-calendar-start</v-icon>
-              {{ formatDate(item.startDate) }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              <v-icon size="small" class="mr-1">mdi-calendar-end</v-icon>
-              {{ formatDate(item.endDate) }}
-            </div>
-          </div>
-        </template>
-
-        <!-- Budget Column -->
-        <template v-slot:item.budget="{ item }">
-          <span class="font-weight-medium">{{ formatCurrency(item.budget) }}</span>
-        </template>
-
-        <!-- Actions Column -->
-        <template v-slot:item.actions="{ item }">
-          <div class="action-buttons">
-            <v-btn icon variant="text" size="small" color="info" @click="viewItem(item)">
-              <v-icon size="20">mdi-eye-outline</v-icon>
-              <v-tooltip activator="parent">View</v-tooltip>
+          </template>
+          <v-list-item-title>
+            <span class="font-weight-bold">{{ project.project_name }}</span>
+            <span class="text-caption grey--text ml-2">Status: {{ project.status }}</span>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            <span class="text-caption grey--text">Start: {{ project.start_date}}</span>
+            <span class="text-caption grey--text ml-3">End: {{ project.end_date }}</span>
+          </v-list-item-subtitle>
+          <template #append>
+            <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editProject(project)">
+              <v-icon size="22">mdi-pencil</v-icon>
             </v-btn>
-            <v-btn icon variant="text" size="small" color="primary" @click="editItem(item)">
-              <v-icon size="20">mdi-pencil-outline</v-icon>
-              <v-tooltip activator="parent">Edit</v-tooltip>
+            <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteProject(project)">
+              <v-icon size="22">mdi-delete</v-icon>
             </v-btn>
-            <v-btn icon variant="text" size="small" color="error" @click="deleteItem(item)">
-              <v-icon size="20">mdi-delete-outline</v-icon>
-              <v-tooltip activator="parent">Delete</v-tooltip>
-            </v-btn>
-          </div>
-        </template>
-      </v-data-table-server>
+          </template>
+        </v-list-item>
+      </v-list>
+
+      <!-- Pagination -->
+      <v-row justify="center" v-if="totalPages > 1">
+        <v-pagination v-model="page" :length="totalPages" @update:model-value="onPageChange" :total-visible="7" />
+      </v-row>
     </v-card>
 
-    <!-- Project Form Dialog -->
-    <project-form-dialog
-      v-model="showFormDialog"
-      :project-item="selectedProject"
-      @success="handleFormSuccess"
-    />
+    <!-- Dialogs -->
+    <ProjectFormDialog v-model="showAddEditDialog" :project-item="selectedProject" @success="handleProjectSuccess" @error="handleError" />
+    <DeleteConfirmDialog v-model="showDeleteDialog" :item-name="selectedProject?.projectname" @confirm="handleProjectDelete" />
 
-    <!-- Delete Confirmation Dialog -->
-    <delete-confirm-dialog
-      v-model="showDeleteDialog"
-      :item-name="selectedProject?.name"
-      @confirm="handleDeleteConfirm"
-    />
-
-    <!-- Success Snackbar -->
-    <v-snackbar
-      v-model="showSuccessSnackbar"
-      :timeout="3000"
-      color="success"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-check-circle</v-icon>
-        {{ successMessage }}
-      </div>
+    <!-- Notifications -->
+    <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" top right>
+      <v-icon left>mdi-check-circle</v-icon> {{ successMessage }}
     </v-snackbar>
-
-    <!-- Error Snackbar -->
-    <v-snackbar
-      v-model="showError"
-      :timeout="5000"
-      color="error"
-      location="top right"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-3">mdi-alert-circle</v-icon>
-        {{ projectStore.error }}
-      </div>
+    <v-snackbar v-model="showError" color="error" :timeout="5000" top right>
+      <v-icon left>mdi-alert-circle</v-icon> {{ errorMessage }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="showError = false">Close</v-btn>
+        <v-btn text @click="showError = false">Close</v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -320,218 +170,164 @@ import ProjectFormDialog from '@/components/ProjectFormDialog.vue'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
 
 const projectStore = useProjectStore()
-
 const page = ref(1)
-const itemsPerPage = ref(10)
-const sortBy = ref([])
+const itemsPerPage = ref(12)
 const searchQuery = ref('')
-const showError = ref(false)
+const viewMode = ref('grid')
 
-const showFormDialog = ref(false)
-const showDeleteDialog = ref(false)
+const showAddEditDialog = ref(false)
 const selectedProject = ref(null)
-const successMessage = ref('')
+const showDeleteDialog = ref(false)
 const showSuccessSnackbar = ref(false)
+const successMessage = ref('')
+const showError = ref(false)
+const errorMessage = ref('')
 
-const headers = ref([
-  { title: 'Project Name', key: 'name', align: 'start', sortable: true },
-  { title: 'Priority', key: 'priority', align: 'center', sortable: true, width: '120px' },
-  { title: 'Status', key: 'status', align: 'center', sortable: true, width: '140px' },
-  { title: 'Progress', key: 'completionPercentage', align: 'start', sortable: true, width: '150px' },
-  { title: 'Timeline', key: 'dates', align: 'start', sortable: false, width: '200px' },
-  { title: 'Budget', key: 'budget', align: 'end', sortable: true, width: '130px' },
-  { title: 'Actions', key: 'actions', align: 'center', sortable: false, width: '150px' },
+const projects = computed(() => projectStore.projects || [])
+const totalPages = computed(() => {
+  const total = projectStore.totalProjects || 0
+  return Math.ceil(total / itemsPerPage.value) || 1
+})
+
+const stats = computed(() => [
+  { label: 'Total', value: projectStore.totalProjects, icon: 'mdi-briefcase', color: 'primary' },
+  { label: 'Active', value: projectStore.activeProjects, icon: 'mdi-check-circle', color: 'success' },
+  { label: 'Completed', value: projectStore.completedProjects, icon: 'mdi-checkbox-marked-circle', color: 'blue' },
 ])
 
-const activeCount = computed(() => {
-  return projectStore.projects.filter(p => p.status === 'In Progress').length
-})
-
-const onHoldCount = computed(() => {
-  return projectStore.projects.filter(p => p.status === 'On Hold').length
-})
-
-const completedCount = computed(() => {
-  return projectStore.projects.filter(p => p.status === 'Completed').length
-})
-
-const loadProjects = async ({ page: p, itemsPerPage: ipp, sortBy: sb }) => {
+const loadProjects = async () => {
   try {
     await projectStore.fetchProjects({
-      page: p,
-      itemsPerPage: ipp,
-      sortBy: sb,
-      search: searchQuery.value
+      page: page.value,
+      pageSize: itemsPerPage.value,
+      search: searchQuery.value,
     })
-  } catch (error) {
-    console.error('Failed to load projects:', error)
+  } catch (err) {
+    errorMessage.value = err.message || 'Failed to load projects'
     showError.value = true
   }
 }
 
 const onSearch = async () => {
   page.value = 1
-  await loadProjects({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
+  await loadProjects()
+}
+
+const onPageChange = async () => {
+  await loadProjects()
 }
 
 const refreshData = async () => {
   projectStore.clearCache()
-  await loadProjects({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
-}
-
-const getPriorityColor = (priority) => {
-  const colors = {
-    'Low': 'grey',
-    'Medium': 'info',
-    'High': 'warning',
-    'Critical': 'error'
-  }
-  return colors[priority] || 'grey'
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    'Planning': 'info',
-    'In Progress': 'primary',
-    'On Hold': 'warning',
-    'Completed': 'success',
-    'Cancelled': 'error'
-  }
-  return colors[status] || 'grey'
-}
-
-const getStatusIcon = (status) => {
-  const icons = {
-    'Planning': 'mdi-pencil-ruler',
-    'In Progress': 'mdi-progress-check',
-    'On Hold': 'mdi-pause-circle',
-    'Completed': 'mdi-check-circle',
-    'Cancelled': 'mdi-close-circle'
-  }
-  return icons[status] || 'mdi-help-circle'
-}
-
-const getProgressColor = (percentage) => {
-  if (percentage >= 75) return 'success'
-  if (percentage >= 50) return 'info'
-  if (percentage >= 25) return 'warning'
-  return 'error'
-}
-
-const formatDate = (date) => {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('en-IN', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  })
-}
-
-const formatCurrency = (amount) => {
-  return amount ? `₹${amount.toLocaleString('en-IN')}` : 'N/A'
+  await loadProjects()
 }
 
 const openAddDialog = () => {
   selectedProject.value = null
-  showFormDialog.value = true
+  showAddEditDialog.value = true
 }
 
-const viewItem = (item) => {
-  console.log('View project:', item)
-}
+const editProject = (project) => {
+  selectedProject.value = { ...project }; // create a shallow copy to avoid 2-way binding issues
+  showAddEditDialog.value = true;
+};
 
-const editItem = (item) => {
-  selectedProject.value = { ...item }
-  showFormDialog.value = true
-}
 
-const deleteItem = (item) => {
-  selectedProject.value = item
+const deleteProject = (project) => {
+  selectedProject.value = project
   showDeleteDialog.value = true
 }
 
-const handleDeleteConfirm = async () => {
+const handleProjectDelete = async () => {
   try {
-    await projectStore.deleteProject(selectedProject.value.id)
+    await projectStore.deleteProject(selectedProject.value.projectid)
     showDeleteDialog.value = false
-    successMessage.value = 'Project deleted successfully!'
+    successMessage.value = 'Project deleted successfully'
     showSuccessSnackbar.value = true
-    await refreshData()
+    await loadProjects()
   } catch (error) {
-    console.error('Failed to delete project:', error)
+    errorMessage.value = error.message || 'Failed to delete project'
     showError.value = true
   }
 }
 
-const handleFormSuccess = async (data) => {
-  successMessage.value = data.message
+const handleProjectSuccess = ({ message }) => {
+  successMessage.value = message || 'Operation successful'
+  showAddEditDialog.value = false
   showSuccessSnackbar.value = true
-  await refreshData()
+  loadProjects()
 }
 
-watch(() => projectStore.error, (newError) => {
-  if (newError) {
+const handleError = ({ message }) => {
+  errorMessage.value = message || 'An error occurred'
+  showError.value = true
+}
+
+watch(() => projectStore.error, (val) => {
+  if (val) {
+    errorMessage.value = val
     showError.value = true
   }
 })
 
-onMounted(() => {
-  loadProjects({
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value
-  })
-})
+onMounted(() => loadProjects())
 </script>
 
 <style scoped>
-.stat-card {
+.metadata-card {
+  text-align: center;
   border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-}
-
-.professional-table :deep(thead th) {
-  background-color: rgb(var(--v-theme-surface-variant)) !important;
-  font-weight: 600 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.75rem;
-  padding: 16px 12px !important;
-}
-
-.professional-table :deep(tbody tr:hover) {
-  background-color: rgba(var(--v-theme-primary), 0.03) !important;
-}
-
-.professional-table :deep(tbody td) {
-  padding: 12px !important;
-}
-
-.action-buttons {
+  min-height: 110px;
   display: flex;
-  gap: 4px;
+  align-items: center;
   justify-content: center;
 }
 
-.progress-cell {
-  min-width: 130px;
+.metadata-card .v-icon {
+  font-size: 32px;
+  margin-bottom: 5px;
 }
 
-.dates-cell {
-  max-width: 200px;
+.project-card {
+  cursor: pointer;
+  transition: box-shadow 0.3s, border-color 0.3s;
+  border-radius: 12px;
+  border: 1.2px solid #e3e6ed;
+}
+
+.project-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.11);
+  border-color: #1976d2;
+}
+
+.project-list-item {
+  border-radius: 6px;
+  border: 1px solid #ececec;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+}
+
+.project-list-item:hover {
+  background-color: #f3f8fa;
+}
+
+.action-btn {
+  margin-right: 6px;
+  background-color: #f2f4ff !important;
+  color: #1976d2 !important;
+  border-radius: 8px !important;
+  padding: 5px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.action-btn:last-child {
+  margin-right: 0;
+}
+
+.action-btn[aria-pressed='true'],
+.action-btn:hover {
+  background-color: #e3e0fa !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

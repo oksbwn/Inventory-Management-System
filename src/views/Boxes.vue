@@ -12,7 +12,7 @@
               <div>
                 <h1 class="text-h5 font-weight-bold mb-0">Storage Boxes</h1>
                 <p class="text-caption text-medium-emphasis mb-0">
-                  {{ boxMetaStore.totalBoxes }} total boxes
+                  {{ boxStore.totalBoxes }} total boxes
                 </p>
               </div>
             </div>
@@ -30,49 +30,13 @@
     </v-row>
 
     <!-- Metadata Cards -->
-    <v-row class="mb-6">
-      <v-col cols="6" sm="2">
+    <v-row class="mb-6" dense>
+      <v-col v-for="item in stats" :key="item.label" cols="12" sm="2">
         <v-card class="metadata-card" elevation="2">
           <v-card-text class="text-center">
-            <v-icon size="35" color="primary">mdi-shape</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.totalBoxes }}</div>
-            <div class="caption">Total</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" sm="2">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon size="35" color="success">mdi-check-circle</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.activeBoxes }}</div>
-            <div class="caption">Active</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" sm="2">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon size="35" color="grey">mdi-package-variant-closed</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.emptyBoxes }}</div>
-            <div class="caption">Empty</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" sm="3">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon size="35" color="blue">mdi-database</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.totalComponents }}</div>
-            <div class="caption">Components</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" sm="3">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon size="35" color="orange">mdi-trending-up</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ boxMetaStore.recentAdditions }}</div>
-            <div class="caption">New (30d)</div>
+            <v-icon :color="item.color" size="35">{{ item.icon }}</v-icon>
+            <div class="text-h6 font-weight-bold mt-1">{{ item.value }}</div>
+            <div class="caption">{{ item.label }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -93,13 +57,13 @@
         />
       </v-col>
       <v-col cols="12" md="4" class="d-flex justify-end">
-        <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'">
+        <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'" aria-label="Grid view">
           <v-icon>mdi-view-grid</v-icon>
         </v-btn>
-        <v-btn :color="viewMode === 'list' ? 'primary' : ''" icon @click="viewMode = 'list'">
+        <v-btn :color="viewMode === 'list' ? 'primary' : ''" icon @click="viewMode = 'list'" aria-label="List view">
           <v-icon>mdi-view-list</v-icon>
         </v-btn>
-        <v-btn icon @click="refreshData" :loading="boxStore.loading">
+        <v-btn icon @click="refreshData" :loading="boxStore.loading" aria-label="Refresh">
           <v-icon>mdi-refresh</v-icon>
         </v-btn>
       </v-col>
@@ -114,7 +78,7 @@
           <div class="mt-3">Loading boxes...</div>
         </v-col>
       </v-row>
-      <!-- Empty -->
+      <!-- Empty State -->
       <v-row v-else-if="boxes.length === 0">
         <v-col cols="12" class="text-center">
           <v-icon size="80" color="grey lighten-2">mdi-shape-outline</v-icon>
@@ -122,10 +86,11 @@
           <v-btn color="primary" class="mt-3" @click="openAddDialog" prepend-icon="mdi-plus">Add Box</v-btn>
         </v-col>
       </v-row>
+
       <!-- Grid View -->
-      <v-row v-else-if="viewMode === 'grid'">
+      <v-row v-else-if="viewMode === 'grid'" dense>
         <v-col v-for="box in boxes" :key="box.box_id" cols="12" sm="6" md="4" lg="3">
-          <v-card elevation="2" class="box-card" hover>
+          <v-card elevation="2" class="box-card hoverable">
             <v-card-text>
               <div class="d-flex align-center mb-3">
                 <v-avatar color="indigo" size="48" class="mr-3">
@@ -157,6 +122,7 @@
           </v-card>
         </v-col>
       </v-row>
+
       <!-- List View -->
       <v-list v-else>
         <v-list-item v-for="box in boxes" :key="box.box_id" class="box-list-item px-2 py-2">
@@ -185,20 +151,23 @@
           </template>
         </v-list-item>
       </v-list>
+
       <!-- Pagination -->
-      <v-row justify="center" v-if=" boxMetaStore.totalBoxes > 1">
-        <v-pagination v-model="page" :length=" boxMetaStore.totalBoxes" @update:model-value="onPageChange" :total-visible="7" />
+      <v-row justify="center" v-if="totalPages > 1">
+        <v-pagination v-model="page" :length="totalPages" @update:model-value="onPageChange" :total-visible="7" />
       </v-row>
     </v-card>
+
     <!-- Dialogs -->
-    <BoxFormDialog v-model="showAddEditDialog" :box-item="selectedBox" @success="handleBoxSuccess" />
+    <BoxFormDialog v-model="showAddEditDialog" :box-item="selectedBox" @success="handleBoxSuccess" @error="handleError" />
     <DeleteConfirmDialog v-model="showDeleteDialog" :item-name="selectedBox?.box_label" @confirm="handleBoxDelete" />
+
     <!-- Notifications -->
     <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" top right>
       <v-icon left>mdi-check-circle</v-icon> {{ successMessage }}
     </v-snackbar>
     <v-snackbar v-model="showError" color="error" :timeout="5000" top right>
-      <v-icon left>mdi-alert-circle</v-icon> {{ boxStore.error }}
+      <v-icon left>mdi-alert-circle</v-icon> {{ errorMessage }}
       <template v-slot:actions>
         <v-btn text @click="showError = false">Close</v-btn>
       </template>
@@ -213,7 +182,7 @@ import BoxFormDialog from '@/components/BoxFormDialog.vue'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
 
 const boxStore = useBoxStore()
-const boxMetaStore = useBoxStore()
+
 const page = ref(1)
 const itemsPerPage = ref(12)
 const searchQuery = ref('')
@@ -225,15 +194,32 @@ const showDeleteDialog = ref(false)
 const showSuccessSnackbar = ref(false)
 const successMessage = ref('')
 const showError = ref(false)
+const errorMessage = ref('')
 
 const boxes = computed(() => boxStore.boxes || [])
+const totalPages = computed(() => {
+  const total = boxStore.totalBoxes || 0
+  return Math.ceil(total / itemsPerPage.value) || 1
+})
 
-// Load boxes and metadata
+const stats = computed(() => [
+  { label: 'Total', value: boxStore.totalBoxes, icon: 'mdi-shape', color: 'primary' },
+  { label: 'Active', value: boxStore.activeBoxes, icon: 'mdi-check-circle', color: 'success' },
+  { label: 'Empty', value: boxStore.emptyBoxes, icon: 'mdi-package-variant-closed', color: 'grey' },
+  { label: 'Components', value: boxStore.totalComponents, icon: 'mdi-database', color: 'blue' },
+  { label: 'New (30d)', value: boxStore.recentAdditions, icon: 'mdi-trending-up', color: 'orange' },
+])
+
 const loadBoxes = async () => {
   try {
-    await boxStore.fetchBoxes({ page: page.value, pageSize: itemsPerPage.value, search: searchQuery.value })
+    await boxStore.fetchBoxes({
+      page: page.value,
+      pageSize: itemsPerPage.value,
+      search: searchQuery.value,
+    })
     await boxStore.fetchBoxesMeta()
   } catch (err) {
+    errorMessage.value = err.message || 'Failed to load boxes'
     showError.value = true
   }
 }
@@ -242,9 +228,11 @@ const onSearch = async () => {
   page.value = 1
   await loadBoxes()
 }
+
 const onPageChange = async () => {
   await loadBoxes()
 }
+
 const refreshData = async () => {
   boxStore.clearCache()
   await loadBoxes()
@@ -254,14 +242,17 @@ const openAddDialog = () => {
   selectedBox.value = null
   showAddEditDialog.value = true
 }
+
 const editBox = (box) => {
   selectedBox.value = box
   showAddEditDialog.value = true
 }
+
 const deleteBox = (box) => {
   selectedBox.value = box
   showDeleteDialog.value = true
 }
+
 const handleBoxDelete = async () => {
   try {
     await boxStore.deleteBox(selectedBox.value.box_id)
@@ -270,28 +261,30 @@ const handleBoxDelete = async () => {
     showSuccessSnackbar.value = true
     await loadBoxes()
   } catch (error) {
+    errorMessage.value = error.message || 'Failed to delete box'
     showError.value = true
   }
 }
-const handleBoxSuccess = async ({ data, isEdit }) => {
-  try {
-    if (isEdit) {
-      await boxStore.updateBox(selectedBox.value.box_id, data)
-      successMessage.value = 'Box updated successfully'
-    } else {
-      await boxStore.createBox(data)
-      successMessage.value = 'Box created successfully'
-    }
-    showAddEditDialog.value = false
-    showSuccessSnackbar.value = true
-    await loadBoxes()
-  } catch (error) {
-    showError.value = true
-  }
+
+const handleBoxSuccess = ({ message }) => {
+  successMessage.value = message || 'Operation successful'
+  showAddEditDialog.value = false
+  showSuccessSnackbar.value = true
+  loadBoxes()
 }
+
+const handleError = ({ message }) => {
+  errorMessage.value = message || 'An error occurred'
+  showError.value = true
+}
+
 watch(() => boxStore.error, (val) => {
-  if (val) showError.value = true
+  if (val) {
+    errorMessage.value = val
+    showError.value = true
+  }
 })
+
 onMounted(() => loadBoxes())
 </script>
 

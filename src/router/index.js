@@ -46,6 +46,11 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue')
+  },  
+  {
+    path: '/chatbot',
+    name: 'Chatbot',
+    component: () => import('@/views/Chatbot.vue')
   }
 ]
 

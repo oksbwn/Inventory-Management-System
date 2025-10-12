@@ -67,7 +67,7 @@ export const useProjectStore = defineStore("project", () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await projectService.updateProject(projectId, projectData);
+       const response = await projectService.updateProject(projectId, projectData);
       
       // Update the project in the local state
       const index = projects.value.findIndex(p => p.project_id === projectId);

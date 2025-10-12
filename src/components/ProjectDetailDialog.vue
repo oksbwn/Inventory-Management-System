@@ -38,9 +38,7 @@
               </h3>
               <v-card variant="outlined" class="description-card">
                 <v-card-text class="pa-4">
-                  <div class="description-full-text text-body-1">
-                    {{ projectItem.description }}
-                  </div>
+                  <div class="description-full-text text-body-1" v-html="projectItem.description"></div>
                   <div class="text-caption text-medium-emphasis mt-3">
                     {{ projectItem.description.length }} characters
                   </div>

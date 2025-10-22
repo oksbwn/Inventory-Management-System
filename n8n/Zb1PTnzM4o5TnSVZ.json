@@ -1,0 +1,624 @@
+{
+  "createdAt": "2025-10-11T18:45:07.947Z",
+  "updatedAt": "2025-10-12T10:43:29.000Z",
+  "id": "Zb1PTnzM4o5TnSVZ",
+  "name": "Projects APIs",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "api/components/projects",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Projects List Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b98e0077-4ab2-42cc-ab83-3eeaafe241a2",
+      "webhookId": "e5ffe472-0e71-4bee-a6ab-348fb10613b8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and default page/filter parameters\nconst q = $input.first().json.query || {};\nconst search = q.search || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.page)) ? parseInt(q.page) : 1;\nconst offset = (pageNo - 1) * limit;\nreturn [{ json: { search, limit, offset } }];"
+      },
+      "name": "Parse Project List Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "dc53214f-0111-4941-9430-e54a22d51f2d"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH filtered_projects AS (\n  SELECT project_id, project_name, start_date, end_date, status, description, is_yt_project, git_repository\n  FROM projects\n  WHERE CASE WHEN '{{ $json.search }}' != '' THEN project_name ILIKE '%{{ $json.search }}%' ELSE TRUE END\n),\npaginated_projects AS (\n  SELECT * FROM filtered_projects\n  ORDER BY project_name ASC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : '' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : '' }}\n)\nSELECT *, (SELECT COUNT(*) FROM filtered_projects) AS total_records\nFROM paginated_projects;\n",
+        "options": {}
+      },
+      "name": "Execute Project List Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "3bd9e1e0-aef0-449a-bd3b-5ca72ec10744",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Project List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "83068227-d2ce-437c-a319-f50fcdad87a3"
+    },
+    {
+      "parameters": {
+        "path": "api/components/projects/meta",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Projects Meta Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        896
+      ],
+      "id": "836126c2-9d48-41ca-bdeb-223fff943d87",
+      "webhookId": "8ffca88c-5fd1-4e90-80dd-8c3cdd965c2f"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COUNT(*) AS total_projects,\n  COUNT(CASE WHEN status = 'CREATED' THEN 1 END) AS active_projects,\n  COUNT(CASE WHEN status = 'COMPLETE' THEN 1 END) AS completed_projects\nFROM projects;",
+        "options": {}
+      },
+      "name": "Execute Projects Meta Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        224,
+        896
+      ],
+      "id": "df8c6252-b70d-4209-8746-73286da9059b",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $input.first().json;\nreturn [{ json: {\n  totalProjects: parseInt(meta.total_projects || 0),\n  activeProjects: parseInt(meta.active_projects || 0),\n  completedProjects: parseInt(meta.completed_projects || 0)\n} }];"
+      },
+      "name": "Format Projects Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        896
+      ],
+      "id": "b8a1f2fa-f652-4a6b-a729-3bbe2855965c"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Projects Meta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        896
+      ],
+      "id": "89e2b490-5c80-44e4-ba4c-92e1d90c5168"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/projects",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Projects Create Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1120
+      ],
+      "id": "1b44ba0e-c9c3-4b0e-8617-904fd7380cf0",
+      "webhookId": "ab0c16f4-8777-471f-b714-325c79144acc"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO projects (project_name, start_date, end_date, status, description, is_yt_project, git_repository)\nVALUES (\n  '{{ $json.body.project_name }}', '{{ $json.body.start_date }}', '{{ $json.body.end_date }}', \n  '{{ $json.body.status }}', '{{ $json.body.description }}', '{{ $json.body.is_yt_project }}', '{{ $json.body.git_repository }}'\n)\nRETURNING *;\n",
+        "options": {}
+      },
+      "name": "Execute Project Insert",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1120
+      ],
+      "id": "32098bae-b29e-48cc-9994-e4212b993186",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nreturn [{ json: { success: true, message: 'Project created', data } }];"
+      },
+      "name": "Format Project Insert Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        1120
+      ],
+      "id": "4c5eac95-e5db-49ad-9ec4-f56d453f0ee5"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        1120
+      ],
+      "id": "f33c2354-3323-4c59-b537-6e838545850e"
+    },
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "api/components/projects/:id",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Projects Delete Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        672
+      ],
+      "id": "d14ba33d-1f47-4119-a8e2-8a4f8bef6192",
+      "webhookId": "b7f95b49-1f6b-4661-ab87-73a61326bf2c"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM projects WHERE project_id = {{ $json.params.id }} RETURNING *;\n",
+        "options": {}
+      },
+      "name": "Execute Project Delete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        224,
+        672
+      ],
+      "id": "d96ee683-5dbf-4002-b0c8-87f6c2218c0e",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (result && result.projectid) {\n  return [{ json: { success: true, message: 'Project deleted' } }];\n}\nreturn [{ json: { success: false, message: 'Project not deleted' } }];"
+      },
+      "name": "Format Project Delete Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        672
+      ],
+      "id": "d5160a64-5261-4b5b-a433-5ef81319d05b"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Project Delete",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        672
+      ],
+      "id": "159a2617-ec93-4abc-b7f4-26457027c4d5"
+    },
+    {
+      "parameters": {
+        "path": "api/components/projects/:id",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Project Get By ID Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        448
+      ],
+      "id": "07946a8c-4794-4ed7-a063-78b2ef913357",
+      "webhookId": "7541b056-c248-456f-9468-90a884ff7012"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM projects WHERE project_id = {{ $json.params.id }} LIMIT 1;\n",
+        "options": {}
+      },
+      "name": "Execute Project Get By ID Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        224,
+        448
+      ],
+      "id": "0d2f330c-00bb-4826-83c2-b544b3b4422a",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const project = $input.first().json || null;\nif (project) {\n  return [{ json: { success: true, data: project } }];\n} else {\n  return [{ json: { success: false, message: 'Project not found' } }];\n}\n"
+      },
+      "name": "Format Project Get By ID Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        448
+      ],
+      "id": "d4065a40-f06a-4d55-92f9-73ab4309eb59"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Project Get By ID",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        448
+      ],
+      "id": "1b93a0f5-4e1e-4253-b95e-c338d2a93126"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/projects/update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Projects Update Webhook1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        224
+      ],
+      "id": "98c69a88-d5be-4c61-b7ab-db99cc64f765",
+      "webhookId": "5e9a8734-a4ee-42b7-bf05-26f30d2759e8"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE projects\nSET project_name = '{{ $json.body.project_name }}',\n    start_date = '{{ $json.body.start_date }}',\n    end_date = '{{ $json.body.end_date }}',\n    status = '{{ $json.body.status }}',\n    description = '{{ $json.body.description }}',\n    is_yt_project = {{ $json.body.is_yt_project }},\n    git_repository = '{{ $json.body.git_repository }}'\nWHERE project_id = {{ $json.body.project_id }}\nRETURNING *;",
+        "options": {}
+      },
+      "name": "Execute Project Update1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        224,
+        224
+      ],
+      "id": "798316e1-d843-4229-85e7-8a5be4cac3db",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nreturn [{ json: { success: true, message: 'Project updated', data: result } }];"
+      },
+      "name": "Format Project Update Response1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        224
+      ],
+      "id": "60352762-47cf-4c50-9bc8-445df4b598d8"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Project Update1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        224
+      ],
+      "id": "a826810e-9e1a-409b-842b-86d949000c1f"
+    }
+  ],
+  "connections": {
+    "Projects List Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Project List Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Project List Params": {
+      "main": [
+        [
+          {
+            "node": "Execute Project List Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Project List Query": {
+      "main": [
+        [
+          {
+            "node": "Respond Project List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projects Meta Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Projects Meta Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Projects Meta Query": {
+      "main": [
+        [
+          {
+            "node": "Format Projects Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Projects Meta": {
+      "main": [
+        [
+          {
+            "node": "Respond Projects Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projects Create Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Project Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Project Insert": {
+      "main": [
+        [
+          {
+            "node": "Format Project Insert Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Project Insert Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projects Delete Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Project Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Project Delete": {
+      "main": [
+        [
+          {
+            "node": "Format Project Delete Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Project Delete Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Project Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Project Get By ID Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Project Get By ID Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Project Get By ID Query": {
+      "main": [
+        [
+          {
+            "node": "Format Project Get By ID Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Project Get By ID Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Project Get By ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projects Update Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Execute Project Update1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Project Update1": {
+      "main": [
+        [
+          {
+            "node": "Format Project Update Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Project Update Response1": {
+      "main": [
+        [
+          {
+            "node": "Respond Project Update1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e58af9c7-cb18-4327-b352-555e43ee990b",
+  "triggerCount": 6,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-11T18:45:07.961Z",
+      "updatedAt": "2025-10-11T18:45:07.961Z",
+      "role": "workflow:owner",
+      "workflowId": "Zb1PTnzM4o5TnSVZ",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

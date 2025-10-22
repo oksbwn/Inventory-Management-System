@@ -1,0 +1,220 @@
+{
+  "createdAt": "2025-10-06T15:06:26.341Z",
+  "updatedAt": "2025-10-08T15:17:37.000Z",
+  "id": "z9UL2JzJEciEBQu2",
+  "name": "Images CDN",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const filename = $input.first().json.query.filename || \"default-image.jpeg\";\nreturn [{ json: { filename } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -160
+      ],
+      "id": "52a77b85-4bed-4d84-8d71-293f611945c8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        -160
+      ],
+      "id": "7389c2b4-8a49-4c32-ad04-47d97599560f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "/image",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -160
+      ],
+      "id": "3b6cedd1-7a07-459b-b68d-91640fb87ab1",
+      "name": "/image/:filename",
+      "webhookId": "90ba4925-1bc9-402b-83b2-e6cccaf21f78"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        -176
+      ],
+      "id": "0ce9d963-c658-4f62-8e4a-a2d9c464b366",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/images/boxes/{{ $json.filename  }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -160
+      ],
+      "id": "f7408d42-a10f-4d40-81c6-77b0b8491c50",
+      "name": "Read Boxes"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/images/components/{{ $json.filename  }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -352
+      ],
+      "id": "7cb5c658-5dde-4aeb-a029-410af9405400",
+      "name": "Read Components"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/images/vendors/{{ $json.filename  }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        448,
+        32
+      ],
+      "id": "473d7a31-4f88-482b-8699-d5a08b129dfb",
+      "name": "Read Vendors"
+    }
+  ],
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Read Components",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Boxes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Vendors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "/image/:filename": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Boxes": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Read Components": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Vendors": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "764f0ddb-3555-41c5-abae-ed6acd246959",
+  "triggerCount": 1,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-06T15:06:26.343Z",
+      "updatedAt": "2025-10-06T15:06:26.343Z",
+      "role": "workflow:owner",
+      "workflowId": "z9UL2JzJEciEBQu2",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

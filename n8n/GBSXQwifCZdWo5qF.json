@@ -1,0 +1,526 @@
+{
+  "createdAt": "2025-10-05T16:59:11.492Z",
+  "updatedAt": "2025-10-11T11:43:15.000Z",
+  "id": "GBSXQwifCZdWo5qF",
+  "name": "IMS APIs",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst name = q.name || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        name,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        736
+      ],
+      "id": "8f1227c1-ba32-423c-a896-f3d867105232",
+      "name": "Parse Params2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT box_id, CONCAT(box_code,' > ',box_label) AS label,*\n\tFROM public.boxes;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        736
+      ],
+      "id": "959d4832-22e1-44b9-b76f-060d90a6138e",
+      "name": "Execute a SQL query2",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        640
+      ],
+      "id": "4ba2944e-303a-482f-9ebf-ee7aca45eb31",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "path": "api/boxes/list",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        736
+      ],
+      "id": "24cf382d-acad-4573-8f81-ec036c727e95",
+      "name": "api/boxes/list",
+      "webhookId": "90ba4925-1bc9-402b-83b2-e6cccaf21f78"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n  const imageBuffer = Buffer.from(data.box_qr_content.data);\n  const imageType = data.box_qr_file_type || 'jpeg';\n  const base64Image = imageBuffer.toString('base64');\n\n  // Generate filename\n  const filename = `box_${data.box_id}.${imageType}`;\n\n  return {\n    json:  {  // 'data' is the standard expected binary property name\n        data: base64Image,\n        mimeType: `image/${imageType}`,\n        fileName: filename\n      }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        832
+      ],
+      "id": "7fbcb3a2-0fef-4294-85fd-afc83e5a6733",
+      "name": "Image1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "={{ $json.mimeType }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        832
+      ],
+      "id": "c4fca355-867b-4449-9bde-6e3dc86f364d",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/images/boxes/{{ $('Image1').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        832
+      ],
+      "id": "bf636a0b-c04f-4b5d-bb2a-aa61bc9a168a",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['box_qr_content', 'box_qr_file_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `box_${item.json.box_id}.${item.json.box_qr_file_type || 'jpeg'}`;\n\n  return { json };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        640
+      ],
+      "id": "bb77cd85-2421-4f22-9f0f-8f993e4db0e4",
+      "name": "Remove Image Info1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst name = q.name || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        name,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1056
+      ],
+      "id": "df49b709-27e8-4534-b9e7-ee8ef8edab1a",
+      "name": "Parse Params3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n\tp.project_id AS projectid,\n\tv.video_id AS videoid,\n\tv.script AS videocontent,\n\tvs.status_id AS videostatusid,\n\tp.project_name AS projectname,\n\tp.start_date AS projectstartdate,\n\tp.status AS projectstatus,\n\tp.description AS projectdescription,\n\tp.is_yt_project AS iytproject,\n\tv.status AS videostatus, \n\tv.publish_date AS vodeopublishdate,\n\tv.youtube_video_id AS ytvideoid,\n\t(SELECT SUM(quantity_used) FROM project_components pc WHERE pc.project_id = p.project_id) AS componentcount\nFROM public.projects p\nLEFT\nJOIN video v ON v.projects_id = p.project_id\nLEFT\nJOIN videostatus vs ON vs.video_id = v.video_id ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        1056
+      ],
+      "id": "4d22a4d3-1c99-4013-8df1-ecf5c9103c01",
+      "name": "Execute a SQL query3",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        1056
+      ],
+      "id": "aa74f3e2-6d09-493a-85f4-b19a3bc1e414",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "path": "api/projects/list",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        1056
+      ],
+      "id": "1d42ee70-ee4a-4b2b-b0f7-6e3d986fff40",
+      "name": "api/projects/list",
+      "webhookId": "90ba4925-1bc9-402b-83b2-e6cccaf21f78"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst name = q.name || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        name,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1376
+      ],
+      "id": "3defb893-e290-4fa1-8ebf-f99ae0f94442",
+      "name": "Parse Params4"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT vendor_id, vendor_name,contact_email,phone_number, website,vendor_icon_type,vendor_icon_content FROM public.\"vendors\" ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        1376
+      ],
+      "id": "16c961f6-e07c-49f7-869e-03b52c2d430d",
+      "name": "Execute a SQL query4",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        1280
+      ],
+      "id": "2ddeb479-42f8-4f04-a005-3b9e1a1a8e56",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n  const imageBuffer = Buffer.from(data.vendor_icon_content.data);\n  const imageType = data.vendor_icon_type || 'jpeg';\n  const base64Image = imageBuffer.toString('base64');\n\n  // Generate filename\n  const filename = `vendor_${data.vendor_id}.${imageType}`;\n\n  return {\n    json:  {  // 'data' is the standard expected binary property name\n        data: base64Image,\n        mimeType: `image/${imageType}`,\n        fileName: filename\n      }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        1472
+      ],
+      "id": "41ba49d1-7761-4fff-a128-b6cfc8c0dd08",
+      "name": "Image2"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "={{ $json.mimeType }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        1472
+      ],
+      "id": "7c852754-6c65-4fdf-9149-323c3e8a33db",
+      "name": "Convert to File2"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/images/vendors/{{ $('Image2').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        1472
+      ],
+      "id": "8769aa19-b7d0-4ff3-960d-bb35571ed5b8",
+      "name": "Read/Write Files from Disk2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['vendor_icon_content', 'vendor_icon_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `vendor_${item.json.vendor_id}.${item.json.vendor_icon_type || 'jpeg'}`;\n\n  return { json };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        1280
+      ],
+      "id": "9ad6027f-131b-4f6a-8e48-d10e83fd2329",
+      "name": "Image3"
+    },
+    {
+      "parameters": {
+        "path": "api/vendors/list",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        1376
+      ],
+      "id": "afbd5592-ebc6-4484-a648-f2097ddd5242",
+      "name": "api/vendors/list",
+      "webhookId": "90ba4925-1bc9-402b-83b2-e6cccaf21f78"
+    }
+  ],
+  "connections": {
+    "Parse Params2": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query2": {
+      "main": [
+        [
+          {
+            "node": "Image1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Remove Image Info1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/boxes/list": {
+      "main": [
+        [
+          {
+            "node": "Parse Params2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Params3": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/projects/list": {
+      "main": [
+        [
+          {
+            "node": "Parse Params3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Params4": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query4": {
+      "main": [
+        [
+          {
+            "node": "Image3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Image2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image2": {
+      "main": [
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File2": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/vendors/list": {
+      "main": [
+        [
+          {
+            "node": "Parse Params4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "27762c13-1e4c-4885-9be7-64017cf59164",
+  "triggerCount": 3,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-05T16:59:11.500Z",
+      "updatedAt": "2025-10-05T16:59:11.500Z",
+      "role": "workflow:owner",
+      "workflowId": "GBSXQwifCZdWo5qF",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

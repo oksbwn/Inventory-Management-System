@@ -1,0 +1,147 @@
+{
+  "createdAt": "2025-10-05T16:56:46.477Z",
+  "updatedAt": "2025-10-08T15:17:35.000Z",
+  "id": "oQ0Chcjhvk9n4xtH",
+  "name": "IMS -Run SQL (Sub Flow)",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "31aa5f3f-abe3-46cd-ba05-aa3d94218c7c",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get SQL query from agent\nconst query = $json.query || $json.sql_query || '';\n\n// Validate query safety\nconst queryLower = query.toLowerCase().trim();\n\n// Blocked keywords\nconst forbidden = [\n  'insert', 'update', 'delete', 'drop', 'truncate', \n  'alter', 'create', 'grant', 'revoke', 'exec'\n];\n\nconst hasForbidden = forbidden.some(kw => queryLower.includes(kw));\n\nif (hasForbidden) {\n  throw new Error('❌ Security violation: Only SELECT queries are allowed');\n}\n\n// Enforce LIMIT if missing\nif (!queryLower.includes('limit')) {\n  return [{\n    json: {\n      query: query + ' LIMIT 100',\n      original_query: query\n    }\n  }];\n}\n\nreturn [{ json: { query: query, original_query: query } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "fe527f60-edfb-40b7-b7ef-5048d0dc8834",
+      "name": "Validator"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        432,
+        0
+      ],
+      "id": "e5f96852-e14e-45d6-a3d9-67a5c71ac6fa",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.all().map(item => item.json);\nconst originalQuery = $('Validator').first().json.original_query;\n\nif (results.length === 0) {\n  return [{\n    json: {\n      success: true,\n      message: 'Query executed successfully but returned no results.',\n      row_count: 0,\n      data: []\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    success: true,\n    message: `Query returned ${results.length} row(s)`,\n    row_count: results.length,\n    data: results,\n    executed_query: originalQuery\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "62dd2612-8bc7-4a25-a656-70d45279f26e",
+      "name": "Formatter"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validator": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "f7c1dc32-5f3d-4bd6-ac67-0ebd6e394d49",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-10-05T16:56:30.557Z",
+      "updatedAt": "2025-10-05T16:56:30.557Z",
+      "id": "aIO4nhMQOfAgk71k",
+      "name": "IMS"
+    }
+  ],
+  "shared": [
+    {
+      "createdAt": "2025-10-05T16:56:46.482Z",
+      "updatedAt": "2025-10-05T16:56:46.482Z",
+      "role": "workflow:owner",
+      "workflowId": "oQ0Chcjhvk9n4xtH",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

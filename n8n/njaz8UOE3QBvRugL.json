@@ -1,0 +1,531 @@
+{
+  "createdAt": "2025-10-09T15:55:44.195Z",
+  "updatedAt": "2025-10-11T16:10:48.000Z",
+  "id": "njaz8UOE3QBvRugL",
+  "name": "Dashboard",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Complete Dashboard Overview\nWITH stock_metrics AS (\n    SELECT \n        COUNT(DISTINCT c.component_id) as total_components,\n        COUNT(DISTINCT cat.category_id) as total_categories,\n        COUNT(DISTINCT b.box_id) as total_boxes\n    FROM components c\n    LEFT JOIN categories cat ON c.category_id = cat.category_id\n    LEFT JOIN boxes b ON c.box_id = b.box_id\n),\nproject_metrics AS (\n    SELECT \n        COUNT(*) as total_projects,\n        COUNT(CASE WHEN status <> 'CREATED' THEN 1 END) as active_projects,\n        COUNT(CASE WHEN status = 'COMPLETE' THEN 1 END) as completed_projects,\n        COUNT(CASE WHEN is_yt_project = true THEN 1 END) as youtube_projects\n    FROM projects\n),\norder_metrics AS (\n    SELECT \n        COUNT(*) as total_orders,\n        COUNT(CASE WHEN status = 'Pending' THEN 1 END) as pending_orders,\n        COUNT(CASE WHEN status = 'Delivered' THEN 1 END) as delivered_orders,\n        COALESCE(SUM(total_cost), 0) as total_order_value\n    FROM orders\n),\nvendor_metrics AS (\n    SELECT \n        COUNT(*) as total_vendors,\n        COUNT(DISTINCT o.vendor_id) as active_vendors\n    FROM vendors v\n    LEFT JOIN orders o ON v.vendor_id = o.vendor_id\n)\nSELECT \n    sm.total_components,\n    sm.total_categories,\n    sm.total_boxes,\n    pm.total_projects,\n    pm.active_projects,\n    pm.completed_projects,\n    pm.youtube_projects,\n    om.total_orders,\n    om.pending_orders,\n    om.delivered_orders,\n    om.total_order_value,\n    vm.total_vendors,\n    vm.active_vendors\nFROM stock_metrics sm, project_metrics pm, order_metrics om, vendor_metrics vm;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        0
+      ],
+      "id": "55c10580-d378-4a53-a501-8a98f91b7491",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        0
+      ],
+      "id": "1870da4c-9497-48f7-bf80-13ac694e99b2",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Quick Stats for Dashboard Cards\nSELECT \n    (SELECT COUNT(*) FROM components) as total_components,\n    (SELECT COUNT(*) FROM categories) as total_categories,\n     (SELECT COUNT(*) FROM orders) as total_orders,\n    (SELECT COUNT(*) FROM boxes) as total_storage_boxes,\n    (SELECT COUNT(*) FROM projects WHERE status = 'CREATED') as active_projects,\n    (SELECT COUNT(*) FROM projects WHERE is_yt_project = true) as youtube_projects,\n    (SELECT COUNT(*) FROM vendors) as total_vendors,\n    (SELECT COUNT(*) FROM orders WHERE status = 'Pending') as pending_orders,\n    (SELECT COALESCE(SUM(total_cost), 0) FROM orders) as total_order_value,\n    (SELECT COUNT(*) FROM video WHERE status = 'Published') as published_videos;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        224
+      ],
+      "id": "7f660a66-d97e-4242-81d4-6d73c4b74aae",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        224
+      ],
+      "id": "c97a1aeb-1717-4ff3-bc8d-f3d7128d1c82",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Recent Activity Feed (Last 10 activities)\nSELECT \n    activity_type,\n    activity_title,\n    activity_details,\n    activity_date,\n    color,\n    CASE \n        WHEN activity_date > NOW() - INTERVAL '1 hour' THEN 'Just now'\n        WHEN activity_date > NOW() - INTERVAL '1 day' THEN \n            EXTRACT(HOUR FROM (NOW() - activity_date))::text || ' hours ago'\n        WHEN activity_date > NOW() - INTERVAL '7 days' THEN \n            EXTRACT(DAY FROM (NOW() - activity_date))::text || ' days ago'\n        ELSE TO_CHAR(activity_date, 'Mon DD, YYYY')\n    END as time_ago\nFROM (\n    -- Components Added\n    SELECT \n        'component_added' as activity_type,\n        'Component Added: ' || name as activity_title,\n        'Category: ' || COALESCE(cat.category_name, 'Uncategorized') as activity_details,\n        date_added as activity_date,\n        'success' as color\n    FROM components c\n    LEFT JOIN categories cat ON c.category_id = cat.category_id\n    WHERE date_added > CURRENT_DATE - INTERVAL '30 days'\n    \n    UNION ALL\n    \n    -- Projects Updated\n    SELECT \n        'project_updated' as activity_type,\n        'Project: ' || project_name as activity_title,\n        'Status: ' || COALESCE(status, 'Unknown') as activity_details,\n        COALESCE(start_date, end_date, CURRENT_DATE) as activity_date,\n        'info' as color\n    FROM projects\n    WHERE COALESCE(start_date, end_date) > CURRENT_DATE - INTERVAL '30 days'\n    \n    UNION ALL\n    \n    -- Orders Placed\n    SELECT \n        'order_placed' as activity_type,\n        'Order from: ' || v.vendor_name as activity_title,\n        'Amount: ₹' || o.total_cost::text || ' - ' || o.status as activity_details,\n        o.order_date as activity_date,\n        'primary' as color\n    FROM orders o\n    JOIN vendors v ON o.vendor_id = v.vendor_id\n    WHERE o.order_date > CURRENT_DATE - INTERVAL '30 days'\n    \n    UNION ALL\n    \n    -- Component Usage\n    SELECT \n        'component_used' as activity_type,\n        'Used: ' || c.name as activity_title,\n        'Quantity: ' || gu.quantity_used::text || ' - ' || COALESCE(gu.purpose, 'General use') as activity_details,\n        gu.usage_date as activity_date,\n        'warning' as color\n    FROM general_usage gu\n    JOIN components c ON gu.component_id = c.component_id\n    WHERE gu.usage_date > CURRENT_DATE - INTERVAL '30 days'\n) activities\nORDER BY activity_date DESC\nLIMIT 10;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        448
+      ],
+      "id": "1db18c7c-cbb9-40c4-949a-080b87fcc2f9",
+      "name": "Execute a SQL query2",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        448
+      ],
+      "id": "90bbc5fb-e33c-43cc-8219-593b1e83e5cd",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Most Used Components\nSELECT \n    c.component_id,\n    c.name as component_name,\n    cat.category_name,\n    b.box_label,\n    COALESCE(SUM(gu.quantity_used), 0) as total_quantity_used,\n    COUNT(DISTINCT gu.usage_id) as usage_count,\n    MAX(gu.usage_date) as last_used_date,\n    TO_CHAR(MAX(gu.usage_date), 'Mon DD, YYYY') as last_used_formatted\nFROM components c\nLEFT JOIN categories cat ON c.category_id = cat.category_id\nLEFT JOIN boxes b ON c.box_id = b.box_id\nLEFT JOIN general_usage gu ON c.component_id = gu.component_id\nGROUP BY c.component_id, c.name, cat.category_name, b.box_label\nHAVING SUM(gu.quantity_used) > 0\nORDER BY total_quantity_used DESC\nLIMIT 10;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        672
+      ],
+      "id": "9bfd0dc9-69b9-405a-8765-ec476799e2c9",
+      "name": "Execute a SQL query3",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        672
+      ],
+      "id": "66cab320-c207-44ee-a3dc-fe8c7226fe3f",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "path": "api/dashboard/summary",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b7bfb87f-bdcc-4679-9014-a6e265213290",
+      "name": "api/dashboard/summary",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "path": "api/dashboard/stats",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "0e801562-f7e0-4b89-8d5b-3c75773b9092",
+      "name": "api/dashboard/stats",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "path": "api/dashboard/activities",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        448
+      ],
+      "id": "5c315baf-9cca-4066-9c6b-78cd5d66e238",
+      "name": "api/dashboard/activities",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "path": "api/dashboard/topcpmponents",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        672
+      ],
+      "id": "6c0159a1-e364-4f08-aa48-25f46b491ec9",
+      "name": "api/dashboard/topcpmponents",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Component Addition Trend (Last 6 Months)\nSELECT \n    TO_CHAR(DATE_TRUNC('month', date_added), 'Mon YYYY') as month,\n    TO_CHAR(DATE_TRUNC('month', date_added), 'YYYY-MM') as month_key,\n    COUNT(*) as components_added,\n    COUNT(DISTINCT category_id) as categories_used\nFROM components\nWHERE date_added >= CURRENT_DATE - INTERVAL '6 months'\nGROUP BY DATE_TRUNC('month', date_added)\nORDER BY DATE_TRUNC('month', date_added) DESC;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        896
+      ],
+      "id": "8f461477-d242-47d9-95cb-8912af816cb1",
+      "name": "Execute a SQL query4",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        896
+      ],
+      "id": "96112e1a-c702-4c98-9e5a-f28cf51a82ad",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "path": "api/dashboard/trend",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        896
+      ],
+      "id": "48e433d5-2fe8-4282-abaf-a969f02d6c88",
+      "name": "api/dashboard/trend",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Category Distribution with Component Count\nSELECT \n    cat.category_id,\n    cat.category_name,\n    COUNT(c.component_id) as component_count,\n    COUNT(CASE WHEN c.image_content IS NOT NULL THEN 1 END) as components_with_images,\n    ROUND((COUNT(c.component_id)::decimal / NULLIF(\n        (SELECT COUNT(*) FROM components), 0\n    ) * 100), 1) as percentage\nFROM categories cat\nLEFT JOIN components c ON cat.category_id = c.category_id\nGROUP BY cat.category_id, cat.category_name\nHAVING COUNT(c.component_id) > 0\nORDER BY component_count DESC\nLIMIT 10;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        1120
+      ],
+      "id": "7321dcd6-22ef-42bb-8635-a4f60637b90a",
+      "name": "Execute a SQL query5",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        1120
+      ],
+      "id": "cbbc1168-2c70-4220-8dff-6670bea06d8e",
+      "name": "Respond to Webhook5"
+    },
+    {
+      "parameters": {
+        "path": "api/dashboard/categories",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        1120
+      ],
+      "id": "6edbfb03-124a-442d-a118-279350d6cd6f",
+      "name": "api/dashboard/categories",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    }
+  ],
+  "connections": {
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/dashboard/summary": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/dashboard/stats": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/dashboard/activities": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/dashboard/topcpmponents": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query4": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/dashboard/trend": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query5": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/dashboard/categories": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "4f86067f-70b6-4c02-a25a-65a0c79b8e75",
+  "triggerCount": 6,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-09T15:55:44.205Z",
+      "updatedAt": "2025-10-09T15:55:44.205Z",
+      "role": "workflow:owner",
+      "workflowId": "njaz8UOE3QBvRugL",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,503 @@
+{
+  "createdAt": "2025-10-12T12:32:03.646Z",
+  "updatedAt": "2025-10-12T13:12:43.000Z",
+  "id": "GPIoYMXINj8bnfIw",
+  "name": "Single Stock Detail API",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst name = q.name || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        name,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        96
+      ],
+      "id": "476a6959-7d4e-485b-ad55-b283ed3d91a9",
+      "name": "Parse Params"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "128d2ea7-adf6-4710-9118-b243570bcd01",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH purchased_cte AS (\n    SELECT component_id, SUM(quantity_ordered) AS purchased\n    FROM order_parts\n    GROUP BY component_id\n),\nused_cte AS (\n    SELECT component_id, SUM(quantity_used) AS used\n    FROM (\n        SELECT component_id, quantity_used FROM project_components\n        UNION ALL\n        SELECT component_id, quantity_used FROM general_usage\n    ) AS combined_usage\n    GROUP BY component_id\n),\navg_price_cte AS (\n    SELECT component_id, AVG(unit_cost) AS avg_unit_price\n    FROM order_parts\n    GROUP BY component_id\n),\ntotal_items_cte AS (\n    SELECT COUNT(1) AS total_items\n    FROM components\n    WHERE name ILIKE '%{{ $json.params.name }}%'\n)\nSELECT \n    c.name,\n    c.component_id AS ID,\n    c.description,\n    c.date_added,\n    c.image_content,\n    c.image_type,\n    b.box_code,\n    c.category_id,\n    b.box_label,\n    ct.category_name,\n    b.box_id,\n    COALESCE(purchased_cte.purchased, 0) AS purchased,\n    COALESCE(used_cte.used, 0) AS used,\n    COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) AS stock,\n    total_items_cte.total_items AS totalItems,\n    COALESCE(avg_price_cte.avg_unit_price, 0) AS avg_unit_price,\n    CASE WHEN COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) > 0 THEN 'In Stock' ELSE 'No Stock' END AS status\nFROM \n    components c\nLEFT JOIN purchased_cte ON purchased_cte.component_id = c.component_id\nLEFT JOIN used_cte ON used_cte.component_id = c.component_id\nLEFT JOIN avg_price_cte ON avg_price_cte.component_id = c.component_id\nLEFT JOIN boxes b ON b.box_id = c.box_id\nLEFT JOIN categories ct ON ct.category_id = c.category_id\nCROSS JOIN total_items_cte\nWHERE \n    c.name ILIKE '%{{ $json.params.name }}%'\nLIMIT {{ $json.params.limit }}\nOFFSET {{ $json.params.offset }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        96
+      ],
+      "id": "03b6398e-9237-42d4-a21e-cb150f3e3e54",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['image_content', 'image_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=component_${item.json.id}.${item.json.image_type || 'jpeg'}`;\n\n  return { json };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "3c9ee4fa-51bf-4b9f-b98f-120c9aecab52",
+      "name": "Remove Image Info"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n  const imageBuffer = Buffer.from(data.image_content.data);\n  const imageType = data.image_type || 'jpeg';\n  const base64Image = imageBuffer.toString('base64');\n\n  // Generate filename\n  const filename = `component_${data.id}.${imageType}`;\n\n  return {\n    json:  {  // 'data' is the standard expected binary property name\n        data: base64Image,\n        mimeType: `image/${imageType}`,\n        fileName: filename\n      }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        192
+      ],
+      "id": "5cfce6ac-ccfb-4e05-8083-6d195288feb8",
+      "name": "Image"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "={{ $json.mimeType }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        192
+      ],
+      "id": "3f4f68e0-9fbd-4182-acb0-87c707d680ef",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/images/components/{{ $('Image').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "2c08fb0f-487a-4701-a775-e183dfa9d071",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        0
+      ],
+      "id": "7bf0ffa2-909a-444b-b200-c75e41c4b36b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "api/components/stocks",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "17c54329-4efb-4522-81d8-6e6e4c1540d5",
+      "name": "api/components/stocks",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH purchased_cte AS (\n    SELECT component_id, SUM(quantity_ordered) AS purchased\n    FROM order_parts\n    GROUP BY component_id\n),\nused_cte AS (\n    SELECT component_id, SUM(quantity_used) AS used\n    FROM (\n        SELECT component_id, quantity_used FROM project_components\n        UNION ALL\n        SELECT component_id, quantity_used FROM general_usage\n    ) AS combined_usage\n    GROUP BY component_id\n),\nstock_cte AS (\n  SELECT\n    c.component_id,\n    COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) AS stock\n  FROM components c\n  LEFT JOIN purchased_cte ON purchased_cte.component_id = c.component_id\n  LEFT JOIN used_cte ON used_cte.component_id = c.component_id\n)\nSELECT\n  COUNT(*) AS total_items,\n  COUNT(CASE WHEN stock > 0 THEN 1 END) AS in_stock,\n  COUNT(CASE WHEN stock > 0 AND stock < 10 THEN 1 END) AS low_stock,\n  COUNT(CASE WHEN stock <= 0 THEN 1 END) AS no_stock\nFROM stock_cte;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        416
+      ],
+      "id": "4a6c4bbd-1a61-46d4-8c67-95048e61949f",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        416
+      ],
+      "id": "3d20b408-b9f5-421b-9acc-dfe7c2196c6a",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "path": "api/components/gist",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        416
+      ],
+      "id": "a32d52e6-0010-4098-afc3-b2f636274d7f",
+      "name": "api/components/gist",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/stocks/detail",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Stock Detail Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        640
+      ],
+      "id": "56e0c661-0dc7-4d2f-87e9-5ac494ca59f3",
+      "webhookId": "stock-detail-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [ { json: { id: $json.body.id } } ];"
+      },
+      "name": "Extract ID From Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        640
+      ],
+      "id": "d68a7cbe-b420-4eae-bfad-5af82748f002"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  c.name,\n  c.component_id AS id,\n  c.description,\n  c.date_added,\n  c.image_content,\n  c.image_type,\n  b.box_code,\n  c.category_id,\n  b.box_label,\n  ct.category_name,\n  b.box_id,\n  COALESCE(purchased.purchased, 0) AS total_purchased,\n  COALESCE(used.used, 0) AS total_used,\n  COALESCE(purchased.purchased, 0) - COALESCE(used.used, 0) AS stock,\n  COALESCE(avg_price.avg_unit_price, 0) AS avg_unit_price,\n  CASE WHEN COALESCE(purchased.purchased, 0) - COALESCE(used.used, 0) > 0 THEN 'In Stock' ELSE 'No Stock' END AS status,\n  -- Purchase history\n  (SELECT json_agg(p)\n   FROM (\n     SELECT order_id, quantity_ordered, unit_cost, url\n     FROM order_parts\n     WHERE component_id = c.component_id\n     ORDER BY order_id DESC\n     LIMIT 10\n   ) p) AS purchase_history,\n  -- Project usage history always as array\n  COALESCE(\n    (SELECT json_agg(pr)\n     FROM (\n       SELECT project_id, quantity_used, date\n       FROM project_components\n       WHERE component_id = c.component_id\n       ORDER BY date DESC\n       LIMIT 10\n     ) pr),\n    '[]'::json\n  ) AS project_usage_history,\n  -- General usage history always as array\n  COALESCE(\n    (SELECT json_agg(gu)\n     FROM (\n       SELECT usage_id, quantity_used, usage_date, purpose\n       FROM general_usage\n       WHERE component_id = c.component_id\n       ORDER BY usage_date DESC\n       LIMIT 10\n     ) gu),\n    '[]'::json\n  ) AS general_usage_history\nFROM components c\nLEFT JOIN boxes b ON b.box_id = c.box_id\nLEFT JOIN categories ct ON ct.category_id = c.category_id\nLEFT JOIN (\n  SELECT component_id, SUM(quantity_ordered) AS purchased\n  FROM order_parts\n  GROUP BY component_id\n) purchased ON purchased.component_id = c.component_id\nLEFT JOIN (\n  SELECT component_id, SUM(quantity_used) AS used\n  FROM (\n    SELECT component_id, quantity_used FROM project_components\n    UNION ALL\n    SELECT component_id, quantity_used FROM general_usage\n  ) usage_all\n  GROUP BY component_id\n) used ON used.component_id = c.component_id\nLEFT JOIN (\n  SELECT component_id, AVG(unit_cost) AS avg_unit_price\n  FROM order_parts\n  GROUP BY component_id\n) avg_price ON avg_price.component_id = c.component_id\nWHERE c.component_id = {{ $json.id }};\n",
+        "options": {}
+      },
+      "name": "Get Stock Detail Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        448,
+        640
+      ],
+      "id": "30bc1e38-0be4-412f-bc42-e71d9a39853c",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nif (!item) {\n  return [{ json: { success: false, message: 'Component not found', data: null } }];\n}\nreturn [{ json: { success: true, message: 'Component found', data: item } }];"
+      },
+      "name": "Format Stock Detail Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        640
+      ],
+      "id": "e5148165-cb2b-4b23-acf0-ed41d73c16c7"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Stock Detail",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        640
+      ],
+      "id": "7ea8c4c7-455e-48c5-af77-ac10b9879891"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['image_content', 'image_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=component_${item.json.id}.${item.json.image_type || 'jpeg'}`;\n\n  return { json };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        640
+      ],
+      "id": "ae9db593-b463-43ee-bd85-54a4ff58e5cf",
+      "name": "Remove Image Info1"
+    }
+  ],
+  "connections": {
+    "Parse Params": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Parse Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Remove Image Info",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/stocks": {
+      "main": [
+        [
+          {
+            "node": "Parse Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/gist": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock Detail Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract ID From Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ID From Body": {
+      "main": [
+        [
+          {
+            "node": "Get Stock Detail Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stock Detail Query": {
+      "main": [
+        [
+          {
+            "node": "Remove Image Info1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Stock Detail Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Stock Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info1": {
+      "main": [
+        [
+          {
+            "node": "Format Stock Detail Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "ebd8b2f0-c879-499e-adf2-77aca04665b2",
+  "triggerCount": 3,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-12T12:32:03.665Z",
+      "updatedAt": "2025-10-12T12:32:03.665Z",
+      "role": "workflow:owner",
+      "workflowId": "GPIoYMXINj8bnfIw",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

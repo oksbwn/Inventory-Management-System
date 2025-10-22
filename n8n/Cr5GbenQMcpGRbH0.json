@@ -1,0 +1,304 @@
+{
+  "createdAt": "2025-10-05T16:58:20.858Z",
+  "updatedAt": "2025-10-08T15:17:29.000Z",
+  "id": "Cr5GbenQMcpGRbH0",
+  "name": "IMS - Backend",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "32adb0cc-2bb5-4b80-881f-1362be3bd9fe",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "table_name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        96
+      ],
+      "id": "a02548ee-25b7-40ea-9314-454f8416aa8c",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    tc.table_name,\n    kcu.column_name,\n    ccu.table_name AS foreign_table_name,\n    ccu.column_name AS foreign_column_name,\n    tc.constraint_name\nFROM information_schema.table_constraints AS tc\nJOIN information_schema.key_column_usage AS kcu\n    ON tc.constraint_name = kcu.constraint_name\nJOIN information_schema.constraint_column_usage AS ccu\n    ON ccu.constraint_name = tc.constraint_name\nWHERE tc.constraint_type = 'FOREIGN KEY'\nORDER BY tc.table_name;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        192
+      ],
+      "id": "c0f2381d-40b2-4be2-a400-44310fef3681",
+      "name": "Extract FKs",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    t.table_name,\n    array_agg(\n        json_build_object(\n            'column', c.column_name,\n            'type', c.data_type,\n            'nullable', c.is_nullable,\n            'default', c.column_default\n        ) ORDER BY c.ordinal_position\n    ) as columns,\n    obj_description((t.table_schema||'.'||t.table_name)::regclass, 'pg_class') as table_description\nFROM information_schema.tables t\nJOIN information_schema.columns c \n    ON t.table_name = c.table_name \n    AND t.table_schema = c.table_schema\nWHERE t.table_schema = 'public' \n    AND t.table_type = 'BASE TABLE'\nGROUP BY t.table_name, t.table_schema\nORDER BY t.table_name;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d70377b4-ad86-4381-ad13-72f265cccaef",
+      "name": "Extract Schemas",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from merged PostgreSQL results\nconst allItems = $input.all();\n\n// Group by unique table to avoid duplicates\nconst tableMap = new Map();\n\nallItems.forEach(item => {\n  const data = item.json;\n  const tableName = data.table_name;\n  \n  // Initialize table entry if doesn't exist\n  if (!tableMap.has(tableName)) {\n    tableMap.set(tableName, {\n      table_name: tableName,\n      columns: data.columns || [],\n      relationships: []\n    });\n  }\n  \n  // Add relationship if present\n  if (data.column_name && data.foreign_table_name) {\n    tableMap.get(tableName).relationships.push({\n      column: data.column_name,\n      foreign_table: data.foreign_table_name,\n      foreign_column: data.foreign_column_name,\n      constraint: data.constraint_name\n    });\n  }\n});\n\n// Convert map to array and create descriptions\nconst descriptions = Array.from(tableMap.values()).map(table => {\n  const tableName = table.table_name;\n  const columns = table.columns;\n  const relationships = table.relationships;\n  \n  // Create column descriptions\n  const columnDesc = columns.map(col => \n    `${col.column} (${col.type}${col.nullable === 'NO' ? ', required' : ''})`\n  ).join(', ');\n  \n  // Create relationship descriptions\n  const relDesc = relationships.length > 0 \n    ? relationships.map(r => \n        `${r.column} → ${r.foreign_table}.${r.foreign_column}`\n      ).join('; ')\n    : 'No foreign keys';\n  \n  // Build comprehensive description\n  const fullDescription = `Table: ${tableName}. Columns: ${columnDesc}. Foreign Keys: ${relDesc}.`;\n  \n  return {\n    json: {\n      pageContent: fullDescription,\n      metadata: {\n        doc_type: 'schema',\n        table_name: tableName,\n        column_count: columns.length,\n        fk_count: relationships.length.toString(),\n        has_relationships: relationships.length > 0 ? 'yes' : 'no'\n      }\n    }\n  };\n});\n\nreturn descriptions;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        96
+      ],
+      "id": "2753d73d-9e51-48ad-bc7d-c336918add10",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "milvusCollection": {
+          "__rl": true,
+          "value": "inventory_schema_kb",
+          "mode": "list",
+          "cachedResultName": "inventory_schema_kb"
+        },
+        "options": {
+          "clearCollection": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreMilvus",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        96
+      ],
+      "id": "a7630333-1a29-45e1-99fc-120f940efd03",
+      "name": "Milvus Vector Store",
+      "credentials": {
+        "milvusApi": {
+          "id": "LLc4BvKbqWF1qP0O",
+          "name": "Main Milvus"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        672,
+        320
+      ],
+      "id": "a19fb2a0-29ed-46b5-af04-c24dd9530fb2",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "g6fCWxJjNrh8XztU",
+          "name": "Cohere"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        320
+      ],
+      "id": "b169a309-11fa-4dc2-ad38-8a4b1749db8d",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        880,
+        528
+      ],
+      "id": "3f662c48-3ff0-49e8-9916-0a43f222283e",
+      "name": "Token Splitter"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Schemas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract FKs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract FKs": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Schemas": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Milvus Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Milvus Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Milvus Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "9d86da11-31fc-45ef-8480-142e128b1caa",
+  "triggerCount": 1,
+  "tags": [
+    {
+      "createdAt": "2025-10-05T16:56:30.557Z",
+      "updatedAt": "2025-10-05T16:56:30.557Z",
+      "id": "aIO4nhMQOfAgk71k",
+      "name": "IMS"
+    }
+  ],
+  "shared": [
+    {
+      "createdAt": "2025-10-05T16:58:20.864Z",
+      "updatedAt": "2025-10-05T16:58:20.864Z",
+      "role": "workflow:owner",
+      "workflowId": "Cr5GbenQMcpGRbH0",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "createdAt": "2025-10-05T16:57:48.268Z",
+  "updatedAt": "2025-10-08T15:17:49.000Z",
+  "id": "cI3YhhQsjoSgAArM",
+  "name": "Backup Flows",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "2728da63-2833-4626-81b9-6d8f87ab2f5a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "command": "docker exec -i n8n n8n export:workflow --backup --output=/home/node/.n8n/workflow"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        224,
+        80
+      ],
+      "id": "81bb769a-737d-4848-b794-79653b426c6a",
+      "name": "Execute a command",
+      "credentials": {
+        "sshPassword": {
+          "id": "kv4hGtXkrTf4ItE5",
+          "name": "Main Server"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        176
+      ],
+      "id": "396106e2-ed57-4e42-8c19-8655b1230f7e",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute a command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "7385356c-6f34-4d3c-8ad3-0a2592175e2c",
+  "triggerCount": 1,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-05T16:57:48.274Z",
+      "updatedAt": "2025-10-05T16:57:48.274Z",
+      "role": "workflow:owner",
+      "workflowId": "cI3YhhQsjoSgAArM",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

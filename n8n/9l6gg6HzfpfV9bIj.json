@@ -1,0 +1,579 @@
+{
+  "createdAt": "2025-10-22T08:50:19.845Z",
+  "updatedAt": "2025-10-22T08:58:37.000Z",
+  "id": "9l6gg6HzfpfV9bIj",
+  "name": "Delete Order API",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "api/orders",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Orders List Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -16
+      ],
+      "id": "2e52da24-31a6-4845-b0ef-7d4f59d4e4cb",
+      "webhookId": "orders-list-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  o.order_id,\n  o.vendor_id,\n  o.order_date,\n  o.total_cost,\n  o.delivery_date,\n  o.status,\n  v.vendor_name,\n  v.contact_email,\n  COUNT(DISTINCT op.component_id) as item_count,\n  SUM(op.quantity_ordered * op.unit_cost) as total_value\nFROM orders o\nLEFT JOIN vendors v ON v.vendor_id = o.vendor_id\nLEFT JOIN order_parts op ON op.order_id = o.order_id\nGROUP BY o.order_id, o.vendor_id, o.order_date, o.total_cost, o.delivery_date, o.status, v.vendor_name, v.contact_email\nORDER BY o.order_date DESC;",
+        "options": {}
+      },
+      "name": "Get Orders Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        -16
+      ],
+      "id": "8a3e664b-4dfb-4506-8bbd-675a72bddfaf",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        -16
+      ],
+      "id": "e643e16a-9683-4fb6-95e7-5b7461458266"
+    },
+    {
+      "parameters": {
+        "path": "api/orders/detail",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Order Detail Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        208
+      ],
+      "id": "3579911e-8f50-49e0-a1bd-287097524911",
+      "webhookId": "order-detail-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { order_id: $json.query.order_id } }];"
+      },
+      "name": "Extract Order ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        208
+      ],
+      "id": "0913143b-3d4e-4a2b-8de4-8d193bcbb5dc"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  o.order_id,\n  o.vendor_id,\n  o.order_date,\n  o.total_cost,\n  o.delivery_date,\n  o.status,\n  v.vendor_name,\n  v.contact_email,\n  v.phone_number,\n  (\n    SELECT json_agg(\n      json_build_object(\n        'order_part_id', op.order_part_id,\n        'component_id', op.component_id,\n        'component_name', c.name,\n        'category_name', cat.category_name,\n        'quantity_ordered', op.quantity_ordered,\n        'unit_cost', op.unit_cost,\n        'url', op.url,\n        'total', op.quantity_ordered * op.unit_cost\n      )\n    )\n    FROM order_parts op\n    LEFT JOIN components c ON c.component_id = op.component_id\n    LEFT JOIN categories cat ON cat.category_id = c.category_id\n    WHERE op.order_id = o.order_id\n  ) AS order_items\nFROM orders o\nLEFT JOIN vendors v ON v.vendor_id = o.vendor_id\nWHERE o.order_id = {{ $json.order_id }};",
+        "options": {}
+      },
+      "name": "Get Order Detail Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        352,
+        208
+      ],
+      "id": "d77a1554-5d5f-4056-89d9-8cdafbbb5039",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        576,
+        208
+      ],
+      "id": "c8aa440f-40e5-48e5-a442-669785be1419"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/orders/create",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Create Order Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -240
+      ],
+      "id": "bf1ef991-6de7-4ec4-999c-0084b9a32299",
+      "webhookId": "create-order-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nconst totalCost = body.items.reduce((sum, item) => sum + (item.quantity * item.unit_cost), 0);\n\nreturn [{\n  json: {\n    vendor_id: body.vendor_id,\n    order_date: body.order_date,\n    total_cost: totalCost,\n    status: 'Pending',\n    items: body.items\n  }\n}];"
+      },
+      "name": "Prepare Order Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        -240
+      ],
+      "id": "d8322b35-7194-4347-82fd-ccccbd2f7edb"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO orders (vendor_id, order_date, total_cost, status)\nVALUES ({{ $json.vendor_id }}, '{{ $json.order_date }}', {{ $json.total_cost }}, '{{ $json.status }}')\nRETURNING order_id, vendor_id, order_date, total_cost, status;",
+        "options": {}
+      },
+      "name": "Insert Order",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        352,
+        -240
+      ],
+      "id": "e5e5cbb6-2b8a-4164-a621-ba58f0cad202",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const orderId = $input.first().json.order_id;\nconst items = $('Prepare Order Data').first().json.items;\n\nreturn items.map(item => ({\n  json: {\n    order_id: orderId,\n    component_id: item.component_id,\n    quantity_ordered: item.quantity,\n    unit_cost: item.unit_cost,\n    url: item.url || ''\n  }\n}));"
+      },
+      "name": "Prepare Order Parts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -240
+      ],
+      "id": "c3ba2324-ce12-473e-a891-8bab84e42a47"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO order_parts (order_id, component_id, quantity_ordered, unit_cost, url)\nVALUES ({{ $json.order_id }}, {{ $json.component_id }}, {{ $json.quantity_ordered }}, {{ $json.unit_cost }}, '{{ $json.url }}');",
+        "options": {}
+      },
+      "name": "Insert Order Parts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        800,
+        -240
+      ],
+      "id": "720eba00-8625-46b2-bafa-349709397a2e",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const orderId = $('Insert Order').first().json.order_id;\nreturn [{ json: { success: true, message: 'Order created successfully', order_id: orderId } }];"
+      },
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        -240
+      ],
+      "id": "5b54b763-0e02-4ac0-b4e9-7f6fddcdb807"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1248,
+        -240
+      ],
+      "id": "3e90a4cc-1f67-4325-92be-ded008878c01"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/orders/delete",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Delete Order Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        432
+      ],
+      "id": "d7a7cda9-2f85-481e-93ee-b65bead4e011",
+      "webhookId": "delete-order-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM order_parts WHERE order_id = {{ $json.order_id }};",
+        "options": {}
+      },
+      "name": "Delete Order Parts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        352,
+        432
+      ],
+      "id": "da00122b-f27c-4a71-8fd3-a6b5786016cb",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM orders WHERE order_id = {{ $json.order_id }};",
+        "options": {}
+      },
+      "name": "Delete Order",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        576,
+        432
+      ],
+      "id": "fee2885a-5f9d-42a6-9dfb-c668c5129a7f",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { success: true, message: 'Order deleted successfully' } }];"
+      },
+      "name": "Format Delete Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        432
+      ],
+      "id": "1b238be4-1703-45b0-9905-8ab93422527f"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { order_id: $json.body.order_id } }];"
+      },
+      "name": "Extract Order ID1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        432
+      ],
+      "id": "036fc5ef-bb35-495b-9b0d-82eb9b2445b5"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1024,
+        432
+      ],
+      "id": "85a2bcda-a48e-405d-84ee-7cad7a1ab0c6"
+    }
+  ],
+  "connections": {
+    "Orders List Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Orders Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Orders Query": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Detail Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Order ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Order ID": {
+      "main": [
+        [
+          {
+            "node": "Get Order Detail Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Order Detail Query": {
+      "main": [
+        [
+          {
+            "node": "Respond1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Order Data": {
+      "main": [
+        [
+          {
+            "node": "Insert Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Order": {
+      "main": [
+        [
+          {
+            "node": "Prepare Order Parts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Order Parts": {
+      "main": [
+        [
+          {
+            "node": "Insert Order Parts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Order Parts": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Order Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Order ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Order Parts": {
+      "main": [
+        [
+          {
+            "node": "Delete Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Order": {
+      "main": [
+        [
+          {
+            "node": "Format Delete Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Delete Response": {
+      "main": [
+        [
+          {
+            "node": "Respond3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Order ID1": {
+      "main": [
+        [
+          {
+            "node": "Delete Order Parts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "6f2a8344-5dae-4e29-bf5b-18297e2a0e08",
+  "triggerCount": 4,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-22T08:50:19.851Z",
+      "updatedAt": "2025-10-22T08:50:19.851Z",
+      "role": "workflow:owner",
+      "workflowId": "9l6gg6HzfpfV9bIj",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

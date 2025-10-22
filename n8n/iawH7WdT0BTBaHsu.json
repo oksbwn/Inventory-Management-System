@@ -1,0 +1,625 @@
+{
+  "createdAt": "2025-10-08T15:15:18.621Z",
+  "updatedAt": "2025-10-12T12:31:50.000Z",
+  "id": "iawH7WdT0BTBaHsu",
+  "name": "Categories API",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "api/components/categories",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        880
+      ],
+      "id": "a0a5b8c6-10c4-4599-9870-02c6708df7fe",
+      "name": "api/components/categories",
+      "webhookId": "categories-api"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH filtered_categories AS (\n    SELECT \n        c.category_id,\n        c.category_name,\n        COUNT(comp.component_id) as component_count,\n        COUNT(CASE WHEN comp.date_added >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_additions,\n        MIN(comp.date_added) as first_component_date,\n        MAX(comp.date_added) as last_component_date\n    FROM categories c\n    LEFT JOIN components comp ON c.category_id = comp.category_id\n    WHERE \n        CASE \n            WHEN '{{ $json.params.search }}' != '' \n            THEN c.category_name ILIKE '%{{ $json.params.search }}%'\n            ELSE TRUE\n        END\n    GROUP BY c.category_id, c.category_name\n),\npaginated_data AS (\n    SELECT *\n    FROM filtered_categories\n    ORDER BY \n        CASE WHEN '{{ $json.params.sortBy }}' = 'category_name' THEN category_name END ASC,\n        CASE WHEN '{{ $json.params.sortBy }}' = 'component_count' THEN component_count END DESC,\n        category_name ASC\n    {{ $json.params.limit ? 'LIMIT ' + $json.params.limit : '' }}\n    {{ $json.params.offset ? 'OFFSET ' + $json.params.offset : '' }}\n)\nSELECT \n    pd.*,\n    (SELECT COUNT(*) FROM filtered_categories) as total_records\nFROM paginated_data pd;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        880
+      ],
+      "id": "4ac0ca48-aa96-417c-998e-aa1c40eae8cf",
+      "name": "Get Categories",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst search = q.search || \"\";\nconst sortBy = q.sortBy || \"category_name\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : null;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = limit ? (pageNo - 1) * limit : 0;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        search,\n        sortBy,\n        limit,\n        offset\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        880
+      ],
+      "id": "20c3983f-a366-4da8-9cd6-0f3de8490d2d",
+      "name": "Parse Params1"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        880
+      ],
+      "id": "a8304e5b-9e4a-4faf-bd54-b8ea7cdd4953",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/categories",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        656
+      ],
+      "id": "cb4f9ba0-de9e-4c8c-84f0-fad61716307f",
+      "name": "api/components/categories [POST]",
+      "webhookId": "categories-create"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get incoming data\nconst items = $input.all();\nconst body = (items[0] && items[0].json && items[0].json.body) ? items[0].json.body : {};\n\n// Extract category name\nconst categoryName = body.category_name || body.name || \"\";\n\n// Validate\nif (!categoryName.trim()) {\n  throw new Error('Category name is required');\n}\n\nreturn [\n  {\n    json: {\n      params: {\n        categoryName: categoryName.trim()\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        656
+      ],
+      "id": "11ff25d6-43b5-40c5-8251-4528c3032ab5",
+      "name": "Parse Create Params"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO categories (category_name)\nVALUES ('{{ $json.params.categoryName }}')\nRETURNING category_id, category_name;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        656
+      ],
+      "id": "5b8ac70f-0fa1-4a80-b946-de2092d4a26f",
+      "name": "Create Category",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\n\nreturn [\n  {\n    json: {\n      success: true,\n      message: 'Category created successfully',\n      data: result\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        656
+      ],
+      "id": "1dcfbcb7-bc6d-43e9-9528-d72a7375e89d",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        656
+      ],
+      "id": "23144832-6425-4701-aeaa-ffff2fce3d6d",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "PUT",
+        "path": "api/components/categories/={{ $parameter[\"id\"] }}",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        1328
+      ],
+      "id": "c49feecb-0395-4032-b6cf-308b144464e5",
+      "name": "api/components/categories/:id [PUT]",
+      "webhookId": "categories-update"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get incoming data\nconst items = $input.all();\nconst body = (items[0] && items[0].json && items[0].json.body) ? items[0].json.body : {};\nconst params = (items[0] && items[0].json && items[0].json.params) ? items[0].json.params : {};\n\n// Extract data\nconst categoryId = parseInt(params.id) || 0;\nconst categoryName = body.category_name || body.name || \"\";\n\n// Validate\nif (!categoryId) {\n  throw new Error('Category ID is required');\n}\nif (!categoryName.trim()) {\n  throw new Error('Category name is required');\n}\n\nreturn [\n  {\n    json: {\n      params: {\n        categoryId,\n        categoryName: categoryName.trim()\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        1328
+      ],
+      "id": "e0011604-deba-4beb-9f4e-a42bd004aebe",
+      "name": "Parse Update Params"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE categories\nSET category_name = '{{ $json.params.categoryName }}'\nWHERE category_id = {{ $json.params.categoryId }}\nRETURNING category_id, category_name;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        1328
+      ],
+      "id": "b7a1ccb6-26c9-4ada-8aca-a78c42147440",
+      "name": "Update Category",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\n\nreturn [\n  {\n    json: {\n      success: true,\n      message: 'Category updated successfully',\n      data: result\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1328
+      ],
+      "id": "f057090d-3f5f-466e-9524-21aad3e222ce",
+      "name": "Format Response1"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        1328
+      ],
+      "id": "783c225c-ff86-4a79-af45-cdeafa35eeb1",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "api/components/categories/={{ $parameter[\"id\"] }}",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        1104
+      ],
+      "id": "ba422209-2d17-4034-a364-94c1df076669",
+      "name": "api/components/categories/:id [DELETE]",
+      "webhookId": "categories-delete"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get incoming data\nconst items = $input.all();\nconst params = (items[0] && items[0].json && items[0].json.params) ? items[0].json.params : {};\n\n// Extract category ID\nconst categoryId = parseInt(params.id) || 0;\n\n// Validate\nif (!categoryId) {\n  throw new Error('Category ID is required');\n}\n\nreturn [\n  {\n    json: {\n      params: {\n        categoryId\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        1104
+      ],
+      "id": "8b76236c-1c48-4ac0-b917-6754a84407ad",
+      "name": "Parse Delete Params"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM categories\nWHERE category_id = {{ $json.params.categoryId }}\n  AND NOT EXISTS (\n    SELECT 1 FROM components WHERE category_id = {{ $json.params.categoryId }}\n  )\nRETURNING category_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        1104
+      ],
+      "id": "5a7e8949-fce5-43dc-abf6-376d42050baf",
+      "name": "Delete Category",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst result = items[0] && items[0].json ? items[0].json : null;\n\nif (result && result.category_id) {\n  return [\n    {\n      json: {\n        success: true,\n        message: 'Category deleted successfully'\n      }\n    }\n  ];\n} else {\n  return [\n    {\n      json: {\n        success: false,\n        message: 'Cannot delete category. Either it does not exist or has components assigned to it.'\n      }\n    }\n  ];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1104
+      ],
+      "id": "cc82ec83-64cf-4c7f-bf6b-a2e9ed033e6a",
+      "name": "Format Response2"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        1104
+      ],
+      "id": "bc474566-d2fb-44d0-99c8-3a7a45d25b87",
+      "name": "Respond to Webhook5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COUNT(DISTINCT c.category_id) AS total_categories,\n  COUNT(DISTINCT CASE WHEN comp.component_id IS NOT NULL THEN c.category_id END) AS active_categories,\n  COUNT(DISTINCT CASE WHEN comp.component_id IS NULL THEN c.category_id END) AS empty_categories,\n  SUM(COALESCE(comp_count.component_count, 0)) AS total_components,\n  SUM(COALESCE(new_items.new_count, 0)) AS recent_additions\nFROM categories c\nLEFT JOIN components comp ON c.category_id = comp.category_id\nLEFT JOIN (\n  SELECT category_id, COUNT(*) AS component_count\n  FROM components\n  GROUP BY category_id\n) comp_count ON comp_count.category_id = c.category_id\nLEFT JOIN (\n  SELECT category_id, COUNT(*) AS new_count\n  FROM components\n  WHERE date_added >= CURRENT_DATE - INTERVAL '30 days'\n  GROUP BY category_id\n) new_items ON new_items.category_id = c.category_id;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        1552
+      ],
+      "id": "0ca8e008-c7c7-4ade-8b5f-bb4852305f23",
+      "name": "Get Categories1",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst search = q.search || \"\";\nconst sortBy = q.sortBy || \"category_name\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : null;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = limit ? (pageNo - 1) * limit : 0;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        search,\n        sortBy,\n        limit,\n        offset\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        1552
+      ],
+      "id": "a348afbb-3481-42ef-a48a-357fe264be4a",
+      "name": "Parse Params2"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        1552
+      ],
+      "id": "a3a60f1b-a3a4-44a4-9e9c-4cba2964e2cb",
+      "name": "Respond to Webhook6"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format response to clean JSON\nconst data = $input.item.json;\n\nreturn [\n  {\n    json: {\n      totalCategories: parseInt(data.total_categories),\n      activeCategories: parseInt(data.active_categories),\n      emptyCategories: parseInt(data.empty_categories),\n      totalComponents: parseInt(data.total_components),\n      recentAdditions: parseInt(data.recent_additions)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1552
+      ],
+      "id": "af828a25-77a3-404e-b35d-88323214fbf8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "path": "api/components/categories/meta",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        1552
+      ],
+      "id": "3a4383da-22b6-4fff-959e-ea4b04d00db7",
+      "name": "api/components/categories/meta",
+      "webhookId": "categories-api"
+    }
+  ],
+  "connections": {
+    "api/components/categories": {
+      "main": [
+        [
+          {
+            "node": "Parse Params1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Categories": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Params1": {
+      "main": [
+        [
+          {
+            "node": "Get Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/categories [POST]": {
+      "main": [
+        [
+          {
+            "node": "Parse Create Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Create Params": {
+      "main": [
+        [
+          {
+            "node": "Create Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Category": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/categories/:id [PUT]": {
+      "main": [
+        [
+          {
+            "node": "Parse Update Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Update Params": {
+      "main": [
+        [
+          {
+            "node": "Update Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Category": {
+      "main": [
+        [
+          {
+            "node": "Format Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/categories/:id [DELETE]": {
+      "main": [
+        [
+          {
+            "node": "Parse Delete Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Delete Params": {
+      "main": [
+        [
+          {
+            "node": "Delete Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Category": {
+      "main": [
+        [
+          {
+            "node": "Format Response2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Categories1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Params2": {
+      "main": [
+        [
+          {
+            "node": "Get Categories1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/categories/meta": {
+      "main": [
+        [
+          {
+            "node": "Parse Params2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "536ebd25-d66c-49b9-b3b5-1a733af84ea0",
+  "triggerCount": 5,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-08T15:15:18.632Z",
+      "updatedAt": "2025-10-08T15:15:18.632Z",
+      "role": "workflow:owner",
+      "workflowId": "iawH7WdT0BTBaHsu",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

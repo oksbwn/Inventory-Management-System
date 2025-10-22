@@ -1,0 +1,357 @@
+{
+  "createdAt": "2025-10-05T16:59:28.716Z",
+  "updatedAt": "2025-10-12T06:39:43.000Z",
+  "id": "3wBw4lvgqudhPZ21",
+  "name": "IMS - Chat",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        592
+      ],
+      "id": "f276e042-04e2-41b9-a727-86186c16388a",
+      "name": "When chat message received",
+      "webhookId": "cd409596-7cd9-4272-a020-cde40305597d"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an expert inventory management assistant with access to a PostgreSQL database containing components, boxes, projects, orders, vendors, and invoices.\n\nWORKFLOW:\n1. When a user asks a database question, FIRST use database_schema_tool to understand the table structure.\n2. Then, generate a valid SQL SELECT query based on the schema and user intent.\n3. Execute the query using the execute_sql_query tool.\n4. Present results in clear, friendly language.\n\nRULES:\n- ALWAYS retrieve schema before writing SQL queries.\n- ONLY generate SELECT queries (never INSERT, UPDATE, DELETE, DROP, ALTER).\n- Use proper JOIN syntax based on foreign key relationships from schema.\n- For non-aggregate queries, include LIMIT 100 to limit large results.\n- Do NOT add LIMIT clause on aggregate queries like COUNT(), SUM(), AVG(), MIN(), MAX().\n- Construct grammatically and syntactically correct PostgreSQL queries with no extra semicolons within the statements.\n- When handling component names, proactively generate multiple variants or synonyms and include them in the WHERE clause using ILIKE and OR/ANY conditions.\n- Always join related tables properly and use the correct referential keys.\n- If a query fails validation, clearly explain the error and suggest a fix.\n- When a user asks about the quantity of a component, and the main components table lacks quantity information:\n  - First, do a case-insensitive COUNT(*) check for existence.\n  - If the user wants quantity and it is not tracked directly, query related tables such as order_parts (for purchased quantity), general_usage, and project_components to aggregate quantity_used or quantity_ordered values.\n  - Calculate net quantity as total purchased minus total used (usage plus project allocations).\n  - Inform the user the quantity is approximate based on usage, order, and allocation data and that exact stock tracking may not be available.\n  - If no relevant quantity data exists, inform the user that exact stock counts are not available.\n- Format results as human-readable summaries, bullet points, or markdown tables.\n- Use markdown tables with columns \"Metric\" and \"Quantity\" for numeric inventory summaries, including rows for Total Purchased, Total Used (General Usage), Total Used (Projects), and Estimated Net Quantity.\n- Precede tables with a clear introductory sentence mentioning the component name and user query.\n- Conclude with a note clarifying quantities are approximate and based on system records.\n- Be confident and concise in your responses.\n- Use variant keyword normalization for user queries. For example, if the user says \"Raspberry Pi Pico Module,\" internally expand the search to \"Raspberry Pi Pico\" OR \"Pi Pico Module\" for better recall.\n- Respond based on combined variant matches confidently without asking the user for clarification.\n- Use previous conversation history from session memory to inform multi-turn conversations and provide context-aware responses.\n- Format responses cleanly and avoid dumping raw JSON or debug data.\n- Keep responses friendly and easy to read.\n\nDATABASE SCHEMA OVERVIEW:\n- components: Main inventory items linked to boxes, categories, vendors.\n- boxes: Storage containers for components.\n- projects: Engineering projects using components.\n- orders: Purchase orders from vendors.\n- vendors: Component suppliers.\n- order_parts: Purchased quantities of components linked to orders.\n- general_usage: Records of component quantities used generally.\n- project_components: Records of component quantities used in projects.\n- invoices: Order invoices (file metadata stored in MinIO).\n- component_files, project_files: File metadata (actual files stored in MinIO).\n\nRESPONSE STYLE:\n- Explain what data you're retrieving before showing results.\n- Provide counts, aggregations, or summaries when appropriate.\n- Suggest alternatives or checks if no results found.\n- Use bullet points, markdown tables, or concise paragraphs as appropriate.\n\nRemember: Schema retrieval first, then accurate SQL generation (syntax-safe, variant-aware, aggregate-aware), then query execution, then a friendly, helpful explanation using summaries and markdown formatting!\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        496
+      ],
+      "id": "c43c7610-8c21-4bae-bce3-42ac37510502",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Database schema knowledge retrieval tool. Use this BEFORE generating any SQL query to understand table structures, column names, data types, and relationships. Query with natural language like \"what columns are in components table\", \"how are boxes related to components\", \"what is the structure of orders table\", or \"foreign keys in project_components\". Returns schema documentation with column types, nullable constraints, and foreign key mappings. This ensures SQL queries use correct table and column names with proper JOIN syntax.\n",
+        "milvusCollection": {
+          "__rl": true,
+          "value": "inventory_schema_kb",
+          "mode": "list",
+          "cachedResultName": "inventory_schema_kb"
+        },
+        "topK": 3
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreMilvus",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        720
+      ],
+      "id": "60baee9a-f503-4fd4-9156-b61e28b72271",
+      "name": "Milvus Vector Store",
+      "credentials": {
+        "milvusApi": {
+          "id": "LLc4BvKbqWF1qP0O",
+          "name": "Main Milvus"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        928,
+        928
+      ],
+      "id": "52de02da-16ca-4932-98c1-bf0d9bfa0aa5",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "g6fCWxJjNrh8XztU",
+          "name": "Cohere"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        720
+      ],
+      "id": "335a9959-3321-424f-babb-da9536424784",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2,
+          "topK": 3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        592,
+        720
+      ],
+      "id": "e4f36daf-0f39-4f2f-bc2d-f85de7e59088",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "AMKP5q76s0eUQ8eq",
+          "name": "Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1562d130-7601-4f7d-94c0-ede27ef9e82a",
+              "name": "chatInput",
+              "value": "={{$json[\"chatInput\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "70e85fa9-ec3e-4d6b-bce9-8a456abd148f",
+              "name": "sessionId",
+              "value": "={{$json[\"sessionId\"] || $workflow.id}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        496
+      ],
+      "id": "ed590756-a8a0-4cd2-b265-7301961e2f9c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "description": "Execute SELECT queries on the PostgreSQL inventory database. \nPass the complete SQL query as the 'query' parameter. \nThis tool will validate the query for safety and return results as JSON. \nUse this after retrieving schema information from the vector store tool.\nExample: {\"query\": \"SELECT name, category_id FROM components LIMIT 10\"}",
+        "workflowId": {
+          "__rl": true,
+          "value": "oQ0Chcjhvk9n4xtH",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/oQ0Chcjhvk9n4xtH",
+          "cachedResultName": "IMS -Run SQL (Sub Flow)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        720
+      ],
+      "id": "f398d840-a7ef-4bca-8ea6-b2f8d84acf93",
+      "name": "Call 'IMS -Run SQL (Sub Flow)'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        400
+      ],
+      "id": "2ab9159b-bf09-4c6c-a50f-50b569dd464a",
+      "name": "Webhook",
+      "webhookId": "071e9e72-eda7-4a24-a2d3-3126db487a8d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of $input.all()) {\n  const inputMsg = item.json.body?.message || item.json.chatInput || \"\";\n  const sessionId = item.json.body?.sessionId || null;\n\n  if (typeof inputMsg === \"string\" && inputMsg.trim() !== \"\") {\n    // Clean message: trim whitespace and normalize spaces\n    const cleanedMsg = inputMsg.trim().replace(/\\s+/g, \" \");\n\n    output.push({\n      json: {\n        chatInput: cleanedMsg,\n        sessionId: sessionId,\n        action: \"sendMessage\"\n      }\n    });\n  }\n}\n\n// Return only valid inputs with non-empty messages as an array\nreturn output;\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        400
+      ],
+      "id": "996c03a5-3061-48ba-9871-5f0d136b83f7",
+      "name": "Parse"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Milvus Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Milvus Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Call 'IMS -Run SQL (Sub Flow)'": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "d6792d1a-7187-492a-b7b1-fe89e9a27090",
+  "triggerCount": 2,
+  "tags": [],
+  "shared": [
+    {
+      "createdAt": "2025-10-05T16:59:28.719Z",
+      "updatedAt": "2025-10-05T16:59:28.719Z",
+      "role": "workflow:owner",
+      "workflowId": "3wBw4lvgqudhPZ21",
+      "projectId": "0tBJbgcFWwxEMKPn",
+      "project": {
+        "createdAt": "2025-10-05T16:55:31.619Z",
+        "updatedAt": "2025-10-05T16:55:58.616Z",
+        "id": "0tBJbgcFWwxEMKPn",
+        "name": "Bikash Panda <oksbwn@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

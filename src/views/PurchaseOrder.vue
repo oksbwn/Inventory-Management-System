@@ -8,15 +8,15 @@
             <h1 class="text-h4 font-weight-bold mb-2">Create Purchase Order</h1>
             <p class="text-body-1 text-medium-emphasis">Add new component purchase to inventory</p>
           </div>
-          <v-btn color="grey" variant="outlined" :to="{ name: 'Orders' }">
-            <v-icon start>mdi-arrow-left</v-icon>
-            Back to Orders
+          <v-btn color="grey" variant="outlined" @click="goBack">
+            <v-icon start>mdi-arrow-left</v-icon> Back to Orders
           </v-btn>
         </div>
       </v-col>
     </v-row>
 
     <v-form ref="orderForm" v-model="valid" @submit.prevent="handleSubmit">
+      <!-- Order Info -->
       <v-card elevation="2" class="mb-6">
         <v-card-title class="pa-5 d-flex align-center bg-gradient">
           <v-icon class="mr-3" color="primary">mdi-information</v-icon>
@@ -25,7 +25,6 @@
         <v-divider />
         <v-card-text class="pa-6">
           <v-row>
-            <!-- Vendor Selection -->
             <v-col cols="12" md="6">
               <div class="d-flex align-center ga-2">
                 <v-autocomplete
@@ -34,47 +33,38 @@
                   item-title="vendor_name"
                   item-value="vendor_id"
                   label="Vendor *"
-                  placeholder="Select vendor"
-                  :loading="loadingVendors"
-                  :rules="[(v) => !!v || 'Vendor is required']"
+                  :loading="vendorStore.loading"
+                  :rules="[v => !!v || 'Vendor is required']"
                   variant="outlined"
-                  density="comfortable"
                   clearable
                 >
                   <template #prepend-inner>
                     <v-icon>mdi-account-group</v-icon>
                   </template>
                 </v-autocomplete>
-                <v-btn color="primary" icon size="small" @click="openVendorDialog">
+                <v-btn icon small color="primary" @click="openVendorDialog">
                   <v-icon>mdi-plus</v-icon>
                 </v-btn>
               </div>
             </v-col>
-
-            <!-- Purchase Date -->
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.order_date"
                 label="Purchase Date *"
                 type="date"
-                :rules="[(v) => !!v || 'Date is required']"
+                :rules="[v => !!v || 'Date is required']"
                 variant="outlined"
-                density="comfortable"
               >
                 <template #prepend-inner>
                   <v-icon>mdi-calendar</v-icon>
                 </template>
               </v-text-field>
             </v-col>
-
-            <!-- Order URL/Invoice -->
             <v-col cols="12">
               <v-text-field
                 v-model="form.order_url"
                 label="Order URL / Invoice Link"
-                placeholder="https://..."
                 variant="outlined"
-                density="comfortable"
               >
                 <template #prepend-inner>
                   <v-icon>mdi-link</v-icon>
@@ -92,15 +82,18 @@
             <v-icon class="mr-3" color="primary">mdi-cart</v-icon>
             <span class="text-h6">Order Items</span>
           </div>
-          <v-btn color="primary" variant="tonal" size="small" @click="addOrderItem">
-            <v-icon start>mdi-plus</v-icon>
-            Add Item
+          <v-btn color="primary" variant="tonal" small @click="addOrderItem">
+            <v-icon start>mdi-plus</v-icon> Add Item
           </v-btn>
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-6">
-          <v-row v-for="(item, index) in form.items" :key="index" class="mb-4 order-item-row" align="center">
-            <!-- Component Selection -->
+          <v-row
+            v-for="(item, i) in form.items"
+            :key="i"
+            class="mb-4 order-item-row"
+            align="center"
+          >
             <v-col cols="12" md="3">
               <div class="d-flex align-center ga-2">
                 <v-autocomplete
@@ -109,24 +102,21 @@
                   item-title="name"
                   item-value="component_id"
                   label="Component *"
-                  placeholder="Select or create"
-                  :loading="loadingComponents"
-                  :rules="[(v) => !!v || 'Component required']"
+                  :loading="stockStore.loading"
+                  :rules="[v => !!v || 'Component required']"
                   variant="outlined"
                   density="compact"
-                  @update:model-value="(val) => onComponentChange(val, index)"
+                  @update:model-value="val => onComponentChange(val, i)"
                 >
                   <template #prepend-inner>
-                    <v-icon size="small">mdi-chip</v-icon>
+                    <v-icon small>mdi-chip</v-icon>
                   </template>
                 </v-autocomplete>
-                <v-btn color="primary" icon size="x-small" @click="openComponentDialog(index)">
-                  <v-icon size="small">mdi-plus</v-icon>
+                <v-btn icon x-small color="primary" @click="openComponentDialog(i)">
+                  <v-icon small>mdi-plus</v-icon>
                 </v-btn>
               </div>
             </v-col>
-
-            <!-- Category -->
             <v-col cols="12" md="2">
               <v-text-field
                 :model-value="item.category_name"
@@ -134,25 +124,20 @@
                 readonly
                 variant="outlined"
                 density="compact"
-                placeholder="Auto-filled"
               />
             </v-col>
-
-            <!-- Quantity -->
             <v-col cols="6" md="2">
               <v-text-field
                 v-model.number="item.quantity"
                 label="Quantity *"
                 type="number"
                 min="1"
-                :rules="[(v) => v > 0 || 'Quantity must be > 0']"
+                :rules="[v => v > 0 || 'Quantity must be > 0']"
                 variant="outlined"
                 density="compact"
-                @input="calculateItemTotal(index)"
+                @input="calculateItemTotal(i)"
               />
             </v-col>
-
-            <!-- Unit Cost -->
             <v-col cols="6" md="2">
               <v-text-field
                 v-model.number="item.unit_cost"
@@ -160,15 +145,13 @@
                 type="number"
                 min="0"
                 step="0.01"
-                :rules="[(v) => v >= 0 || 'Cost must be >= 0']"
+                :rules="[v => v >= 0 || 'Cost must be >= 0']"
                 variant="outlined"
                 density="compact"
                 prefix="₹"
-                @input="calculateItemTotal(index)"
+                @input="calculateItemTotal(i)"
               />
             </v-col>
-
-            <!-- Total -->
             <v-col cols="6" md="2">
               <v-text-field
                 :model-value="formatCurrency(item.total)"
@@ -178,39 +161,32 @@
                 density="compact"
               />
             </v-col>
-
-            <!-- Delete Button -->
             <v-col cols="6" md="1" class="text-center">
               <v-btn
-                color="error"
                 icon
-                size="small"
-                variant="text"
-                @click="removeOrderItem(index)"
+                small
+                color="error"
                 :disabled="form.items.length === 1"
+                @click="removeOrderItem(i)"
               >
                 <v-icon>mdi-delete</v-icon>
               </v-btn>
             </v-col>
-
             <v-col cols="12">
-              <v-divider v-if="index < form.items.length - 1" />
+              <v-divider v-if="i < form.items.length - 1" />
             </v-col>
           </v-row>
 
-          <!-- Empty State -->
           <div v-if="form.items.length === 0" class="text-center py-12">
             <v-icon size="80" color="grey-lighten-2">mdi-cart-outline</v-icon>
             <p class="mt-4 text-body-1 text-medium-emphasis">No items added yet</p>
-            <v-btn color="primary" @click="addOrderItem" class="mt-4">
-              <v-icon start>mdi-plus</v-icon>
-              Add First Item
+            <v-btn color="primary" class="mt-4" @click="addOrderItem">
+              <v-icon start>mdi-plus</v-icon> Add First Item
             </v-btn>
           </div>
         </v-card-text>
       </v-card>
 
-      <!-- Order Summary -->
       <v-card elevation="2" class="mb-6">
         <v-card-title class="pa-5 d-flex align-center bg-gradient">
           <v-icon class="mr-3" color="success">mdi-calculator</v-icon>
@@ -223,7 +199,6 @@
               <v-textarea
                 v-model="form.notes"
                 label="Notes (Optional)"
-                placeholder="Add any additional notes about this purchase..."
                 rows="3"
                 variant="outlined"
               />
@@ -232,17 +207,17 @@
               <v-card color="success-lighten-5" elevation="0">
                 <v-card-text class="pa-4">
                   <div class="d-flex justify-space-between mb-2">
-                    <span class="text-body-1">Total Items:</span>
-                    <span class="text-body-1 font-weight-bold">{{ form.items.length }}</span>
+                    <span>Total Items:</span>
+                    <span>{{ form.items.length }}</span>
                   </div>
                   <div class="d-flex justify-space-between mb-2">
-                    <span class="text-body-1">Total Quantity:</span>
-                    <span class="text-body-1 font-weight-bold">{{ totalQuantity }}</span>
+                    <span>Total Quantity:</span>
+                    <span>{{ totalQuantity }}</span>
                   </div>
                   <v-divider class="my-3" />
                   <div class="d-flex justify-space-between">
-                    <span class="text-h6 font-weight-bold">Grand Total:</span>
-                    <span class="text-h6 font-weight-bold text-success">{{ formatCurrency(grandTotal) }}</span>
+                    <span class="font-weight-bold">Grand Total:</span>
+                    <span class="font-weight-bold text-success">{{ formatCurrency(grandTotal) }}</span>
                   </div>
                 </v-card-text>
               </v-card>
@@ -251,20 +226,24 @@
         </v-card-text>
       </v-card>
 
-      <!-- Action Buttons -->
       <v-card elevation="2">
         <v-card-actions class="pa-6 justify-end">
-          <v-btn variant="outlined" size="large" @click="handleCancel">Cancel</v-btn>
-          <v-btn color="primary" type="submit" size="large" :loading="saving" :disabled="!valid || form.items.length === 0">
-            <v-icon start>mdi-check</v-icon>
-            Save Purchase Order
+          <v-btn outlined large @click="goBack">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            type="submit"
+            large
+            :loading="orderStore.loading"
+            :disabled="!valid || form.items.length === 0"
+          >
+            <v-icon start>mdi-check</v-icon> Save Purchase Order
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-form>
 
     <!-- Add Vendor Dialog -->
-    <v-dialog v-model="vendorDialog" max-width="500px" persistent>
+    <v-dialog v-model="vendorDialog" max-width="500" persistent>
       <v-card>
         <v-card-title class="pa-5">
           <v-icon class="mr-3" color="primary">mdi-account-plus</v-icon>
@@ -275,23 +254,28 @@
           <v-text-field
             v-model="newVendor.vendor_name"
             label="Vendor Name *"
-            variant="outlined"
-            :rules="[(v) => !!v || 'Name is required']"
+            :rules="[v => !!v || 'Vendor name is required']"
           />
-          <v-text-field v-model="newVendor.contact_email" label="Email" type="email" variant="outlined" />
-          <v-text-field v-model="newVendor.contact_phone" label="Phone" variant="outlined" />
+          <v-text-field
+            v-model="newVendor.contact_email"
+            label="Email"
+            type="email"
+          />
+          <v-text-field v-model="newVendor.contact_phone" label="Phone" />
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="outlined" @click="vendorDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="saveVendor" :loading="savingVendor">Save Vendor</v-btn>
+          <v-btn outlined @click="vendorDialog = false">Cancel</v-btn>
+          <v-btn color="primary" @click="saveVendor" :loading="savingVendor">
+            Save Vendor
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Add Component Dialog -->
-    <v-dialog v-model="componentDialog" max-width="600px" persistent>
+    <v-dialog v-model="componentDialog" max-width="600" persistent>
       <v-card>
         <v-card-title class="pa-5">
           <v-icon class="mr-3" color="primary">mdi-chip</v-icon>
@@ -302,8 +286,7 @@
           <v-text-field
             v-model="newComponent.name"
             label="Component Name *"
-            variant="outlined"
-            :rules="[(v) => !!v || 'Name is required']"
+            :rules="[v => !!v || 'Component name is required']"
             class="mb-4"
           />
           <div class="d-flex align-center ga-2 mb-4">
@@ -313,11 +296,10 @@
               item-title="category_name"
               item-value="category_id"
               label="Category *"
-              variant="outlined"
-              :loading="loadingCategories"
-              :rules="[(v) => !!v || 'Category required']"
+              :loading="categoryStore.loading"
+              :rules="[v => !!v || 'Category is required']"
             />
-            <v-btn color="primary" icon size="small" @click="openCategoryDialog">
+            <v-btn icon small color="primary" @click="openCategoryDialog">
               <v-icon>mdi-plus</v-icon>
             </v-btn>
           </div>
@@ -328,27 +310,26 @@
               item-title="box_label"
               item-value="box_id"
               label="Storage Box *"
-              variant="outlined"
-              :loading="loadingBoxes"
-              :rules="[(v) => !!v || 'Box required']"
+              :loading="boxStore.loading"
+              :rules="[v => !!v || 'Box is required']"
             />
-            <v-btn color="primary" icon size="small" @click="openBoxDialog">
+            <v-btn icon small color="primary" @click="openBoxDialog">
               <v-icon>mdi-plus</v-icon>
             </v-btn>
           </div>
-          <v-textarea v-model="newComponent.description" label="Description" rows="3" variant="outlined" />
+          <v-textarea v-model="newComponent.description" label="Description" rows="3" />
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="outlined" @click="componentDialog = false">Cancel</v-btn>
+          <v-btn outlined @click="componentDialog = false">Cancel</v-btn>
           <v-btn color="primary" @click="saveComponent" :loading="savingComponent">Save Component</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Add Category Dialog -->
-    <v-dialog v-model="categoryDialog" max-width="400px" persistent>
+    <v-dialog v-model="categoryDialog" max-width="400" persistent>
       <v-card>
         <v-card-title class="pa-5">
           <v-icon class="mr-3" color="primary">mdi-shape</v-icon>
@@ -359,21 +340,20 @@
           <v-text-field
             v-model="newCategory.category_name"
             label="Category Name *"
-            variant="outlined"
-            :rules="[(v) => !!v || 'Name is required']"
+            :rules="[v => !!v || 'Category name is required']"
           />
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="outlined" @click="categoryDialog = false">Cancel</v-btn>
+          <v-btn outlined @click="categoryDialog = false">Cancel</v-btn>
           <v-btn color="primary" @click="saveCategory" :loading="savingCategory">Save Category</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Add Box Dialog -->
-    <v-dialog v-model="boxDialog" max-width="400px" persistent>
+    <v-dialog v-model="boxDialog" max-width="400" persistent>
       <v-card>
         <v-card-title class="pa-5">
           <v-icon class="mr-3" color="primary">mdi-package-variant</v-icon>
@@ -384,31 +364,27 @@
           <v-text-field
             v-model="newBox.box_label"
             label="Box Label *"
-            variant="outlined"
-            :rules="[(v) => !!v || 'Label is required']"
+            :rules="[v => !!v || 'Box label is required']"
             class="mb-4"
           />
-          <v-text-field v-model="newBox.box_code" label="Box Code" variant="outlined" />
+          <v-text-field v-model="newBox.box_code" label="Box Code" />
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn variant="outlined" @click="boxDialog = false">Cancel</v-btn>
+          <v-btn outlined @click="boxDialog = false">Cancel</v-btn>
           <v-btn color="primary" @click="saveBox" :loading="savingBox">Save Box</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- Success Snackbar -->
+    <!-- Snackbars -->
     <v-snackbar v-model="showSuccess" color="success" location="top right" :timeout="3000">
-      <v-icon class="mr-2">mdi-check-circle</v-icon>
-      {{ successMessage }}
+      <v-icon class="mr-2">mdi-check-circle</v-icon> {{ successMessage }}
     </v-snackbar>
 
-    <!-- Error Snackbar -->
     <v-snackbar v-model="showError" color="error" location="top right" :timeout="5000">
-      <v-icon class="mr-2">mdi-alert-circle</v-icon>
-      {{ errorMessage }}
+      <v-icon class="mr-2">mdi-alert-circle</v-icon> {{ errorMessage }}
     </v-snackbar>
   </v-container>
 </template>
@@ -416,53 +392,44 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useVendorStore } from '@/stores/vendorStore'
+import { useStockStore } from '@/stores/stockStore'
+import { useCategoryStore } from '@/stores/categoryStore'
+import { useBoxStore } from '@/stores/boxStore'
+import { useOrderStore } from '@/stores/orderStore'
 
 const router = useRouter()
+const vendorStore = useVendorStore()
+const stockStore = useStockStore()
+const categoryStore = useCategoryStore()
+const boxStore = useBoxStore()
+const orderStore = useOrderStore()
+
 const orderForm = ref(null)
 const valid = ref(false)
 const saving = ref(false)
 
-// Loading states
-const loadingVendors = ref(false)
-const loadingComponents = ref(false)
-const loadingCategories = ref(false)
-const loadingBoxes = ref(false)
-
-// Data lists
-const vendors = ref([])
-const components = ref([])
-const categories = ref([])
-const boxes = ref([])
+// Reactive lists from stores
+const vendors = computed(() => vendorStore.vendors)
+const components = computed(() => stockStore.stocks)
+const categories = computed(() => categoryStore.categories)
+const boxes = computed(() => boxStore.boxes)
 
 // Form data
 const form = ref({
   vendor_id: null,
-  order_date: new Date().toISOString().split('T')[0],
+  order_date: new Date().toISOString().slice(0, 10),
   order_url: '',
   notes: '',
-  items: [
-    {
-      component_id: null,
-      category_name: '',
-      quantity: 1,
-      unit_cost: 0,
-      total: 0
-    }
-  ]
+  items: [{ component_id: null, category_name: '', quantity: 1, unit_cost: 0, total: 0 }]
 })
 
-// Dialog states
+// Dialogs
 const vendorDialog = ref(false)
 const componentDialog = ref(false)
 const categoryDialog = ref(false)
 const boxDialog = ref(false)
 const currentItemIndex = ref(null)
-
-// Saving states for dialogs
-const savingVendor = ref(false)
-const savingComponent = ref(false)
-const savingCategory = ref(false)
-const savingBox = ref(false)
 
 // New entity forms
 const newVendor = ref({ vendor_name: '', contact_email: '', contact_phone: '' })
@@ -470,51 +437,43 @@ const newComponent = ref({ name: '', category_id: null, box_id: null, descriptio
 const newCategory = ref({ category_name: '' })
 const newBox = ref({ box_label: '', box_code: '' })
 
-// Snackbar states
+// Snackbar
 const showSuccess = ref(false)
 const showError = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 
-// Computed
-const totalQuantity = computed(() => {
-  return form.value.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
-})
-
-const grandTotal = computed(() => {
-  return form.value.items.reduce((sum, item) => sum + (item.total || 0), 0)
-})
+// Computed totals
+const totalQuantity = computed(() => form.value.items.reduce((s, i) => s + (i.quantity || 0), 0))
+const grandTotal = computed(() => form.value.items.reduce((s, i) => s + (i.total || 0), 0))
+const formatCurrency = v => `₹${(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
 
 // Methods
-const formatCurrency = (value) => {
-  return `₹${(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-const calculateItemTotal = (index) => {
-  const item = form.value.items[index]
-  item.total = (item.quantity || 0) * (item.unit_cost || 0)
+const calculateItemTotal = i => {
+  const it = form.value.items[i]
+  it.total = (it.quantity || 0) * (it.unit_cost || 0)
 }
 
 const addOrderItem = () => {
-  form.value.items.push({
-    component_id: null,
-    category_name: '',
-    quantity: 1,
-    unit_cost: 0,
-    total: 0
-  })
+  form.value.items.push({ component_id: null, category_name: '', quantity: 1, unit_cost: 0, total: 0 })
 }
 
-const removeOrderItem = (index) => {
-  form.value.items.splice(index, 1)
+const removeOrderItem = i => {
+  form.value.items.splice(i, 1)
 }
 
-const onComponentChange = (componentId, index) => {
-  const component = components.value.find((c) => c.component_id === componentId)
-  if (component) {
-    form.value.items[index].category_name = component.category_name || ''
-  }
+const onComponentChange = (cid, i) => {
+  const c = components.value.find(x => x.component_id === cid)
+  if (c) form.value.items[i].category_name = c.category_name
 }
+
+const goBack = () => router.push({ name: 'Orders' })
+
+// Save handlers for dialogs
+const savingVendor = ref(false)
+const savingComponent = ref(false)
+const savingCategory = ref(false)
+const savingBox = ref(false)
 
 const openVendorDialog = () => {
   newVendor.value = { vendor_name: '', contact_email: '', contact_phone: '' }
@@ -541,16 +500,13 @@ const saveVendor = async () => {
   if (!newVendor.value.vendor_name) return
   savingVendor.value = true
   try {
-    // TODO: Call API to create vendor
-    // const response = await vendorService.create(newVendor.value)
-    // vendors.value.push(response.data)
-    // form.value.vendor_id = response.data.vendor_id
-    successMessage.value = 'Vendor created successfully'
-    showSuccess.value = true
+    await vendorStore.createVendor(newVendor.value)
     vendorDialog.value = false
-  } catch (error) {
-    errorMessage.value = 'Failed to create vendor'
+    showSuccess.value = true
+    successMessage.value = 'Vendor created successfully'
+  } catch {
     showError.value = true
+    errorMessage.value = 'Failed to create vendor'
   } finally {
     savingVendor.value = false
   }
@@ -560,18 +516,13 @@ const saveComponent = async () => {
   if (!newComponent.value.name || !newComponent.value.category_id || !newComponent.value.box_id) return
   savingComponent.value = true
   try {
-    // TODO: Call API to create component
-    // const response = await componentService.create(newComponent.value)
-    // components.value.push(response.data)
-    // if (currentItemIndex.value !== null) {
-    //   form.value.items[currentItemIndex.value].component_id = response.data.component_id
-    // }
-    successMessage.value = 'Component created successfully'
-    showSuccess.value = true
+    await stockStore.createComponent(newComponent.value)
     componentDialog.value = false
-  } catch (error) {
-    errorMessage.value = 'Failed to create component'
+    showSuccess.value = true
+    successMessage.value = 'Component created successfully'
+  } catch {
     showError.value = true
+    errorMessage.value = 'Failed to create component'
   } finally {
     savingComponent.value = false
   }
@@ -581,16 +532,13 @@ const saveCategory = async () => {
   if (!newCategory.value.category_name) return
   savingCategory.value = true
   try {
-    // TODO: Call API to create category
-    // const response = await categoryService.create(newCategory.value)
-    // categories.value.push(response.data)
-    // newComponent.value.category_id = response.data.category_id
-    successMessage.value = 'Category created successfully'
-    showSuccess.value = true
+    await categoryStore.createCategory(newCategory.value)
     categoryDialog.value = false
-  } catch (error) {
-    errorMessage.value = 'Failed to create category'
+    showSuccess.value = true
+    successMessage.value = 'Category created successfully'
+  } catch {
     showError.value = true
+    errorMessage.value = 'Failed to create category'
   } finally {
     savingCategory.value = false
   }
@@ -600,90 +548,59 @@ const saveBox = async () => {
   if (!newBox.value.box_label) return
   savingBox.value = true
   try {
-    // TODO: Call API to create box
-    // const response = await boxService.create(newBox.value)
-    // boxes.value.push(response.data)
-    // newComponent.value.box_id = response.data.box_id
-    successMessage.value = 'Storage box created successfully'
-    showSuccess.value = true
+    await boxStore.createBox(newBox.value)
     boxDialog.value = false
-  } catch (error) {
-    errorMessage.value = 'Failed to create box'
+    showSuccess.value = true
+    successMessage.value = 'Storage box created successfully'
+  } catch {
     showError.value = true
+    errorMessage.value = 'Failed to create box'
   } finally {
     savingBox.value = false
   }
 }
 
 const handleSubmit = async () => {
-  const { valid: isValid } = await orderForm.value.validate()
-  if (!isValid || form.value.items.length === 0) return
-
+  const { valid: ok } = await orderForm.value.validate()
+  if (!ok || !form.value.items.length) return
   saving.value = true
   try {
-    // TODO: Call API to create purchase order
-    // const orderData = {
-    //   vendor_id: form.value.vendor_id,
-    //   order_date: form.value.order_date,
-    //   order_url: form.value.order_url,
-    //   notes: form.value.notes,
-    //   items: form.value.items
-    // }
-    // await purchaseOrderService.create(orderData)
-    
-    successMessage.value = 'Purchase order created successfully!'
+    const created = await orderStore.createOrder({
+      vendor_id: form.value.vendor_id,
+      order_date: form.value.order_date,
+      order_url: form.value.order_url,
+      notes: form.value.notes,
+      items: form.value.items
+    })
     showSuccess.value = true
-    setTimeout(() => {
-      router.push({ name: 'Orders' })
-    }, 1500)
-  } catch (error) {
-    errorMessage.value = 'Failed to create purchase order'
+    successMessage.value = 'Purchase order created successfully!'
+    router.push({ name: 'OrderDetail', params: { order_id: created.order_id } })
+  } catch {
     showError.value = true
+    errorMessage.value = 'Failed to create purchase order'
   } finally {
     saving.value = false
   }
 }
 
-const handleCancel = () => {
-  router.push({ name: 'Orders' })
-}
-
-// Load initial data
+// Load all lists if empty when mounted
 onMounted(async () => {
-  loadingVendors.value = true
-  loadingComponents.value = true
-  loadingCategories.value = true
-  loadingBoxes.value = true
-
-  try {
-    // TODO: Load data from APIs
-    // vendors.value = await vendorService.getAll()
-    // components.value = await componentService.getAll()
-    // categories.value = await categoryService.getAll()
-    // boxes.value = await boxService.getAll()
-  } catch (error) {
-    errorMessage.value = 'Failed to load form data'
-    showError.value = true
-  } finally {
-    loadingVendors.value = false
-    loadingComponents.value = false
-    loadingCategories.value = false
-    loadingBoxes.value = false
-  }
+  if (!vendorStore.vendors.length) await vendorStore.fetchVendors()
+  if (!stockStore.stocks.length) await stockStore.fetchStocks()
+  if (!categoryStore.categories.length) await categoryStore.fetchCategories()
+  if (!boxStore.boxes.length) await boxStore.fetchBoxes()
 })
 </script>
 
 <style scoped>
 .bg-gradient {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
 }
-
 .order-item-row {
   border-left: 3px solid transparent;
   padding-left: 12px;
   transition: all 0.2s ease;
 }
-
 .order-item-row:hover {
   border-left-color: rgb(var(--v-theme-primary));
   background: rgba(102, 126, 234, 0.02);

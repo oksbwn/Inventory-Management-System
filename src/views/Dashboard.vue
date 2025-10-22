@@ -3,11 +3,7 @@
     <!-- Loading State -->
     <v-row v-if="loading" justify="center" class="my-12">
       <v-col cols="12" class="text-center">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="64"
-        ></v-progress-circular>
+        <v-progress-circular indeterminate color="primary" size="64" />
         <p class="mt-4 text-body-1">Loading dashboard...</p>
       </v-col>
     </v-row>
@@ -15,52 +11,53 @@
     <!-- Main Content -->
     <template v-else>
       <!-- Page Header -->
-      <v-row class="mb-6">
+      <v-row class="mb-8">
         <v-col cols="12">
           <div class="d-flex align-center justify-space-between flex-wrap ga-4">
             <div>
-              <h1 class="text-h4 font-weight-bold mb-2">Dashboard</h1>
-              <p class="text-body-1 text-medium-emphasis">
+              <h1 class="text-h3 font-weight-bold mb-2"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Dashboard
+              </h1>
+              <p class="text-h6 text-medium-emphasis">
                 Welcome back! Here's your inventory overview.
               </p>
             </div>
+            <v-btn color="primary" prepend-icon="mdi-refresh" @click="refreshAll" :loading="isRefreshing" size="large"
+              elevation="2">
+              Refresh Data
+            </v-btn>
           </div>
         </v-col>
       </v-row>
 
       <!-- Key Metrics Row -->
-      <v-row class="mb-6">
+      <v-row class="mb-8">
         <!-- Total Components -->
         <v-col cols="12" sm="6" lg="3">
-          <v-card class="metric-card blue-card" elevation="2">
+          <v-card class="metric-card blue-card" elevation="4">
             <v-card-text class="pa-6">
               <div class="d-flex justify-space-between align-center mb-4">
-                <div class="metric-icon blue-icon">
-                  <v-icon color="white" size="28">mdi-chip</v-icon>
+                <div class="metric-icon">
+                  <v-icon color="white" size="32">mdi-chip</v-icon>
                 </div>
-                <v-chip size="small" color="blue-lighten-4" variant="flat">
-                  Total
-                </v-chip>
+                <div class="metric-value mb-2">{{ formatNumber(dashboardStats.total_components) }}</div>
               </div>
-              <div class="metric-value mb-1">{{ formatNumber(dashboardStats.total_components) }}</div>
-              <div class="metric-label">Components</div>
+              <div class="metric-label">Total Components</div>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Total Categories -->
         <v-col cols="12" sm="6" lg="3">
-          <v-card class="metric-card purple-card" elevation="2">
+          <v-card class="metric-card purple-card" elevation="4">
             <v-card-text class="pa-6">
               <div class="d-flex justify-space-between align-center mb-4">
-                <div class="metric-icon purple-icon">
-                  <v-icon color="white" size="28">mdi-shape</v-icon>
+                <div class="metric-icon">
+                  <v-icon color="white" size="32">mdi-shape</v-icon>
                 </div>
-                <v-chip size="small" color="purple-lighten-4" variant="flat">
-                  Active
-                </v-chip>
+                <div class="metric-value mb-2">{{ formatNumber(dashboardStats.total_categories) }}</div>
               </div>
-              <div class="metric-value mb-1">{{ formatNumber(dashboardStats.total_categories) }}</div>
               <div class="metric-label">Categories</div>
             </v-card-text>
           </v-card>
@@ -68,17 +65,14 @@
 
         <!-- Active Projects -->
         <v-col cols="12" sm="6" lg="3">
-          <v-card class="metric-card orange-card" elevation="2">
+          <v-card class="metric-card orange-card" elevation="4">
             <v-card-text class="pa-6">
               <div class="d-flex justify-space-between align-center mb-4">
-                <div class="metric-icon orange-icon">
-                  <v-icon color="white" size="28">mdi-briefcase</v-icon>
+                <div class="metric-icon">
+                  <v-icon color="white" size="32">mdi-briefcase</v-icon>
                 </div>
-                <v-chip size="small" color="orange-lighten-4" variant="flat">
-                  {{ dashboardStats.active_projects || 0 }}
-                </v-chip>
+                <div class="metric-value mb-2">{{ formatNumber(dashboardStats.active_projects) }}</div>
               </div>
-              <div class="metric-value mb-1">{{ formatNumber(dashboardStats.active_projects) }}</div>
               <div class="metric-label">Active Projects</div>
             </v-card-text>
           </v-card>
@@ -86,17 +80,14 @@
 
         <!-- YouTube Projects -->
         <v-col cols="12" sm="6" lg="3">
-          <v-card class="metric-card red-card" elevation="2">
+          <v-card class="metric-card red-card" elevation="4">
             <v-card-text class="pa-6">
               <div class="d-flex justify-space-between align-center mb-4">
-                <div class="metric-icon red-icon">
-                  <v-icon color="white" size="28">mdi-youtube</v-icon>
+                <div class="metric-icon">
+                  <v-icon color="white" size="32">mdi-youtube</v-icon>
                 </div>
-                <v-chip size="small" color="red-lighten-4" variant="flat">
-                  YT
-                </v-chip>
+                <div class="metric-value mb-2">{{ formatNumber(dashboardStats.youtube_projects) }}</div>
               </div>
-              <div class="metric-value mb-1">{{ formatNumber(dashboardStats.youtube_projects) }}</div>
               <div class="metric-label">YouTube Projects</div>
             </v-card-text>
           </v-card>
@@ -104,15 +95,17 @@
       </v-row>
 
       <!-- Secondary Metrics Row -->
-      <v-row class="mb-6">
+      <v-row class="mb-8">
         <v-col cols="6" sm="3">
-          <v-card class="stat-card" elevation="1" hover>
-            <v-card-text class="pa-4">
+          <v-card class="stat-card" elevation="3" hover>
+            <v-card-text class="pa-5">
               <div class="d-flex align-center ga-3">
-                <v-icon color="indigo" size="32">mdi-package-variant</v-icon>
+                <v-avatar size="48" color="indigo-lighten-5">
+                  <v-icon color="indigo" size="28">mdi-package-variant</v-icon>
+                </v-avatar>
                 <div>
                   <div class="stat-value">{{ formatNumber(dashboardStats.total_storage_boxes) }}</div>
-                  <div class="stat-label">Boxes</div>
+                  <div class="stat-label">Storage Boxes</div>
                 </div>
               </div>
             </v-card-text>
@@ -120,10 +113,12 @@
         </v-col>
 
         <v-col cols="6" sm="3">
-          <v-card class="stat-card" elevation="1" hover>
-            <v-card-text class="pa-4">
+          <v-card class="stat-card" elevation="3" hover>
+            <v-card-text class="pa-5">
               <div class="d-flex align-center ga-3">
-                <v-icon color="teal" size="32">mdi-account-group</v-icon>
+                <v-avatar size="48" color="teal-lighten-5">
+                  <v-icon color="teal" size="28">mdi-account-group</v-icon>
+                </v-avatar>
                 <div>
                   <div class="stat-value">{{ formatNumber(dashboardStats.total_vendors) }}</div>
                   <div class="stat-label">Vendors</div>
@@ -134,13 +129,15 @@
         </v-col>
 
         <v-col cols="6" sm="3">
-          <v-card class="stat-card" elevation="1" hover>
-            <v-card-text class="pa-4">
+          <v-card class="stat-card" elevation="3" hover>
+            <v-card-text class="pa-5">
               <div class="d-flex align-center ga-3">
-                <v-icon color="amber" size="32">mdi-cart</v-icon>
+                <v-avatar size="48" color="amber-lighten-5">
+                  <v-icon color="amber-darken-2" size="28">mdi-cart</v-icon>
+                </v-avatar>
                 <div>
                   <div class="stat-value">{{ formatNumber(dashboardStats.total_orders) }}</div>
-                  <div class="stat-label">Orders</div>
+                  <div class="stat-label">Total Orders</div>
                 </div>
               </div>
             </v-card-text>
@@ -148,13 +145,15 @@
         </v-col>
 
         <v-col cols="6" sm="3">
-          <v-card class="stat-card" elevation="1" hover>
-            <v-card-text class="pa-4">
+          <v-card class="stat-card" elevation="3" hover>
+            <v-card-text class="pa-5">
               <div class="d-flex align-center ga-3">
-                <v-icon color="green" size="32">mdi-currency-inr</v-icon>
+                <v-avatar size="48" color="green-lighten-5">
+                  <v-icon color="green" size="28">mdi-currency-inr</v-icon>
+                </v-avatar>
                 <div>
                   <div class="stat-value">₹{{ formatNumber(dashboardStats.total_order_value) }}</div>
-                  <div class="stat-label">Value</div>
+                  <div class="stat-label">Order Value</div>
                 </div>
               </div>
             </v-card-text>
@@ -163,30 +162,21 @@
       </v-row>
 
       <!-- Content Grid -->
-      <v-row class="mb-6">
+      <v-row class="mb-8">
         <!-- Quick Actions -->
         <v-col cols="12" md="4">
-          <v-card elevation="2" class="content-card">
-            <v-card-title class="pa-5 d-flex align-center">
-              <v-icon class="mr-3" color="primary">mdi-lightning-bolt</v-icon>
-              <span class="text-h6">Quick Actions</span>
+          <v-card elevation="3" class="content-card">
+            <v-card-title class="pa-5 d-flex align-center bg-gradient">
+              <v-icon class="mr-3" color="primary" size="28">mdi-lightning-bolt</v-icon>
+              <span class="text-h6 font-weight-bold">Quick Actions</span>
             </v-card-title>
-            <v-divider></v-divider>
+            <v-divider />
             <v-card-text class="pa-4">
-              <v-list class="py-0">
-                <v-list-item
-                  v-for="action in quickActions"
-                  :key="action.title"
-                  :to="action.route"
-                  class="mb-2 rounded"
-                  :prepend-icon="action.icon"
-                >
-                  <v-list-item-title class="font-weight-medium">
-                    {{ action.title }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ action.subtitle }}
-                  </v-list-item-subtitle>
+              <v-list class="py-0 bg-transparent">
+                <v-list-item v-for="action in quickActions" :key="action.title" :to="action.route"
+                  class="mb-2 rounded-lg action-item" :prepend-icon="action.icon" elevation="1">
+                  <v-list-item-title class="font-weight-bold">{{ action.title }}</v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">{{ action.subtitle }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-card-text>
@@ -195,34 +185,29 @@
 
         <!-- Category Distribution -->
         <v-col cols="12" md="4">
-          <v-card elevation="2" class="content-card">
-            <v-card-title class="pa-5 d-flex align-center">
-              <v-icon class="mr-3" color="purple">mdi-chart-pie</v-icon>
-              <span class="text-h6">Top Categories</span>
+          <v-card elevation="3" class="content-card">
+            <v-card-title class="pa-5 d-flex align-center bg-gradient">
+              <v-icon class="mr-3" color="purple" size="28">mdi-chart-pie</v-icon>
+              <span class="text-h6 font-weight-bold">Top Categories</span>
             </v-card-title>
-            <v-divider></v-divider>
+            <v-divider />
             <v-card-text class="pa-5">
               <div v-if="categoryDistribution.length > 0">
-                <div 
-                  v-for="(cat, index) in categoryDistribution.slice(0, 5)" 
-                  :key="index"
-                  class="mb-4"
-                >
+                <div v-for="(cat, index) in categoryDistribution.slice(0, 5)" :key="index" class="mb-4">
                   <div class="d-flex justify-space-between align-center mb-2">
-                    <span class="text-body-2 font-weight-medium">{{ cat.category_name }}</span>
-                    <span class="text-body-2 font-weight-bold text-primary">{{ cat.component_count }}</span>
+                    <span class="text-body-2 font-weight-bold">{{ cat.category_name }}</span>
+                    <v-chip size="x-small" :color="getCategoryColor(index)" variant="flat">
+                      {{ cat.component_count }}
+                    </v-chip>
                   </div>
                   <v-progress-linear
-                    :model-value="cat.percentage || ((cat.component_count / categoryDistribution[0].component_count) * 100)"
-                    :color="getCategoryColor(index)"
-                    height="8"
-                    rounded
-                  ></v-progress-linear>
+                    :model-value="cat.percentage || (cat.component_count / categoryDistribution[0].component_count) * 100"
+                    :color="getCategoryColor(index)" height="10" rounded class="progress-bar" />
                 </div>
               </div>
-              <div v-else class="text-center py-8">
-                <v-icon size="64" color="grey-lighten-2">mdi-shape-outline</v-icon>
-                <p class="mt-3 text-body-2 text-medium-emphasis">No categories</p>
+              <div v-else class="text-center py-12">
+                <v-icon size="80" color="grey-lighten-2">mdi-shape-outline</v-icon>
+                <p class="mt-4 text-body-2 text-medium-emphasis">No categories available</p>
               </div>
             </v-card-text>
           </v-card>
@@ -230,31 +215,23 @@
 
         <!-- Recent Activities -->
         <v-col cols="12" md="4">
-          <v-card elevation="2" class="content-card">
-            <v-card-title class="pa-5 d-flex align-center">
-              <v-icon class="mr-3" color="info">mdi-history</v-icon>
-              <span class="text-h6">Recent Activity</span>
+          <v-card elevation="3" class="content-card">
+            <v-card-title class="pa-5 d-flex align-center bg-gradient">
+              <v-icon class="mr-3" color="info" size="28">mdi-history</v-icon>
+              <span class="text-h6 font-weight-bold">Recent Activity</span>
             </v-card-title>
-            <v-divider></v-divider>
+            <v-divider />
             <v-card-text class="pa-4">
-              <v-timeline v-if="recentActivity.length > 0" density="compact" align="start">
-                <v-timeline-item
-                  v-for="(activity, index) in recentActivity.slice(0, 5)"
-                  :key="index"
-                  :dot-color="activity.color"
-                  size="small"
-                >
-                  <div class="text-body-2 font-weight-medium mb-1">
-                    {{ activity.activity_title }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ activity.time_ago }}
-                  </div>
+              <v-timeline v-if="recentActivity.length > 0" density="compact" align="start" class="custom-timeline">
+                <v-timeline-item v-for="(activity, index) in recentActivity.slice(0, 3)" :key="index"
+                  :dot-color="activity.color" size="small">
+                  <div class="text-body-2 font-weight-bold mb-1">{{ activity.activity_title }}</div>
+                  <div class="text-caption text-medium-emphasis">{{ activity.time_ago }}</div>
                 </v-timeline-item>
               </v-timeline>
-              <div v-else class="text-center py-8">
-                <v-icon size="64" color="grey-lighten-2">mdi-history</v-icon>
-                <p class="mt-3 text-body-2 text-medium-emphasis">No activity</p>
+              <div v-else class="text-center py-12">
+                <v-icon size="80" color="grey-lighten-2">mdi-history</v-icon>
+                <p class="mt-4 text-body-2 text-medium-emphasis">No recent activity</p>
               </div>
             </v-card-text>
           </v-card>
@@ -263,96 +240,85 @@
 
       <!-- Module Cards -->
       <v-row>
-        <v-col cols="12">
-          <h2 class="text-h5 font-weight-bold mb-4">Manage Inventory</h2>
+        <v-col cols="12" class="mb-4">
+          <h2 class="text-h4 font-weight-bold">Manage Inventory</h2>
+          <p class="text-body-1 text-medium-emphasis">Access your inventory management modules</p>
         </v-col>
 
         <!-- Components -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="2" hover :to="{ name: 'Stocks' }">
+          <v-card class="module-card" elevation="3" hover :to="{ name: 'Stocks' }">
             <v-card-text class="pa-6">
-              <v-avatar size="64" color="blue-lighten-5" class="mb-4">
-                <v-icon color="blue" size="36">mdi-chip</v-icon>
+              <v-avatar size="72" class="mb-4 module-avatar blue-bg">
+                <v-icon color="white" size="40">mdi-chip</v-icon>
               </v-avatar>
               <h3 class="text-h6 font-weight-bold mb-2">Components</h3>
-              <p class="text-body-2 text-medium-emphasis mb-0">
-                Manage electronic components and parts
-              </p>
+              <p class="text-body-2 text-medium-emphasis mb-0">Manage electronic components and parts</p>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Categories -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="2" hover :to="{ name: 'Categories' }">
+          <v-card class="module-card" elevation="3" hover :to="{ name: 'Categories' }">
             <v-card-text class="pa-6">
-              <v-avatar size="64" color="purple-lighten-5" class="mb-4">
-                <v-icon color="purple" size="36">mdi-shape</v-icon>
+              <v-avatar size="72" class="mb-4 module-avatar purple-bg">
+                <v-icon color="white" size="40">mdi-shape</v-icon>
               </v-avatar>
               <h3 class="text-h6 font-weight-bold mb-2">Categories</h3>
-              <p class="text-body-2 text-medium-emphasis mb-0">
-                Organize components by categories
-              </p>
+              <p class="text-body-2 text-medium-emphasis mb-0">Organize components by categories</p>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Storage Boxes -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="2" hover :to="{ name: 'Boxes' }">
+          <v-card class="module-card" elevation="3" hover :to="{ name: 'Boxes' }">
             <v-card-text class="pa-6">
-              <v-avatar size="64" color="indigo-lighten-5" class="mb-4">
-                <v-icon color="indigo" size="36">mdi-package-variant</v-icon>
+              <v-avatar size="72" class="mb-4 module-avatar indigo-bg">
+                <v-icon color="white" size="40">mdi-package-variant</v-icon>
               </v-avatar>
               <h3 class="text-h6 font-weight-bold mb-2">Storage Boxes</h3>
-              <p class="text-body-2 text-medium-emphasis mb-0">
-                Manage storage boxes and locations
-              </p>
+              <p class="text-body-2 text-medium-emphasis mb-0">Manage storage boxes and locations</p>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Projects -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="2" hover :to="{ name: 'Projects' }">
+          <v-card class="module-card" elevation="3" hover :to="{ name: 'Projects' }">
             <v-card-text class="pa-6">
-              <v-avatar size="64" color="orange-lighten-5" class="mb-4">
-                <v-icon color="orange" size="36">mdi-briefcase</v-icon>
+              <v-avatar size="72" class="mb-4 module-avatar orange-bg">
+                <v-icon color="white" size="40">mdi-briefcase</v-icon>
               </v-avatar>
               <h3 class="text-h6 font-weight-bold mb-2">Projects</h3>
-              <p class="text-body-2 text-medium-emphasis mb-0">
-                Track projects and component usage
-              </p>
+              <p class="text-body-2 text-medium-emphasis mb-0">Track projects and component usage</p>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Vendors -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="2" hover :to="{ name: 'Vendors' }">
+          <v-card class="module-card" elevation="3" hover :to="{ name: 'Vendors' }">
             <v-card-text class="pa-6">
-              <v-avatar size="64" color="teal-lighten-5" class="mb-4">
-                <v-icon color="teal" size="36">mdi-account-group</v-icon>
+              <v-avatar size="72" class="mb-4 module-avatar teal-bg">
+                <v-icon color="white" size="40">mdi-account-group</v-icon>
               </v-avatar>
               <h3 class="text-h6 font-weight-bold mb-2">Vendors</h3>
-              <p class="text-body-2 text-medium-emphasis mb-0">
-                Manage vendor relationships
-              </p>
+              <p class="text-body-2 text-medium-emphasis mb-0">Manage vendor relationships</p>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- Orders -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="2" hover href="#">
+          <v-card class="module-card" elevation="3" hover href="#">
             <v-card-text class="pa-6">
-              <v-avatar size="64" color="amber-lighten-5" class="mb-4">
-                <v-icon color="amber" size="36">mdi-cart</v-icon>
+              <v-avatar size="72" class="mb-4 module-avatar amber-bg">
+                <v-icon color="white" size="40">mdi-cart</v-icon>
               </v-avatar>
               <h3 class="text-h6 font-weight-bold mb-2">Orders</h3>
-              <p class="text-body-2 text-medium-emphasis mb-0">
-                Track component orders and deliveries
-              </p>
+              <p class="text-body-2 text-medium-emphasis mb-0">Track component orders and deliveries</p>
             </v-card-text>
           </v-card>
         </v-col>
@@ -360,17 +326,12 @@
     </template>
 
     <!-- Error Snackbar -->
-    <v-snackbar
-      v-model="showError"
-      :timeout="5000"
-      color="error"
-      location="top right"
-    >
+    <v-snackbar v-model="showError" :timeout="5000" color="error" location="top right">
       <div class="d-flex align-center">
         <v-icon class="mr-3">mdi-alert-circle</v-icon>
         {{ errorMessage }}
       </div>
-      <template v-slot:actions>
+      <template #actions>
         <v-btn variant="text" @click="showError = false">Close</v-btn>
       </template>
     </v-snackbar>
@@ -395,7 +356,7 @@ const dashboardStats = ref({
   active_projects: 0,
   youtube_projects: 0,
   total_vendors: 0,
-  pending_orders: 0,
+  total_orders: 0,
   total_order_value: 0
 })
 
@@ -509,81 +470,173 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Metric Cards */
+/* Metric Cards with Enhanced Gradients */
 .metric-card {
-  border-radius: 16px;
-  transition: all 0.3s ease;
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  position: relative;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.metric-card:hover::before {
+  opacity: 1;
 }
 
 .metric-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
-.blue-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-.purple-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-.orange-card { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
-.red-card { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; }
+.blue-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.purple-card {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.orange-card {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+}
+
+.red-card {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+}
 
 .metric-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
 }
 
 .metric-value {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.5rem;
+  font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .metric-label {
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 1rem;
+  opacity: 0.95;
+  font-weight: 500;
 }
 
-/* Stat Cards */
+/* Stat Cards Enhanced */
 .stat-card {
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
 }
 
 .stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  color: rgb(var(--v-theme-on-surface-variant));
-  margin-top: 2px;
+  font-size: 0.8rem;
+  color: #150b0b;
+  margin-top: 4px;
+  font-weight: 600;
 }
 
 /* Content Cards */
 .content-card {
-  border-radius: 16px;
+  border-radius: 20px;
   height: 100%;
+  overflow: hidden;
 }
 
-/* Module Cards */
+.bg-gradient {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.action-item {
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.action-item:hover {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: rgba(102, 126, 234, 0.2);
+  transform: translateX(4px);
+}
+
+.progress-bar {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Module Cards Enhanced */
 .module-card {
-  border-radius: 16px;
-  transition: all 0.3s ease;
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .module-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.module-avatar {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.blue-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.purple-bg {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.indigo-bg {
+  background: linear-gradient(135deg, #5f72e4 0%, #9921e8 100%);
+}
+
+.orange-bg {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.teal-bg {
+  background: linear-gradient(135deg, #13b0b9 0%, #05dfa2 100%);
+}
+
+.amber-bg {
+  background: linear-gradient(135deg, #fdbb2d 0%, #f7971e 100%);
+}
+
+/* Timeline Custom Styling */
+.custom-timeline {
+  padding-left: 0;
 }
 </style>

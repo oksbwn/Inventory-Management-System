@@ -7,19 +7,13 @@
           <div>
             <h1 class="text-h5 font-weight-bold mb-1">
               <v-icon size="28" class="mr-2" color="primary">mdi-cube-outline</v-icon>
-              Stock Management
+              Components
             </h1>
             <p class="text-body-2 text-medium-emphasis">
-              Monitor and manage your inventory
+              Inventory of all components!
             </p>
           </div>
-          <v-btn
-            color="primary"
-            size="default"
-            prepend-icon="mdi-plus"
-            elevation="0"
-            @click="openAddDialog"
-          >
+          <v-btn color="primary" size="default" prepend-icon="mdi-plus" elevation="0" @click="openAddDialog">
             Add Stock
           </v-btn>
         </div>
@@ -27,116 +21,93 @@
     </v-row>
 
     <!-- Compact Stats Cards -->
-<!-- Beautiful Stats Cards -->
-<v-row class="mb-4">
-  <v-col cols="6" sm="3">
-    <v-card class="stat-card-modern" elevation="0">
-      <v-card-text class="pa-4">
-        <div class="d-flex justify-space-between align-center mb-3">
-          <div class="stat-icon-modern blue-modern">
-            <v-icon color="blue" size="24">mdi-package-variant</v-icon>
-          </div>
-          <v-chip size="x-small" color="blue" variant="tonal">
-            All
-          </v-chip>
-        </div>
-        <div class="stat-value-modern text-blue-darken-2 mb-1">
-          {{ stockStore.stockGist.total_items || 0 }}
-        </div>
-        <div class="stat-label-modern">Total Items</div>
-        <div class="stat-progress">
-          <v-progress-linear
-            :model-value="100"
-            color="blue"
-            height="4"
-            rounded
-          ></v-progress-linear>
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-col>
+    <!-- Beautiful Stats Cards -->
+    <v-row class="mb-4">
+      <v-col cols="6" sm="3">
+        <v-card class="stat-card-modern" elevation="0">
+          <v-card-text class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+              <div class="stat-icon-modern blue-modern">
+                <v-icon color="blue" size="24">mdi-package-variant</v-icon>
+              </div>
+              <div class="stat-value-modern text-blue-darken-2 mb-1">
+                {{ stockStore.stockGist.total_items || 0 }}
+              </div>
+            </div>
 
-  <v-col cols="6" sm="3">
-    <v-card class="stat-card-modern" elevation="0">
-      <v-card-text class="pa-4">
-        <div class="d-flex justify-space-between align-center mb-3">
-          <div class="stat-icon-modern green-modern">
-            <v-icon color="green" size="24">mdi-check-circle</v-icon>
-          </div>
-          <v-chip size="x-small" color="green" variant="tonal">
-            Available
-          </v-chip>
-        </div>
-        <div class="stat-value-modern text-green-darken-2 mb-1">
-          {{ stockStore.stockGist.in_stock || 0 }}
-        </div>
-        <div class="stat-label-modern">In Stock</div>
-        <div class="stat-progress">
-          <v-progress-linear
-            :model-value="stockStore.stockGist.total_items ? (stockStore.stockGist.in_stock / stockStore.stockGist.total_items * 100) : 0"
-            color="green"
-            height="4"
-            rounded
-          ></v-progress-linear>
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-col>
+            <div class="stat-label">Components</div>
+            <div class="stat-progress">
+              <v-progress-linear :model-value="100" color="blue" height="4" rounded></v-progress-linear>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-  <v-col cols="6" sm="3">
-    <v-card class="stat-card-modern" elevation="0">
-      <v-card-text class="pa-4">
-        <div class="d-flex justify-space-between align-center mb-3">
-          <div class="stat-icon-modern orange-modern">
-            <v-icon color="orange" size="24">mdi-alert</v-icon>
-          </div>
-          <v-chip size="x-small" color="orange" variant="tonal">
-            Alert
-          </v-chip>
-        </div>
-        <div class="stat-value-modern text-orange-darken-2 mb-1">
-          {{ stockStore.stockGist.low_stock || 0 }}
-        </div>
-        <div class="stat-label-modern">Low Stock</div>
-        <div class="stat-progress">
-          <v-progress-linear
-            :model-value="stockStore.stockGist.total_items ? (stockStore.stockGist.low_stock / stockStore.stockGist.total_items * 100) : 0"
-            color="orange"
-            height="4"
-            rounded
-          ></v-progress-linear>
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-col>
+      <v-col cols="6" sm="3">
+        <v-card class="stat-card-modern" elevation="0">
+          <v-card-text class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+              <div class="stat-icon-modern green-modern">
+                <v-icon color="green" size="24">mdi-check-circle</v-icon>
+              </div>
+              <div class="stat-value-modern text-green-darken-2 mb-1">
+                {{ stockStore.stockGist.in_stock || 0 }}
+              </div>
+            </div>
 
-  <v-col cols="6" sm="3">
-    <v-card class="stat-card-modern" elevation="0">
-      <v-card-text class="pa-4">
-        <div class="d-flex justify-space-between align-center mb-3">
-          <div class="stat-icon-modern red-modern">
-            <v-icon color="red" size="24">mdi-close-circle</v-icon>
-          </div>
-          <v-chip size="x-small" color="red" variant="tonal">
-            Empty
-          </v-chip>
-        </div>
-        <div class="stat-value-modern text-red-darken-2 mb-1">
-          {{ stockStore.stockGist.no_stock || 0 }}
-        </div>
-        <div class="stat-label-modern">Out of Stock</div>
-        <div class="stat-progress">
-          <v-progress-linear
-            :model-value="stockStore.stockGist.total_items ? (stockStore.stockGist.no_stock / stockStore.stockGist.total_items * 100) : 0"
-            color="red"
-            height="4"
-            rounded
-          ></v-progress-linear>
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-col>
-</v-row>
+            <div class="stat-label">In Stock</div>
+            <div class="stat-progress">
+              <v-progress-linear
+                :model-value="stockStore.stockGist.total_items ? (stockStore.stockGist.in_stock / stockStore.stockGist.total_items * 100) : 0"
+                color="green" height="4" rounded></v-progress-linear>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="6" sm="3">
+        <v-card class="stat-card-modern" elevation="0">
+          <v-card-text class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+              <div class="stat-icon-modern orange-modern">
+                <v-icon color="orange" size="24">mdi-alert</v-icon>
+              </div>
+              <div class="stat-value-modern text-orange-darken-2 mb-1">
+                {{ stockStore.stockGist.low_stock || 0 }}
+              </div>
+            </div>
+
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-progress">
+              <v-progress-linear
+                :model-value="stockStore.stockGist.total_items ? (stockStore.stockGist.low_stock / stockStore.stockGist.total_items * 100) : 0"
+                color="orange" height="4" rounded></v-progress-linear>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="6" sm="3">
+        <v-card class="stat-card-modern" elevation="0">
+          <v-card-text class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+              <div class="stat-icon-modern red-modern">
+                <v-icon color="red" size="24">mdi-close-circle</v-icon>
+              </div>
+              <div class="stat-value-modern text-red-darken-2 mb-1">
+                {{ stockStore.stockGist.no_stock || 0 }}
+              </div>
+            </div>
+            <div class="stat-label">Out of Stock</div>
+            <div class="stat-progress">
+              <v-progress-linear
+                :model-value="stockStore.stockGist.total_items ? (stockStore.stockGist.no_stock / stockStore.stockGist.total_items * 100) : 0"
+                color="red" height="4" rounded></v-progress-linear>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Compact Table Card -->
     <v-card elevation="0" class="table-card">
@@ -144,25 +115,11 @@
       <v-card-title class="pa-4 pb-3 bg-transparent">
         <v-row dense align="center">
           <v-col cols="12" md="7">
-            <v-text-field
-              v-model="searchQuery"
-              density="compact"
-              placeholder="Search by name, category, location..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              hide-details
-              clearable
-              @click:clear="onSearch"
-              @keyup.enter="onSearch"
-            >
+            <v-text-field v-model="searchQuery" density="compact" placeholder="Search by name, category, location..."
+              prepend-inner-icon="mdi-magnify" variant="outlined" hide-details clearable @click:clear="onSearch"
+              @keyup.enter="onSearch">
               <template v-slot:append-inner>
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  size="x-small"
-                  elevation="0"
-                  @click="onSearch"
-                >
+                <v-btn color="primary" variant="flat" size="x-small" elevation="0" @click="onSearch">
                   Search
                 </v-btn>
               </template>
@@ -170,38 +127,20 @@
           </v-col>
 
           <v-col cols="12" md="5" class="d-flex justify-end align-center flex-wrap ga-1">
-            <v-chip
-              :color="stockStore.isCacheValid ? 'success' : 'grey'"
-              variant="tonal"
-              size="x-small"
-            >
+            <v-chip :color="stockStore.isCacheValid ? 'success' : 'grey'" variant="tonal" size="x-small">
               <v-icon start size="12">mdi-database</v-icon>
               {{ stockStore.isCacheValid ? 'Cached' : 'Live' }}
             </v-chip>
 
-            <v-btn
-              variant="tonal"
-              size="x-small"
-              icon="mdi-refresh"
-              @click="refreshData"
-              :loading="stockStore.loading"
-            >
+            <v-btn variant="tonal" size="x-small" icon="mdi-refresh" @click="refreshData" :loading="stockStore.loading">
               <v-tooltip activator="parent">Refresh</v-tooltip>
             </v-btn>
 
-            <v-btn
-              variant="tonal"
-              size="x-small"
-              icon="mdi-filter-variant"
-            >
+            <v-btn variant="tonal" size="x-small" icon="mdi-filter-variant">
               <v-tooltip activator="parent">Filters</v-tooltip>
             </v-btn>
 
-            <v-btn
-              variant="tonal"
-              size="x-small"
-              icon="mdi-download"
-            >
+            <v-btn variant="tonal" size="x-small" icon="mdi-download">
               <v-tooltip activator="parent">Export</v-tooltip>
             </v-btn>
           </v-col>
@@ -211,20 +150,10 @@
       <v-divider></v-divider>
 
       <!-- Compact Data Table -->
-      <v-data-table-server
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        v-model:sort-by="sortBy"
-        :headers="headers"
-        :items="stockStore.stocks"
-        :items-length="stockStore.totalItems"
-        :loading="stockStore.loading"
-        item-value="id"
-        @update:options="loadStocks"
-        class="compact-table"
-        density="comfortable"
-        hover
-      >
+      <v-data-table-server v-model:items-per-page="itemsPerPage" v-model:page="page" v-model:sort-by="sortBy"
+        :headers="headers" :items="stockStore.stocks" :items-length="stockStore.totalItems"
+        :loading="stockStore.loading" item-value="id" @update:options="loadStocks" class="compact-table"
+        density="comfortable" hover>
         <!-- ID Column -->
         <template v-slot:item.id="{ item }">
           <span class="id-badge-compact">#{{ item.id }}</span>
@@ -250,11 +179,7 @@
 
         <!-- Quantity Column -->
         <template v-slot:item.quantity="{ item }">
-          <v-chip
-            :color="getQuantityColor(item.stock)"
-            size="x-small"
-            variant="flat"
-          >
+          <v-chip :color="getQuantityColor(item.stock)" size="x-small" variant="flat">
             <v-icon start size="14">
               {{ getQuantityIcon(item.stock) }}
             </v-icon>
@@ -269,11 +194,7 @@
 
         <!-- Status Column -->
         <template v-slot:item.status="{ item }">
-          <v-chip
-            :color="getStatusColor(item.status)"
-            size="x-small"
-            variant="flat"
-          >
+          <v-chip :color="getStatusColor(item.status)" size="x-small" variant="flat">
             <v-icon start size="14">
               {{ getStatusIcon(item.status) }}
             </v-icon>
@@ -283,57 +204,33 @@
 
         <!-- Improved Location Column -->
         <template v-slot:item.location="{ item }">
-          <v-chip
-            size="x-small"
-            variant="outlined"
-            color="indigo"
-            prepend-icon="mdi-package-variant"
-          >
+          <v-chip size="x-small" variant="outlined" color="indigo" prepend-icon="mdi-package-variant">
             {{ item.box_label || 'Unassigned' }}
           </v-chip>
         </template>
 
         <!-- Actions Column -->
-<!-- Actions Column - Compact with smaller icons -->
-<template v-slot:item.actions="{ item }">
-  <div class="action-cell-compact-fixed">
-    <v-btn
-      size="x-small"
-      variant="tonal"
-      color="info"
-      icon
-      @click="viewItem(item)"
-    >
-      <v-icon size="16">mdi-eye-outline</v-icon>
-      <v-tooltip activator="parent" location="top">View</v-tooltip>
-    </v-btn>
-  </div>
-</template>
+        <!-- Actions Column - Compact with smaller icons -->
+        <template v-slot:item.actions="{ item }">
+          <div class="action-cell-compact-fixed">
+            <v-btn size="x-small" variant="tonal" color="info" icon @click="viewItem(item)">
+              <v-icon size="16">mdi-eye-outline</v-icon>
+              <v-tooltip activator="parent" location="top">View</v-tooltip>
+            </v-btn>
+          </div>
+        </template>
 
       </v-data-table-server>
     </v-card>
 
     <!-- Stock Form Dialog -->
-    <stock-form-dialog
-      v-model="showFormDialog"
-      :stock-item="selectedStock"
-      @success="handleFormSuccess"
-    />
+    <stock-form-dialog v-model="showFormDialog" :stock-item="selectedStock" @success="handleFormSuccess" />
 
     <!-- Delete Confirmation Dialog -->
-    <delete-confirm-dialog
-      v-model="showDeleteDialog"
-      :item-name="selectedStock?.name"
-      @confirm="handleDeleteConfirm"
-    />
+    <delete-confirm-dialog v-model="showDeleteDialog" :item-name="selectedStock?.name" @confirm="handleDeleteConfirm" />
 
     <!-- Success Snackbar -->
-    <v-snackbar
-      v-model="showSuccessSnackbar"
-      :timeout="3000"
-      color="success"
-      location="top right"
-    >
+    <v-snackbar v-model="showSuccessSnackbar" :timeout="3000" color="success" location="top right">
       <div class="d-flex align-center">
         <v-icon class="mr-2">mdi-check-circle</v-icon>
         {{ successMessage }}
@@ -341,12 +238,7 @@
     </v-snackbar>
 
     <!-- Error Snackbar -->
-    <v-snackbar
-      v-model="showError"
-      :timeout="5000"
-      color="error"
-      location="top right"
-    >
+    <v-snackbar v-model="showError" :timeout="5000" color="error" location="top right">
       <div class="d-flex align-center">
         <v-icon class="mr-3">mdi-alert-circle</v-icon>
         {{ stockStore.error }}
@@ -568,20 +460,23 @@ onMounted(() => {
   border: 2px solid rgba(0, 0, 0, 0.05);
 }
 
-.blue-modern { 
-  background: rgba(33, 150, 243, 0.1); 
+.blue-modern {
+  background: rgba(33, 150, 243, 0.1);
   border-color: rgba(33, 150, 243, 0.2);
 }
-.green-modern { 
-  background: rgba(76, 175, 80, 0.1); 
+
+.green-modern {
+  background: rgba(76, 175, 80, 0.1);
   border-color: rgba(76, 175, 80, 0.2);
 }
-.orange-modern { 
-  background: rgba(255, 152, 0, 0.1); 
+
+.orange-modern {
+  background: rgba(255, 152, 0, 0.1);
   border-color: rgba(255, 152, 0, 0.2);
 }
-.red-modern { 
-  background: rgba(244, 67, 54, 0.1); 
+
+.red-modern {
+  background: rgba(244, 67, 54, 0.1);
   border-color: rgba(244, 67, 54, 0.2);
 }
 
@@ -719,7 +614,7 @@ onMounted(() => {
   .stat-value-modern {
     font-size: 1.5rem;
   }
-  
+
   .action-cell-compact .v-btn {
     min-width: 32px !important;
   }

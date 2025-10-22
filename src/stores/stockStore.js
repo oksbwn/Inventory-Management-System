@@ -1,23 +1,23 @@
-import { defineStore } from 'pinia'
-import { useBaseStore } from '@/composables/useBaseStore'
-import stockService from '@/api/services/stockService'
-import { ref } from 'vue'
+import { defineStore } from "pinia";
+import { useBaseStore } from "@/composables/useBaseStore";
+import stockService from "@/api/services/stockService";
+import { ref } from "vue";
 // Service adapter with proper ES imports
 const stockServiceAdapter = {
   getItems: (params) => stockService.getStocks(params),
   createItem: (data) => stockService.createStock(data),
   updateItem: (id, data) => stockService.updateStock(id, data),
   deleteItem: (id) => stockService.deleteStock(id),
-  getGist: () => stockService.getStockGist()
-}
+  getGist: () => stockService.getStockGist(),
+};
 
-export const useStockStore = defineStore('stock', () => {
-  const baseStore = useBaseStore('StockStore', stockServiceAdapter, {
+export const useStockStore = defineStore("stock", () => {
+  const baseStore = useBaseStore("StockStore", stockServiceAdapter, {
     cacheTimeout: 5 * 60 * 1000,
     defaultItemsPerPage: 10,
-    itemName: 'stock',
-    pluralItemName: 'stocks'
-  })
+    itemName: "stock",
+    pluralItemName: "stocks",
+  });
 
   const stockGist = ref({
     total_items: 0,
@@ -27,17 +27,21 @@ export const useStockStore = defineStore('stock', () => {
   });
 
   // Rename for clarity
-  const stocks = baseStore.items
-  const fetchStocks = baseStore.fetchItems
-  const createStock = baseStore.createItem
-  const updateStock = baseStore.updateItem
-  const deleteStock = baseStore.deleteItem
+  const stocks = baseStore.items;
+  const fetchStocks = baseStore.fetchItems;
+  const createStock = baseStore.createItem;
+  const updateStock = baseStore.updateItem;
+  const deleteStock = baseStore.deleteItem;
 
   const fetchStockGist = async () => {
     const res = await stockServiceAdapter.getGist();
     stockGist.value = res[0];
   };
 
+  const allComponents = async () => {
+    const res = await stockService.getAllComponents()
+    return res;
+  };
   return {
     // State
     stocks,
@@ -47,10 +51,10 @@ export const useStockStore = defineStore('stock', () => {
     itemsPerPage: baseStore.itemsPerPage,
     currentPage: baseStore.currentPage,
     search: baseStore.search,
-    
+
     // Getters
     isCacheValid: baseStore.isCacheValid,
-    
+
     // Actions
     fetchStocks,
     createStock,
@@ -59,5 +63,6 @@ export const useStockStore = defineStore('stock', () => {
     clearCache: baseStore.clearCache,
     stockGist,
     fetchStockGist,
-  }
-})
+    allComponents,
+  };
+});

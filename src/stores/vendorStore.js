@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import vendorService from '@/api/services/vendorService';
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import vendorService from "@/api/services/vendorService";
 
-export const useVendorStore = defineStore('vendor', () => {
+export const useVendorStore = defineStore("vendor", () => {
   const vendors = ref([]);
   const totalItems = ref(0);
   const loading = ref(false);
@@ -16,7 +16,6 @@ export const useVendorStore = defineStore('vendor', () => {
     try {
       const response = await vendorService.getVendors(params);
       vendors.value = response || [];
-      console.log(response)
       totalItems.value = response || 0;
       await fetchVendorsMeta();
     } catch (err) {
@@ -36,6 +35,28 @@ export const useVendorStore = defineStore('vendor', () => {
     }
   };
 
+  const allVendors = async () => {
+    const res = await vendorService.getVendors();
+    return res;
+  };
+
+  const createVendor = async (vendorData) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const createdVendor = await vendorService.createVendor(vendorData);
+      // Optionally add to vendors list or refetch list after creation
+      vendors.value.push(createdVendor);
+      totalItems.value++;
+      return createdVendor;
+    } catch (err) {
+      error.value = err;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     vendors,
     totalItems,
@@ -44,5 +65,7 @@ export const useVendorStore = defineStore('vendor', () => {
     totalVendors,
     fetchVendors,
     fetchVendorsMeta,
+    allVendors,
+    createVendor
   };
 });

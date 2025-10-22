@@ -22,7 +22,6 @@ export const useBoxStore = defineStore('box', () => {
     try {
       const response = await boxService.getBoxes(params)
       boxes.value = response[0].items || []
-      console.log( response[0].items)
       // totalItems.value = response.data.total || 0
       // Fetch metadata after boxes load for consistency
       await fetchBoxesMeta()

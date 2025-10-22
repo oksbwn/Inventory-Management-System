@@ -23,4 +23,7 @@ export default {
   getStockGist() {
     return apiClient.get("/webhook/api/components/gist");
   },
+  getAllComponents(){
+    return apiClient.get("/webhook/api/components/all");
+  }
 };

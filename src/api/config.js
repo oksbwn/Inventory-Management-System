@@ -13,7 +13,7 @@ apiClient.interceptors.request.use(
   config => {
     // Log requests in development
     if (import.meta.env.VITE_ENABLE_CONSOLE_LOGS === 'true') {
-      console.log('API Request:', config.method?.toUpperCase(), config.url)
+      // console.log('API Request:', config.method?.toUpperCase(), config.url)
     }
     return config
   },
@@ -28,7 +28,7 @@ apiClient.interceptors.response.use(
   response => {
     // Log responses in development
     if (import.meta.env.VITE_ENABLE_CONSOLE_LOGS === 'true') {
-      console.log('API Response:', response.status, response.config.url)
+      // console.log('API Response:', response.status, response.config.url)
     }
     return response.data
   },

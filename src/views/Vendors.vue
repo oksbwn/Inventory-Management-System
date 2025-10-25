@@ -1,153 +1,234 @@
 <template>
-  <v-container fluid class="pa-6">
+  <v-container fluid class="pa-6 vendors-page">
     <!-- Page Header -->
-    <v-row class="mb-6">
+    <v-row class="mb-8">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-4">
           <div>
             <div class="d-flex align-center ga-3 mb-2">
-              <v-avatar size="40" color="primary" variant="tonal">
-                <v-icon size="24">mdi-store</v-icon>
+              <v-avatar size="48" color="primary" class="header-avatar">
+                <v-icon size="28">mdi-store</v-icon>
               </v-avatar>
               <div>
-                <h1 class="text-h5 font-weight-bold mb-0">Vendors</h1>
-                <p class="text-caption text-medium-emphasis mb-0">
-                  {{ vendorStore.totalVendors }} total vendors
+                <h1 class="text-h4 font-weight-bold mb-1">Vendors</h1>
+                <p class="text-body-2 text-medium-emphasis mb-0">
+                  Manage your {{ vendorsMetaData?.summary?.totalVendors || 0 }} vendor relationships
                 </p>
               </div>
             </div>
           </div>
-          <v-btn color="primary" prepend-icon="mdi-plus" elevation="2" @click="openAddDialog">
+          <v-btn 
+            color="primary" 
+            prepend-icon="mdi-plus" 
+            size="large"
+            class="add-vendor-btn"
+            @click="openAddDialog"
+          >
             Add Vendor
           </v-btn>
         </div>
       </v-col>
     </v-row>
 
-    <!-- Metadata Cards -->
-    <!-- Metadata Cards with Insights -->
-    <v-row class="mb-6" dense>
+    <!-- Stats Cards -->
+    <v-row class="mb-8" dense>
       <v-col cols="12" sm="6" md="3">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon color="primary" size="35">mdi-store</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ vendorsMetaData?.summary?.totalVendors || 0 }}</div>
-            <div class="caption">Total Vendors</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon color="success" size="35">mdi-cart</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ vendorsMetaData?.purchases?.totalOrders || 0 }}</div>
-            <div class="caption">Total Orders</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon color="warning" size="35">mdi-currency-usd</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">₹{{ (vendorsMetaData?.purchases?.totalSpent || 0).toFixed(2) }}
+        <v-card class="stats-card" elevation="0">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center justify-space-between mb-3">
+              <div class="stats-icon-wrapper primary-gradient">
+                <v-icon color="white" size="24">mdi-store</v-icon>
+              </div>
+              <v-chip size="small" color="primary" variant="tonal">Active</v-chip>
             </div>
-            <div class="caption">Total Spent</div>
+            <div class="text-h5 font-weight-bold mb-1">{{ vendorsMetaData?.summary?.totalVendors || 0 }}</div>
+            <div class="text-caption text-medium-emphasis">Total Vendors</div>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="metadata-card" elevation="2">
-          <v-card-text class="text-center">
-            <v-icon color="info" size="35">mdi-percent</v-icon>
-            <div class="text-h6 font-weight-bold mt-1">{{ vendorsMetaData?.completeness?.iconCompletion || 0 }}%</div>
-            <div class="caption">Icon Coverage</div>
+        <v-card class="stats-card" elevation="0">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center justify-space-between mb-3">
+              <div class="stats-icon-wrapper success-gradient">
+                <v-icon color="white" size="24">mdi-cart</v-icon>
+              </div>
+              <v-chip size="small" color="success" variant="tonal">Orders</v-chip>
+            </div>
+            <div class="text-h5 font-weight-bold mb-1">{{ vendorsMetaData?.purchases?.totalOrders || 0 }}</div>
+            <div class="text-caption text-medium-emphasis">Total Orders</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="stats-card" elevation="0">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center justify-space-between mb-3">
+              <div class="stats-icon-wrapper warning-gradient">
+                <v-icon color="white" size="24">mdi-currency-inr</v-icon>
+              </div>
+              <v-chip size="small" color="warning" variant="tonal">Spent</v-chip>
+            </div>
+            <div class="text-h5 font-weight-bold mb-1">₹{{ formatCurrency(vendorsMetaData?.purchases?.totalSpent || 0) }}</div>
+            <div class="text-caption text-medium-emphasis">Total Spent</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="stats-card" elevation="0">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center justify-space-between mb-3">
+              <div class="stats-icon-wrapper info-gradient">
+                <v-icon color="white" size="24">mdi-image</v-icon>
+              </div>
+              <v-chip size="small" color="info" variant="tonal">{{ vendorsMetaData?.completeness?.iconCompletion || 0 }}%</v-chip>
+            </div>
+            <div class="text-h5 font-weight-bold mb-1">{{ vendorsMetaData?.summary?.vendorsWithIcon || 0 }}</div>
+            <div class="text-caption text-medium-emphasis">With Icons</div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Additional Insights Row -->
-    <v-row class="mb-6" dense>
+    <!-- Insights Cards -->
+    <v-row class="mb-8" dense>
       <v-col cols="12" md="6">
-        <v-card class="insight-card" elevation="2">
-          <v-card-title class="d-flex align-center">
-            <v-icon color="primary" class="mr-2">mdi-trophy</v-icon>
-            Top Vendor
-          </v-card-title>
-          <v-card-text v-if="vendorsMetaData?.topVendor?.vendorName">
-            <div class="d-flex align-center">
-              <v-avatar v-if="vendorsMetaData?.topVendor?.vendorIcon" color="white" size="56" class="mr-3"
-                elevation="1">
-                <img :src="vendorsMetaData.topVendor.vendorIcon" alt="Top Vendor"
-                  style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 8px;">
-              </v-avatar>
-              <v-avatar v-else color="primary" size="56" class="mr-3">
-                <v-icon size="32" color="white">mdi-store</v-icon>
-              </v-avatar>
+        <v-card class="insight-card" elevation="0">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center mb-4">
+              <div class="insight-icon-badge primary-gradient mr-3">
+                <v-icon color="white" size="20">mdi-trophy</v-icon>
+              </div>
               <div>
-                <div class="text-subtitle-1 font-weight-bold">{{ vendorsMetaData.topVendor.vendorName }}</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ vendorsMetaData.topVendor.orderCount }} orders • ₹{{ (vendorsMetaData.topVendor.totalSpent ||
-                    0).toFixed(2) }}
+                <div class="text-subtitle-2 text-medium-emphasis">Top Vendor</div>
+                <div class="text-caption text-medium-emphasis">Most orders placed</div>
+              </div>
+            </div>
+            <div v-if="vendorsMetaData?.topVendor?.vendorName" class="d-flex align-center">
+              <v-avatar 
+                v-if="vendorsMetaData?.topVendor?.vendorIcon" 
+                color="white" 
+                size="64" 
+                class="mr-4 vendor-avatar"
+              >
+                <img 
+                  :src="vendorsMetaData.topVendor.vendorIcon" 
+                  alt="Top Vendor"
+                  style="max-width: 85%; max-height: 85%; object-fit: contain;"
+                />
+              </v-avatar>
+              <v-avatar v-else color="primary" size="64" class="mr-4" variant="tonal">
+                <v-icon size="32">mdi-store</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-h6 font-weight-bold mb-1">{{ vendorsMetaData.topVendor.vendorName }}</div>
+                <div class="d-flex align-center ga-3">
+                  <v-chip size="x-small" color="primary" variant="tonal">
+                    {{ vendorsMetaData.topVendor.orderCount }} orders
+                  </v-chip>
+                  <v-chip size="x-small" color="success" variant="tonal">
+                    ₹{{ formatCurrency(vendorsMetaData.topVendor.totalSpent || 0) }}
+                  </v-chip>
                 </div>
               </div>
             </div>
-          </v-card-text>
-          <v-card-text v-else class="text-center text-medium-emphasis">
-            No order history yet
+            <div v-else class="text-center py-6 text-medium-emphasis">
+              <v-icon size="48" color="grey-lighten-1">mdi-trophy-outline</v-icon>
+              <div class="mt-2">No order history yet</div>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" md="6">
-        <v-card class="insight-card" elevation="2">
-          <v-card-title class="d-flex align-center">
-            <v-icon color="success" class="mr-2">mdi-clock-outline</v-icon>
-            Recent Purchase
-          </v-card-title>
-          <v-card-text v-if="vendorsMetaData?.recentPurchase?.vendorName">
-            <div class="d-flex align-center">
-              <v-avatar v-if="vendorsMetaData?.recentPurchase?.vendorIcon" color="white" size="56" class="mr-3"
-                elevation="1">
-                <img :src="vendorsMetaData.recentPurchase.vendorIcon" alt="Recent Vendor"
-                  style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 8px;">
-              </v-avatar>
-              <v-avatar v-else color="success" size="56" class="mr-3">
-                <v-icon size="32" color="white">mdi-store</v-icon>
-              </v-avatar>
+        <v-card class="insight-card" elevation="0">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center mb-4">
+              <div class="insight-icon-badge success-gradient mr-3">
+                <v-icon color="white" size="20">mdi-clock-outline</v-icon>
+              </div>
               <div>
-                <div class="text-subtitle-1 font-weight-bold">{{ vendorsMetaData.recentPurchase.vendorName }}</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ new Date(vendorsMetaData.recentPurchase.orderDate).toLocaleDateString() }} • ₹{{
-                    (vendorsMetaData.recentPurchase.totalCost || 0).toFixed(2) }}
+                <div class="text-subtitle-2 text-medium-emphasis">Recent Purchase</div>
+                <div class="text-caption text-medium-emphasis">Latest transaction</div>
+              </div>
+            </div>
+            <div v-if="vendorsMetaData?.recentPurchase?.vendorName" class="d-flex align-center">
+              <v-avatar 
+                v-if="vendorsMetaData?.recentPurchase?.vendorIcon" 
+                color="white" 
+                size="64" 
+                class="mr-4 vendor-avatar"
+              >
+                <img 
+                  :src="vendorsMetaData.recentPurchase.vendorIcon" 
+                  alt="Recent Vendor"
+                  style="max-width: 85%; max-height: 85%; object-fit: contain;"
+                />
+              </v-avatar>
+              <v-avatar v-else color="success" size="64" class="mr-4" variant="tonal">
+                <v-icon size="32">mdi-store</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-h6 font-weight-bold mb-1">{{ vendorsMetaData.recentPurchase.vendorName }}</div>
+                <div class="d-flex align-center ga-3">
+                  <v-chip size="x-small" color="info" variant="tonal">
+                    {{ formatDate(vendorsMetaData.recentPurchase.orderDate) }}
+                  </v-chip>
+                  <v-chip size="x-small" color="success" variant="tonal">
+                    ₹{{ formatCurrency(vendorsMetaData.recentPurchase.totalCost || 0) }}
+                  </v-chip>
                 </div>
               </div>
             </div>
-          </v-card-text>
-          <v-card-text v-else class="text-center text-medium-emphasis">
-            No purchases yet
+            <div v-else class="text-center py-6 text-medium-emphasis">
+              <v-icon size="48" color="grey-lighten-1">mdi-cart-outline</v-icon>
+              <div class="mt-2">No purchases yet</div>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
-    <!-- Filter/Search and View Toggle -->
-    <v-row class="mb-5" align="center">
+
+    <!-- Search and View Controls -->
+    <v-row class="mb-6" align="center">
       <v-col cols="12" md="8">
-        <div class="d-flex align-center" style="gap: 8px;">
-          <v-text-field v-model="searchQuery" label="Search vendors" prepend-inner-icon="mdi-magnify" clearable
-            density="compact" variant="outlined" @keyup.enter="onSearch" @click:clear="onSearch" hide-details
-            class="flex-grow-1" />
-          <v-btn color="primary" @click="onSearch" height="40" width="40" min-width="40" class="pa-0"
-            aria-label="Search">
+        <div class="search-wrapper">
+          <v-text-field 
+            v-model="searchQuery" 
+            placeholder="Search by name, email, or website..." 
+            prepend-inner-icon="mdi-magnify" 
+            clearable
+            density="comfortable" 
+            variant="outlined" 
+            @keyup.enter="onSearch" 
+            @click:clear="onSearch"
+            hide-details
+            class="search-field"
+          />
+          <v-btn 
+            color="primary" 
+            @click="onSearch" 
+            height="46"
+            width="46"
+            class="search-btn"
+            aria-label="Search"
+          >
             <v-icon>mdi-magnify</v-icon>
           </v-btn>
         </div>
       </v-col>
       <v-col cols="12" md="4" class="d-flex justify-end align-center">
-        <v-btn-toggle v-model="viewMode" mandatory density="comfortable" variant="outlined" divided>
+        <v-btn-toggle 
+          v-model="viewMode" 
+          mandatory 
+          density="comfortable"
+          variant="outlined"
+          divided
+          class="view-toggle"
+        >
           <v-btn value="grid" aria-label="Grid view">
             <v-icon>mdi-view-grid</v-icon>
           </v-btn>
@@ -158,53 +239,86 @@
       </v-col>
     </v-row>
 
-    <!-- Main Card -->
-    <v-card elevation="1" class="pa-4">
+    <!-- Main Content Card -->
+    <v-card elevation="0" class="main-card">
       <!-- Loading State -->
-      <v-row v-if="vendorStore.loading && vendors.length === 0" justify="center">
+      <v-row v-if="vendorStore.loading && vendors.length === 0" justify="center" class="py-12">
         <v-col cols="12" class="text-center">
-          <v-progress-circular indeterminate size="48" color="primary" />
-          <div class="mt-3">Loading vendors...</div>
+          <v-progress-circular indeterminate size="64" color="primary" width="3" />
+          <div class="mt-4 text-h6 text-medium-emphasis">Loading vendors...</div>
         </v-col>
       </v-row>
+
       <!-- Empty State -->
-      <v-row v-else-if="vendors.length === 0">
+      <v-row v-else-if="vendors.length === 0" class="py-12">
         <v-col cols="12" class="text-center">
-          <v-icon size="80" color="grey-lighten-2">mdi-store-outline</v-icon>
-          <div class="mt-3">No vendors found</div>
-          <v-btn color="primary" class="mt-3" @click="openAddDialog" prepend-icon="mdi-plus">Add Vendor</v-btn>
+          <div class="empty-state">
+            <v-icon size="120" color="grey-lighten-2">mdi-store-outline</v-icon>
+            <h3 class="text-h5 font-weight-bold mt-4 mb-2">No vendors found</h3>
+            <p class="text-body-2 text-medium-emphasis mb-6">Get started by adding your first vendor</p>
+            <v-btn 
+              color="primary" 
+              size="large"
+              @click="openAddDialog" 
+              prepend-icon="mdi-plus"
+            >
+              Add Your First Vendor
+            </v-btn>
+          </div>
         </v-col>
       </v-row>
 
       <!-- Grid View -->
-      <v-row v-else-if="viewMode === 'grid'" dense>
+      <v-row v-else-if="viewMode === 'grid'" class="pa-4">
         <v-col v-for="vendor in vendors" :key="vendor.vendor_id" cols="12" sm="6" md="4" lg="3">
-          <v-card elevation="2" class="vendor-card hoverable">
-            <v-card-text>
-              <div class="d-flex align-center mb-3">
-                <v-avatar color="white" size="92" class="mr-3" elevation="1">
-                  <div
-                    style="padding: 8px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                    <img :src="vendor.filename" alt="Vendor Icon"
-                      style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-                  </div>
+          <v-card class="vendor-card" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="text-center mb-4">
+                <v-avatar color="white" size="80" class="vendor-card-avatar mx-auto">
+                  <img 
+                    :src="vendor.filename" 
+                    alt="Vendor Icon"
+                    style="max-width: 85%; max-height: 85%; object-fit: contain;"
+                  />
                 </v-avatar>
-                <div>
-                  <div class="text-subtitle-1 font-weight-bold">{{ vendor.vendor_name }}</div>
-                  <div class="text-caption text-medium-emphasis">Website: {{ vendor.website }}</div>
-                  <div class="text-caption text-medium-emphasis">Email: {{ vendor.contact_email }}</div>
-                  <div class="text-caption text-medium-emphasis">Phone: {{ vendor.phone_number }}</div>
+              </div>
+              <div class="text-center">
+                <h3 class="text-h6 font-weight-bold mb-2">{{ vendor.vendor_name }}</h3>
+                <div class="vendor-details">
+                  <div class="text-caption text-medium-emphasis mb-1" v-if="vendor.website">
+                    <v-icon size="14" class="mr-1">mdi-web</v-icon>
+                    {{ truncate(vendor.website, 25) }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis mb-1" v-if="vendor.contact_email">
+                    <v-icon size="14" class="mr-1">mdi-email</v-icon>
+                    {{ truncate(vendor.contact_email, 25) }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis" v-if="vendor.phone_number">
+                    <v-icon size="14" class="mr-1">mdi-phone</v-icon>
+                    {{ vendor.phone_number }}
+                  </div>
                 </div>
               </div>
             </v-card-text>
-            <v-divider></v-divider>
-            <v-card-actions>
-              <v-spacer />
-              <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editVendor(vendor)">
-                <v-icon size="22">mdi-pencil</v-icon>
+            <v-divider />
+            <v-card-actions class="pa-3 justify-center">
+              <v-btn 
+                color="primary" 
+                variant="tonal" 
+                size="small"
+                @click="editVendor(vendor)"
+              >
+                <v-icon size="18" class="mr-1">mdi-pencil</v-icon>
+                Edit
               </v-btn>
-              <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteVendor(vendor)">
-                <v-icon size="22">mdi-delete</v-icon>
+              <v-btn 
+                color="error" 
+                variant="tonal" 
+                size="small"
+                @click="deleteVendor(vendor)"
+              >
+                <v-icon size="18" class="mr-1">mdi-delete</v-icon>
+                Delete
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -212,43 +326,90 @@
       </v-row>
 
       <!-- List View -->
-      <v-list v-else>
-        <v-list-item v-for="vendor in vendors" :key="vendor.vendor_id" class="vendor-list-item px-2 py-2">
+      <v-list v-else class="pa-4">
+        <v-list-item 
+          v-for="vendor in vendors" 
+          :key="vendor.vendor_id" 
+          class="vendor-list-item mb-3"
+          rounded="lg"
+        >
           <template #prepend>
-            <v-avatar color="indigo" size="48" class="mr-4">
-              <v-icon size="28" color="white">mdi-store</v-icon>
+            <v-avatar color="white" size="56" class="mr-4 list-avatar">
+              <img 
+                :src="vendor.filename" 
+                alt="Vendor Icon"
+                style="max-width: 85%; max-height: 85%; object-fit: contain;"
+              />
             </v-avatar>
           </template>
-          <v-list-item-title>
-            <span class="font-weight-bold">{{ vendor.vendor_name }}</span>
-            <span class="text-caption text-medium-emphasis ml-2">{{ vendor.website }}</span>
+          <v-list-item-title class="font-weight-bold mb-1">
+            {{ vendor.vendor_name }}
           </v-list-item-title>
           <v-list-item-subtitle>
-            <span class="text-caption text-medium-emphasis">Email: {{ vendor.contact_email }}</span>
-            <span class="text-caption text-medium-emphasis ml-3">Phone: {{ vendor.phone_number }}</span>
+            <div class="d-flex flex-wrap ga-3 mt-1">
+              <span v-if="vendor.website" class="text-caption">
+                <v-icon size="12" class="mr-1">mdi-web</v-icon>
+                {{ vendor.website }}
+              </span>
+              <span v-if="vendor.contact_email" class="text-caption">
+                <v-icon size="12" class="mr-1">mdi-email</v-icon>
+                {{ vendor.contact_email }}
+              </span>
+              <span v-if="vendor.phone_number" class="text-caption">
+                <v-icon size="12" class="mr-1">mdi-phone</v-icon>
+                {{ vendor.phone_number }}
+              </span>
+            </div>
           </v-list-item-subtitle>
           <template #append>
-            <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editVendor(vendor)">
-              <v-icon size="22">mdi-pencil</v-icon>
-            </v-btn>
-            <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteVendor(vendor)">
-              <v-icon size="22">mdi-delete</v-icon>
-            </v-btn>
+            <div class="d-flex ga-2">
+              <v-btn 
+                color="primary" 
+                variant="tonal" 
+                size="small"
+                @click="editVendor(vendor)"
+              >
+                <v-icon size="18">mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn 
+                color="error" 
+                variant="tonal" 
+                size="small"
+                @click="deleteVendor(vendor)"
+              >
+                <v-icon size="18">mdi-delete</v-icon>
+              </v-btn>
+            </div>
           </template>
         </v-list-item>
       </v-list>
 
       <!-- Pagination -->
-      <v-row justify="center" v-if="totalPages > 1">
-        <v-pagination v-model="page" :length="totalPages" @update:model-value="onPageChange" :total-visible="7" />
-      </v-row>
+      <v-divider v-if="totalPages > 1" class="mt-4" />
+      <div v-if="totalPages > 1" class="pa-4 d-flex justify-center">
+        <v-pagination 
+          v-model="page" 
+          :length="totalPages" 
+          @update:model-value="onPageChange" 
+          :total-visible="7"
+          size="small"
+          rounded="circle"
+        />
+      </div>
     </v-card>
 
     <!-- Dialogs -->
-    <VendorFormDialog v-model="showAddEditDialog" :vendor-item="selectedVendor" @success="handleVendorSuccess"
-      @error="handleError" />
-    <DeleteConfirmDialog v-model="showDeleteDialog" :item-name="selectedVendor?.vendor_name"
-      @confirm="handleVendorDelete" />
+    <VendorFormDialog 
+      v-model="showAddEditDialog" 
+      :vendor-item="selectedVendor" 
+      @success="handleVendorSuccess"
+      @error="handleError" 
+    />
+    <DeleteConfirmDialog 
+      v-model="showDeleteDialog" 
+      :item-name="selectedVendor?.vendor_name"
+      @confirm="handleVendorDelete" 
+    />
 
     <!-- Notifications -->
     <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" location="top right">
@@ -289,6 +450,23 @@ const totalPages = computed(() => {
   const total = vendorStore.totalVendors || 0
   return Math.ceil(total / itemsPerPage.value) || 1
 })
+
+// Helper functions
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('en-IN').format(value)
+}
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString('en-IN', { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric' 
+  })
+}
+
+const truncate = (str, length) => {
+  return str && str.length > length ? str.substring(0, length) + '...' : str
+}
 
 const loadVendors = async () => {
   try {
@@ -367,58 +545,184 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.metadata-card {
-  text-align: center;
+.vendors-page {
+  background: #fafbfc;
+  min-height: 100vh;
+}
+
+/* Header */
+.header-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.add-vendor-btn {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
+/* Stats Cards */
+.stats-card {
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  border-color: #d0d7de;
+}
+
+.stats-icon-wrapper {
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
-  min-height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.metadata-card .v-icon {
-  font-size: 32px;
-  margin-bottom: 5px;
+.primary-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.vendor-card {
-  cursor: pointer;
-  transition: box-shadow 0.3s, border-color 0.3s;
+.success-gradient {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.warning-gradient {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.info-gradient {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Insight Cards */
+.insight-card {
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.insight-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vendor-avatar {
+  border: 2px solid #e8edf2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Search */
+.search-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.search-btn {
   border-radius: 12px;
-  border: 1.2px solid #e3e6ed;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.view-toggle {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Main Card */
+.main-card {
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+  background: white;
+}
+
+/* Vendor Cards */
+.vendor-card {
+  border: 1px solid #e8edf2;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  height: 100%;
 }
 
 .vendor-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.11);
-  border-color: #1976d2;
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
 }
 
+.vendor-card-avatar {
+  border: 2px solid #f0f3f7;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.vendor-card:hover .vendor-card-avatar {
+  border-color: #667eea;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+}
+
+.vendor-details {
+  min-height: 60px;
+}
+
+/* List View */
 .vendor-list-item {
-  border-radius: 6px;
-  border: 1px solid #ececec;
-  margin-bottom: 8px;
-  transition: background 0.18s;
+  border: 1px solid #e8edf2;
+  background: white;
+  transition: all 0.3s ease;
 }
 
 .vendor-list-item:hover {
-  background-color: #f3f8fa;
+  background: #f7f9fc;
+  border-color: #d0d7de;
+  transform: translateX(4px);
 }
 
-.action-btn {
-  margin-right: 6px;
-  background-color: #f2f4ff !important;
-  color: #1976d2 !important;
-  border-radius: 8px !important;
+.list-avatar {
+  border: 2px solid #f0f3f7;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.action-btn:last-child {
-  margin-right: 0;
+/* Empty State */
+.empty-state {
+  padding: 60px 20px;
 }
 
-.action-btn:hover {
-  background-color: #e3e0fa !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vendor-card,
+.vendor-list-item {
+  animation: fadeIn 0.5s ease-out;
 }
 </style>

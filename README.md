@@ -7,6 +7,8 @@
 ![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![n8n](https://img.shields.io/badge/n8n-Automation-FF6D5A?style=for-the-badge&logo=n8n&logoColor=white)
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/oksbwn/Inventory-Management-System?utm_source=oss&utm_medium=github&utm_campaign=oksbwn%2FInventory-Management-System&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 **A modern, full-stack inventory management solution for home labs and small-scale operations**
 
 [Features](#-features) • [Demo](#-demo) • [Getting Started](#-getting-started) • [Documentation](#-documentation)

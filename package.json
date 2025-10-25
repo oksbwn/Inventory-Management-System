@@ -16,6 +16,7 @@
     "@mdi/font": "^7.4.47",
     "@tiptap/starter-kit": "^3.6.6",
     "@tiptap/vue-3": "^3.6.6",
+    "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.7.7",
     "dompurify": "^3.2.7",
     "marked": "^16.4.0",

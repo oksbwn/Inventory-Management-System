@@ -37,4 +37,36 @@ export default {
       params: { id },
     });
   },
+  getVideoByProjectId(project_id) {
+    return apiClient.get("/webhook/api/components/projects/video", {
+      params: { project_id },
+    });
+  },
+
+  // Update video details
+  updateVideo(project_id, data) {
+    return apiClient.post("/webhook/api/components/projects/video/update", {
+      project_id,
+      ...data,
+    });
+  },
+  getComponentsUsed(projectId) {
+    return apiClient.get("/webhook/api/components/projects/components", {
+      params: { project_id: projectId },
+    });
+  },
+
+  // Fetch all available components for selection
+  getAvailableComponents() {
+    return apiClient.get("/webhook/api/components/stocks");
+  },
+
+  // Add a component usage record to a project
+  addComponentToProject(projectId, componentId, quantityUsed) {
+    return apiClient.post("/webhook/api/components/projects/components/add", {
+      project_id: projectId,
+      component_id: componentId,
+      quantity_used: quantityUsed,
+    });
+  },
 };

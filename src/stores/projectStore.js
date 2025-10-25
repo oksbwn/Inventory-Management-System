@@ -8,11 +8,17 @@ export const useProjectStore = defineStore("project", () => {
   const totalItems = ref(0);
   const loading = ref(false);
   const error = ref(null);
+  const videoInfo = ref({});
 
   // Metadata
   const totalProjects = ref(0);
   const activeProjects = ref(0);
   const completedProjects = ref(0);
+  const componentsUsed = ref([]);
+  const availableComponents = ref([]);
+  const loadingComponents = ref(false);
+  const errorComponents = ref(null);
+  const addingComponent = ref(false);
 
   // Fetch project list with pagination and search params
   const fetchProjects = async (params = {}) => {
@@ -317,6 +323,89 @@ export const useProjectStore = defineStore("project", () => {
     };
   };
 
+  const fetchVideoByProjectId = async (projectId) => {
+    try {
+      const response = await projectService.getVideoByProjectId(projectId);
+
+      if (response[0].success) {
+        console.log(response[0].video);
+        videoInfo.value = response[0].video;
+      } else {
+        videoInfo.value = {};
+      }
+      return videoInfo.value;
+    } catch (err) {
+      console.error("Failed to fetch video info:", err);
+      videoInfo.value = {};
+      throw err;
+    }
+  };
+
+  // Update video info for a project
+  const updateVideo = async (projectId, updateData) => {
+    try {
+      const response = await projectService.updateVideo(projectId, updateData);
+      if (response.data?.success) {
+        videoInfo.value = response.data.video;
+      }
+      return response;
+    } catch (err) {
+      console.error("Failed to update video info:", err);
+      throw err;
+    }
+  };
+  // Fetch components currently used by a project
+  const fetchComponentsUsed = async (projectId) => {
+    loadingComponents.value = true;
+    errorComponents.value = null;
+    try {
+      const response = await projectService.getComponentsUsed(projectId);
+      componentsUsed.value = response || [];
+      return response;
+    } catch (err) {
+      errorComponents.value = err.message || "Failed to fetch components used";
+      componentsUsed.value = [];
+      throw err;
+    } finally {
+      loadingComponents.value = false;
+    }
+  };
+
+  // Fetch full list of available components to add
+  const fetchAvailableComponents = async () => {
+    try {
+      const response = await projectService.getAvailableComponents();
+      availableComponents.value = response || [];
+      return response;
+    } catch (err) {
+      errorComponents.value =
+        err.message || "Failed to fetch available components";
+      availableComponents.value = [];
+      throw err;
+    }
+  };
+
+  // Add a new component usage record to a project
+  const addComponentToProject = async (projectId, componentId, quantity) => {
+    if (!projectId || !componentId || !quantity || quantity <= 0) {
+      throw new Error("Invalid projectId, componentId, or quantity");
+    }
+    addingComponent.value = true;
+    try {
+      await projectService.addComponentToProject(
+        projectId,
+        componentId,
+        quantity
+      );
+      // Refresh components used after add
+      await fetchComponentsUsed(projectId);
+    } catch (err) {
+      throw err;
+    } finally {
+      addingComponent.value = false;
+    }
+  };
+
   return {
     // State
     projects,
@@ -349,5 +438,16 @@ export const useProjectStore = defineStore("project", () => {
     getProjectsWithGitRepo,
     filterProjects,
     getProjectStats,
+    videoInfo,
+    fetchVideoByProjectId,
+    updateVideo,
+    componentsUsed,
+    availableComponents,
+    loadingComponents,
+    errorComponents,
+    addingComponent,
+    fetchComponentsUsed,
+    fetchAvailableComponents,
+    addComponentToProject,
   };
 });

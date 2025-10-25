@@ -1,31 +1,113 @@
 <template>
-  <v-dialog v-model="show" max-width="500px" persistent>
-    <v-card>
-      <v-card-title>
-        <span class="text-h6">{{ boxItem ? 'Edit Box' : 'Add New Box' }}</span>
+  <v-dialog 
+    :model-value="modelValue" 
+    @update:model-value="$emit('update:modelValue', $event)" 
+    max-width="600px"
+    persistent 
+    scrollable
+  >
+    <v-card class="box-dialog">
+      <v-card-title class="dialog-header pa-6">
+        <div class="d-flex align-center">
+          <v-avatar :color="isEdit ? 'primary' : 'success'" size="40" class="mr-3">
+            <v-icon color="white" size="24">
+              {{ isEdit ? 'mdi-pencil' : 'mdi-plus' }}
+            </v-icon>
+          </v-avatar>
+          <div>
+            <h2 class="text-h6 font-weight-bold mb-0">
+              {{ isEdit ? 'Edit Storage Box' : 'Add New Storage Box' }}
+            </h2>
+            <p class="text-caption text-medium-emphasis mb-0">
+              {{ isEdit ? 'Update box information' : 'Create a new storage box with QR code' }}
+            </p>
+          </div>
+        </div>
       </v-card-title>
-      <v-card-text>
-        <v-form ref="formRef" v-model="valid" lazy-validation>
-          <v-text-field
-            v-model="form.box_label"
-            :rules="[v => !!v || 'Box label is required']"
-            label="Box Label"
-            required
-          />
-          <v-text-field
-            v-model="form.box_code"
-            :rules="[v => !!v || 'Box code is required']"
-            label="Box Code"
-            required
-          />
+
+      <v-divider />
+
+      <v-card-text class="pa-6">
+        <v-form ref="formRef" @submit.prevent="handleSubmit">
+          <!-- QR Code Preview -->
+          <div class="text-center mb-6">
+            <div class="qr-code-preview mx-auto">
+              <v-img v-if="displayQrCode" :src="displayQrCode" alt="Box QR Code" class="qr-image" />
+              <div v-else class="qr-placeholder">
+                <v-icon size="60" color="grey-lighten-1">mdi-qrcode</v-icon>
+              </div>
+            </div>
+            <p class="text-caption text-medium-emphasis mt-3 mb-0">
+              {{ isEdit ? 'Existing QR Code (cannot be changed)' : 'Auto-generated QR Code' }}
+            </p>
+          </div>
+
+          <!-- Form Fields -->
+          <v-row dense>
+            <v-col cols="12">
+              <v-text-field 
+                v-model="formData.box_label" 
+                label="Box Label *" 
+                :rules="[rules.required]"
+                prepend-inner-icon="mdi-label" 
+                variant="outlined" 
+                density="comfortable" 
+                hide-details="auto"
+                placeholder="e.g., Electronics Box"
+                @input="handleLabelChange"
+              />
+            </v-col>
+
+            <v-col cols="12" class="mt-4">
+              <v-select 
+                v-model="formData.box_size" 
+                label="Box Size *" 
+                :items="boxSizes" 
+                :rules="[rules.required]"
+                prepend-inner-icon="mdi-resize" 
+                variant="outlined" 
+                density="comfortable" 
+                hide-details="auto"
+                @update:model-value="handleSizeChange"
+              >
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props">
+                    <template v-slot:prepend>
+                      <v-icon :size="getSizeIconSize(item.value)">mdi-package-variant</v-icon>
+                    </template>
+                  </v-list-item>
+                </template>
+              </v-select>
+            </v-col>
+
+            <v-col cols="12" class="mt-4">
+              <v-text-field 
+                v-model="formData.box_code" 
+                label="Box Code" 
+                prepend-inner-icon="mdi-barcode" 
+                variant="outlined"
+                density="comfortable" 
+                hide-details="auto" 
+                readonly
+                :placeholder="isEdit ? formData.box_code : 'Auto-generated based on size'" 
+              />
+              <p class="text-caption text-medium-emphasis mt-1 ml-2">
+                {{ isEdit ? 'Box code cannot be changed' : 'Generated automatically: SIZE-ID' }}
+              </p>
+            </v-col>
+          </v-row>
         </v-form>
       </v-card-text>
-      <v-card-actions>
+
+      <v-divider />
+
+      <v-card-actions class="pa-6">
         <v-spacer />
-        <v-btn text @click="close" :disabled="saving">Cancel</v-btn>
-        <v-btn :disabled="!valid || saving" color="primary" @click="submit">
-          <span v-if="saving">Saving...</span>
-          <span v-else>Save</span>
+        <v-btn variant="text" @click="handleClose" size="large" :disabled="loading">
+          Cancel
+        </v-btn>
+        <v-btn color="primary" @click="handleSubmit" :loading="loading" size="large" variant="flat" class="px-6">
+          {{ isEdit ? 'Update Box' : 'Create Box' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -33,74 +115,213 @@
 </template>
 
 <script setup>
-import { ref, watch, reactive } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useBoxStore } from '@/stores/boxStore'
+import QRCode from 'qrcode'
 
 const props = defineProps({
-  boxItem: Object,
-  modelValue: Boolean
+  modelValue: Boolean,
+  boxItem: Object
 })
-const emits = defineEmits(['update:modelValue', 'success', 'error'])
 
-const show = ref(props.modelValue)
-const form = reactive({
-  box_label: '',
-  box_code: ''
-})
-const valid = ref(false)
-const saving = ref(false)
-const formRef = ref(null)
+const emit = defineEmits(['update:modelValue', 'success'])
 
 const boxStore = useBoxStore()
+const formRef = ref(null)
+const loading = ref(false)
+const qrCodeDataUrl = ref('')
+const existingQrData = ref(null)
+const nextBoxId = ref(null)
 
-// Initialize form fields when dialog opens or boxItem changes
-watch(
-  () => props.modelValue,
-  (val) => {
-    show.value = val
-    if (val && props.boxItem) {
-      form.box_label = props.boxItem.box_label || ''
-      form.box_code = props.boxItem.box_code || ''
-    } else {
-      form.box_label = ''
-      form.box_code = ''
-    }
-  }
-)
+const boxSizes = [
+  { title: 'X - Extra Small', value: 'X' },
+  { title: 'XL - Large', value: 'XL' },
+  { title: 'XXL - Extra Large', value: 'XXL' },
+  { title: 'XXXL - Extra Extra Large', value: 'XXXL' }
+]
 
-// Emit modelValue changes on show state change
-watch(show, (val) => {
-  emits('update:modelValue', val)
+const formData = ref({
+  box_label: '',
+  box_size: '',
+  box_code: ''
 })
 
-function close() {
-  show.value = false
+const rules = {
+  required: value => !!value || 'This field is required'
 }
 
-async function submit() {
-  if (!(await formRef.value.validate())) return
+const isEdit = computed(() => !!props.boxItem?.box_id)
 
-  saving.value = true
-  try {
-    if (props.boxItem && props.boxItem.box_id) {
-      await boxStore.updateBox(props.boxItem.box_id, {
-        box_label: form.box_label,
-        box_code: form.box_code
-      })
-      emits('success', { message: 'Box updated successfully' })
-    } else {
-      await boxStore.createBox({
-        box_label: form.box_label,
-        box_code: form.box_code
-      })
-      emits('success', { message: 'Box created successfully' })
-    }
-  } catch (err) {
-    console.error(err)
-    emits('error', { message: 'Failed to save box' })
-  } finally {
-    saving.value = false
+const displayQrCode = computed(() => {
+  if (isEdit.value && existingQrData.value) {
+    return existingQrData.value
   }
-  close()
+  return qrCodeDataUrl.value
+})
+
+const getSizeIconSize = (size) => {
+  const sizeMap = { 'X': 20, 'XL': 28, 'XXL': 36, 'XXXL': 44 }
+  return sizeMap[size] || 24
+}
+
+// Generate QR code with current data
+const generateQRCode = async () => {
+  if (isEdit.value || !nextBoxId.value) return
+
+  try {
+    const qrContent = JSON.stringify({
+      type: 'Container',
+      id: nextBoxId.value
+    })
+
+    console.log('🎨 Generating QR:', qrContent)
+
+    qrCodeDataUrl.value = await QRCode.toDataURL(qrContent, {
+      width: 300,
+      margin: 2,
+      color: { dark: '#000000', light: '#FFFFFF' }
+    })
+
+    console.log('✅ QR Generated!')
+  } catch (error) {
+    console.error('❌ QR Error:', error)
+  }
+}
+
+// Fetch next box ID and immediately generate QR
+const fetchNextBoxId = async () => {
+  try {
+    const response = await boxStore.getNextBoxId()
+    nextBoxId.value = typeof response === 'number' ? response : (response?.next_id || 1)
+    console.log('✅ Next ID:', nextBoxId.value)
+    
+    // Generate QR immediately with just the ID
+    await generateQRCode()
+  } catch (error) {
+    console.error('❌ Error:', error)
+    nextBoxId.value = 1
+  }
+}
+
+// Handle size change
+const handleSizeChange = async (newSize) => {
+  console.log('📏 Size changed:', newSize)
+  
+  if (!isEdit.value && newSize && nextBoxId.value) {
+    formData.value.box_code = `${newSize}-${nextBoxId.value}`
+    console.log('✅ Code generated:', formData.value.box_code)
+    await generateQRCode()
+  }
+}
+
+// Handle label change
+const handleLabelChange = async () => {
+  console.log('📝 Label changed:', formData.value.box_label)
+  await generateQRCode()
+}
+
+// Watch dialog open
+watch(() => props.modelValue, async (isOpen) => {
+  if (isOpen && !isEdit.value) {
+    await fetchNextBoxId()
+  }
+})
+
+// Watch box item changes
+watch(() => props.boxItem, (item) => {
+  if (item) {
+    formData.value = {
+      box_label: item.box_label || '',
+      box_size: item.box_size || '',
+      box_code: item.box_code || ''
+    }
+    existingQrData.value = item.filename || null
+  }
+}, { immediate: true })
+
+const handleClose = () => {
+  emit('update:modelValue', false)
+  setTimeout(() => {
+    formData.value = { box_label: '', box_size: '', box_code: '' }
+    qrCodeDataUrl.value = ''
+    existingQrData.value = null
+    nextBoxId.value = null
+    formRef.value?.resetValidation()
+  }, 300)
+}
+
+const handleSubmit = async () => {
+  const { valid } = await formRef.value.validate()
+  if (!valid) return
+
+  loading.value = true
+
+  try {
+    const boxData = { ...formData.value }
+
+    if (!isEdit.value && qrCodeDataUrl.value) {
+      boxData.box_qr_content = qrCodeDataUrl.value.split(',')[1]
+      boxData.box_qr_file_type = 'png'
+      boxData.box_qr_filename = `QRCode`
+    }
+
+    emit('success', {
+      data: boxData,
+      isEdit: isEdit.value,
+      id: props.boxItem?.box_id
+    })
+
+    handleClose()
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
+
+
+<style scoped>
+.box-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.dialog-header .text-medium-emphasis {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.qr-code-preview {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  border: 2px solid #e8edf2;
+  overflow: hidden;
+  background: white;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qr-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+</style>

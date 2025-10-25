@@ -240,7 +240,9 @@
           <v-text-field v-model="newVendor.website" label="Website" type="url" dense />
 
           <!-- File input for icon -->
-          <v-file-input label="Upload Icon" accept="image/*" dense @update:model-value="handleVendorIconUpload"  :show-size="true"
+          <v-file-input label="Upload Icon" accept="image/*" dense @update:model-value="handleVendorIconUpload"  
+          
+          :show-size="true"
             prepend-icon="mdi-image" />
         </v-card-text>
         <v-divider />

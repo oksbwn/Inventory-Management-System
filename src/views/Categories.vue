@@ -17,12 +17,7 @@
               </div>
             </div>
           </div>
-          <v-btn 
-            color="primary" 
-            prepend-icon="mdi-plus"
-            elevation="2"
-            @click="openAddDialog"
-          >
+          <v-btn color="primary" prepend-icon="mdi-plus" elevation="2" @click="openAddDialog">
             Add Category
           </v-btn>
         </div>
@@ -81,16 +76,8 @@
     <!-- Filter Bar and View Toggle -->
     <v-row class="mb-5" align="center">
       <v-col cols="12" md="8">
-        <v-text-field
-          v-model="searchQuery"
-          label="Search categories"
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          density="comfortable"
-          outlined
-          @keyup.enter="onSearch"
-          @click:clear="onSearch"
-        />
+        <v-text-field v-model="searchQuery" label="Search categories" prepend-inner-icon="mdi-magnify" clearable
+          density="comfortable" outlined @keyup.enter="onSearch" @click:clear="onSearch" />
       </v-col>
       <v-col cols="12" md="4" class="d-flex justify-end">
         <v-btn :color="viewMode === 'grid' ? 'primary' : ''" icon @click="viewMode = 'grid'">
@@ -110,7 +97,7 @@
       <!-- Loading State -->
       <v-row v-if="categoryStore.loading && categories.length === 0" justify="center">
         <v-col cols="12" class="text-center">
-          <v-progress-circular indeterminate size="48" color="primary"/>
+          <v-progress-circular indeterminate size="48" color="primary" />
           <div class="mt-3">Loading categories...</div>
         </v-col>
       </v-row>
@@ -143,32 +130,19 @@
                 </div>
               </div>
               <div class="caption mb-1">
-                <v-icon size="16" color="green" v-if="category.recent_additions > 0">mdi-plus-circle</v-icon> 
+                <v-icon size="16" color="green" v-if="category.recent_additions > 0">mdi-plus-circle</v-icon>
                 {{ category.recent_additions || 0 }} new (last 30d)
               </div>
-              <div class="caption" v-if="category.first_component_date">Added since: {{ formatDate(category.first_component_date) }}</div>
+              <div class="caption" v-if="category.first_component_date">Added since: {{
+                formatDate(category.first_component_date) }}</div>
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions>
               <v-spacer />
-              <v-btn
-                color="primary"
-                class="action-btn"
-                variant="flat"
-                icon
-                size="large"
-                @click="editItem(category)"
-              >
+              <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editItem(category)">
                 <v-icon size="22">mdi-pencil</v-icon>
               </v-btn>
-              <v-btn
-                color="error"
-                class="action-btn"
-                variant="flat"
-                icon
-                size="large"
-                @click="deleteItem(category)"
-              >
+              <v-btn color="error" class="action-btn" variant="flat" icon size="large" @click="deleteItem(category)">
                 <v-icon size="22">mdi-delete</v-icon>
               </v-btn>
             </v-card-actions>
@@ -191,7 +165,8 @@
             <v-chip :color="category.component_count > 0 ? 'success' : 'grey'" size="small" flat class="mr-2">
               {{ category.component_count || 0 }} items
             </v-chip>
-            <span v-if="category.recent_additions > 0" class="caption green--text">+{{ category.recent_additions }} new</span>
+            <span v-if="category.recent_additions > 0" class="caption green--text">+{{ category.recent_additions }}
+              new</span>
           </v-list-item-subtitle>
           <template #append>
             <v-btn color="primary" class="action-btn" variant="flat" icon size="large" @click="editItem(category)">
@@ -206,18 +181,14 @@
 
       <!-- Pagination -->
       <v-row justify="center" v-if="totalPages > 1">
-        <v-pagination
-          v-model="page"
-          :length="totalPages"
-          @update:model-value="onPageChange"
-          :total-visible="7"
-        />
+        <v-pagination v-model="page" :length="totalPages" @update:model-value="onPageChange" :total-visible="7" />
       </v-row>
     </v-card>
 
     <!-- Dialogs -->
-    <category-form-dialog v-model="showAddEditDialog" :category-item="selectedCategory" @success="handleSuccess"/>
-    <delete-confirm-dialog v-model="showDeleteDialog" :item-name="selectedCategory?.category_name" @confirm="handleDelete"/>
+    <category-form-dialog v-model="showAddEditDialog" :category-item="selectedCategory" @success="handleSuccess" />
+    <delete-confirm-dialog v-model="showDeleteDialog" :item-name="selectedCategory?.category_name"
+      @confirm="handleDelete" />
 
     <!-- Notifications -->
     <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" top right>
@@ -308,6 +279,7 @@ const editItem = (category) => {
 const deleteItem = (category) => {
   selectedCategory.value = category
   showDeleteDialog.value = true
+  refreshData();
 }
 
 const handleDelete = async () => {
@@ -318,6 +290,7 @@ const handleDelete = async () => {
     showSuccessSnackbar.value = true
     await loadCategories()
   } catch (error) {
+    console.log(error);
     showError.value = true
   }
 }
@@ -369,7 +342,7 @@ onMounted(() => loadCategories())
 }
 
 .category-card:hover {
-  box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.11);
   border-color: #1976d2;
 }
 
@@ -390,14 +363,17 @@ onMounted(() => loadCategories())
   color: #1976d2 !important;
   border-radius: 8px !important;
   padding: 5px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: background-color 0.2s, box-shadow 0.2s;
 }
+
 .action-btn:last-child {
   margin-right: 0;
 }
-.action-btn[aria-pressed='true'], .action-btn:hover {
+
+.action-btn[aria-pressed='true'],
+.action-btn:hover {
   background-color: #e3e0fa !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.10) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10) !important;
 }
 </style>

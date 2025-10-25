@@ -1,52 +1,88 @@
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
+  <v-dialog 
+    :model-value="modelValue" 
+    @update:model-value="$emit('update:modelValue', $event)" 
     max-width="600px"
     persistent
+    scrollable
   >
-    <v-card>
-      <v-card-title class="pa-6 pb-4">
-        <span class="text-h5 font-weight-bold">
-          {{ isEdit ? 'Edit Category' : 'Add New Category' }}
-        </span>
+    <v-card class="category-dialog">
+      <v-card-title class="dialog-header pa-6">
+        <div class="d-flex align-center">
+          <v-avatar 
+            :color="isEdit ? 'primary' : 'success'" 
+            size="40" 
+            class="mr-3"
+          >
+            <v-icon color="white" size="24">
+              {{ isEdit ? 'mdi-pencil' : 'mdi-plus' }}
+            </v-icon>
+          </v-avatar>
+          <div>
+            <h2 class="text-h6 font-weight-bold mb-0">
+              {{ isEdit ? 'Edit Category' : 'Add New Category' }}
+            </h2>
+            <p class="text-caption text-medium-emphasis mb-0">
+              {{ isEdit ? 'Update category information' : 'Create a new category entry' }}
+            </p>
+          </div>
+        </div>
       </v-card-title>
 
-      <v-divider></v-divider>
+      <v-divider />
 
       <v-card-text class="pa-6">
         <v-form ref="formRef" @submit.prevent="handleSubmit">
-          <v-text-field
-            v-model="form.category_name"
-            label="Category Name *"
-            :rules="[v => !!v || 'Category name is required']"
-            variant="outlined"
-            density="comfortable"
-            required
-            autofocus
-            class="mb-4"
-          ></v-text-field>
+          <!-- Category Icon Display -->
+          <div class="text-center mb-6">
+            <v-avatar color="primary" size="80" variant="tonal" class="category-icon-display">
+              <v-icon size="40">mdi-shape</v-icon>
+            </v-avatar>
+            <p class="text-caption text-medium-emphasis mt-3 mb-0">
+              Category Icon
+            </p>
+          </div>
+
+          <!-- Form Fields -->
+          <v-row dense>
+            <v-col cols="12">
+              <v-text-field 
+                v-model="form.category_name" 
+                label="Category Name *" 
+                :rules="[rules.required]"
+                prepend-inner-icon="mdi-shape"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                autofocus
+                placeholder="e.g., Electronics, Hardware, Software"
+              />
+            </v-col>
+          </v-row>
         </v-form>
       </v-card-text>
 
-      <v-divider></v-divider>
+      <v-divider />
 
-      <v-card-actions class="pa-4">
-        <v-spacer></v-spacer>
-        <v-btn
-          variant="text"
+      <v-card-actions class="pa-6">
+        <v-spacer />
+        <v-btn 
+          variant="text" 
           @click="handleClose"
+          size="large"
           :disabled="loading"
         >
           Cancel
         </v-btn>
-        <v-btn
-          color="primary"
-          variant="flat"
-          @click="handleSubmit"
+        <v-btn 
+          color="primary" 
+          @click="handleSubmit" 
           :loading="loading"
+          size="large"
+          variant="flat"
+          class="px-6"
         >
-          {{ isEdit ? 'Update' : 'Create' }}
+          {{ isEdit ? 'Update Category' : 'Create Category' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -76,9 +112,12 @@ const form = ref({
   category_name: ''
 })
 
+const rules = {
+  required: value => !!value || 'This field is required'
+}
+
 const isEdit = computed(() => !!props.categoryItem?.category_id)
 
-// Define resetForm BEFORE watch
 const resetForm = () => {
   form.value = {
     category_name: ''
@@ -88,7 +127,6 @@ const resetForm = () => {
   }
 }
 
-// Now watch can use resetForm
 watch(() => props.categoryItem, (newVal) => {
   if (newVal) {
     form.value = {
@@ -109,12 +147,44 @@ const handleSubmit = async () => {
   
   if (!valid) return
 
-  emit('success', {
-    data: form.value,
-    isEdit: isEdit.value,
-    id: props.categoryItem?.category_id
-  })
-  
-  handleClose()
+  loading.value = true
+
+  try {
+    emit('success', {
+      data: form.value,
+      isEdit: isEdit.value,
+      id: props.categoryItem?.category_id
+    })
+    
+    handleClose()
+  } finally {
+    loading.value = false
+  }
 }
 </script>
+
+<style scoped>
+.category-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.dialog-header .text-medium-emphasis {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.category-icon-display {
+  border: 3px dashed rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.category-icon-display:hover {
+  border-color: rgba(102, 126, 234, 0.6);
+  transform: scale(1.05);
+}
+</style>

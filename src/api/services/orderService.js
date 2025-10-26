@@ -22,6 +22,9 @@ export default {
 
   // Delete order
   deleteOrder(id) {
-    return apiClient.post('/webhook/api/orders/delete', { order_id: id })
+    return apiClient.post('/api/orders/delete', { order_id: id })
+  },
+  getOrdersMeta(){
+    return apiClient.get('/webhook/api/orders/metadata')
   }
 }

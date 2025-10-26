@@ -23,7 +23,28 @@ export default {
   getStockGist() {
     return apiClient.get("/webhook/api/components/gist");
   },
-  getAllComponents(){
+  getAllComponents() {
     return apiClient.get("/webhook/api/components/all");
-  }
+  },
+  getPurchaseHistory(componentId) {
+    return apiClient.post(`/webhook/api/components/purchase-history`, {
+      component_id: componentId,
+    });
+  },
+  getProjectUsage(componentId) {
+    return apiClient.post(`/webhook/api/components/project-usage`, {
+      component_id: componentId,
+    });
+  },
+  getGeneralUsage(componentId) {
+    return apiClient.post(`/webhook/api/components/general-usage`, {
+      component_id: componentId,
+    });
+  },
+  updateComponent(componentId, updateData) {
+    return apiClient.post(`/webhook/api/components/update`, {
+      component_id: componentId,
+      ...updateData,
+    });
+  },
 };

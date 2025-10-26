@@ -26,12 +26,20 @@ export const useStockStore = defineStore("stock", () => {
     no_stock: 0,
   });
 
-  // Rename for clarity
+  const purchaseHistory = ref([]);
+  const purchaseHistoryLoading = ref(false);
+  const purchaseHistoryError = ref(null);
   const stocks = baseStore.items;
   const fetchStocks = baseStore.fetchItems;
   const createStock = baseStore.createItem;
   const updateStock = baseStore.updateItem;
   const deleteStock = baseStore.deleteItem;
+  const generalUsage = ref([]);
+  const generalUsageLoading = ref(false);
+  const generalUsageError = ref(null);
+  const projectUsage = ref([]);
+  const projectUsageLoading = ref(false);
+  const projectUsageError = ref(null);
 
   const fetchStockGist = async () => {
     const res = await stockServiceAdapter.getGist();
@@ -39,9 +47,92 @@ export const useStockStore = defineStore("stock", () => {
   };
 
   const allComponents = async () => {
-    const res = await stockService.getAllComponents()
+    const res = await stockService.getAllComponents();
     return res;
   };
+  const fetchPurchaseHistory = async (componentId) => {
+    purchaseHistoryLoading.value = true;
+    purchaseHistoryError.value = null;
+    try {
+      const history = await stockService.getPurchaseHistory(componentId);
+      purchaseHistory.value = history.items || [];
+      return history.items;
+    } catch (err) {
+      purchaseHistoryError.value =
+        err.message || "Failed to fetch purchase history";
+      purchaseHistory.value = [];
+      throw err;
+    } finally {
+      purchaseHistoryLoading.value = false;
+    }
+  };
+
+  const fetchProjectUsage = async (componentId) => {
+    projectUsageLoading.value = true;
+    projectUsageError.value = null;
+
+    try {
+      const response = await stockService.getProjectUsage(componentId);
+      let data = typeof response === "string" ? JSON.parse(response) : response;
+      if (Array.isArray(data)) {
+        projectUsage.value = data;
+      } else if (data && data.data && Array.isArray(data.data)) {
+        projectUsage.value = data.data;
+      } else {
+        projectUsage.value = [];
+      }
+
+      return projectUsage.value;
+    } catch (err) {
+      projectUsageError.value = err.message || "Failed to fetch project usage";
+      projectUsage.value = [];
+      throw err;
+    } finally {
+      projectUsageLoading.value = false;
+    }
+  };
+  const fetchGeneralUsage = async (componentId) => {
+    generalUsageLoading.value = true;
+    generalUsageError.value = null;
+
+    try {
+      const response = await stockService.getGeneralUsage(componentId);
+      let data = typeof response === "string" ? JSON.parse(response) : response;
+
+      if (Array.isArray(data)) {
+        generalUsage.value = data;
+      } else if (data && data.data && Array.isArray(data.data)) {
+        generalUsage.value = data.data;
+      } else {
+        generalUsage.value = [];
+      }
+
+      return generalUsage.value;
+    } catch (err) {
+      generalUsageError.value = err.message || "Failed to fetch general usage";
+      generalUsage.value = [];
+      throw err;
+    } finally {
+      generalUsageLoading.value = false;
+    }
+  };
+
+  const updateComponent = async (componentId, updateData) => {
+  try {
+    const response = await stockService.updateComponent(componentId, updateData);
+    
+    // Update the stock in local state
+    const index = stocks.value.findIndex(s => s.id === componentId);
+    if (index !== -1) {
+      stocks.value[index] = { ...stocks.value[index], ...response };
+    }
+    
+    return response;
+  } catch (err) {
+    console.error('Failed to update component:', err);
+    throw err;
+  }
+};
   return {
     // State
     stocks,
@@ -64,5 +155,9 @@ export const useStockStore = defineStore("stock", () => {
     stockGist,
     fetchStockGist,
     allComponents,
+    fetchPurchaseHistory,
+    fetchProjectUsage,
+    fetchGeneralUsage,
+    updateComponent
   };
 });

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { useBaseStore } from "@/composables/useBaseStore";
 import stockService from "@/api/services/stockService";
 import { ref } from "vue";
+
 // Service adapter with proper ES imports
 const stockServiceAdapter = {
   getItems: (params) => stockService.getStocks(params),
@@ -50,6 +51,7 @@ export const useStockStore = defineStore("stock", () => {
     const res = await stockService.getAllComponents();
     return res;
   };
+
   const fetchPurchaseHistory = async (componentId) => {
     purchaseHistoryLoading.value = true;
     purchaseHistoryError.value = null;
@@ -91,6 +93,7 @@ export const useStockStore = defineStore("stock", () => {
       projectUsageLoading.value = false;
     }
   };
+
   const fetchGeneralUsage = async (componentId) => {
     generalUsageLoading.value = true;
     generalUsageError.value = null;
@@ -117,22 +120,54 @@ export const useStockStore = defineStore("stock", () => {
     }
   };
 
-  const updateComponent = async (componentId, updateData) => {
-  try {
-    const response = await stockService.updateComponent(componentId, updateData);
-    
-    // Update the stock in local state
-    const index = stocks.value.findIndex(s => s.id === componentId);
-    if (index !== -1) {
-      stocks.value[index] = { ...stocks.value[index], ...response };
+  const createComponent = async (componentData) => {
+    try {
+      const response = await stockService.createComponent(componentData);
+      
+      // Parse response if it's a string
+      const newComponent = typeof response === 'string' ? JSON.parse(response)[0] : response[0] || response;
+      
+      // Add the new component to local state
+      stocks.value.unshift(newComponent);
+      
+      // Update total items count
+      if (baseStore.totalItems) {
+        baseStore.totalItems.value++;
+      }
+      
+      // Clear cache to force refresh on next fetch
+      baseStore.clearCache();
+      
+      return newComponent;
+    } catch (err) {
+      console.error('Failed to create component:', err);
+      throw err;
     }
-    
-    return response;
-  } catch (err) {
-    console.error('Failed to update component:', err);
-    throw err;
-  }
-};
+  };
+
+  const updateComponent = async (componentId, updateData) => {
+    try {
+      const response = await stockService.updateComponent(componentId, updateData);
+      
+      // Parse response if it's a string
+      const updatedComponent = typeof response === 'string' ? JSON.parse(response)[0] : response[0] || response;
+      
+      // Update the component in local state
+      const index = stocks.value.findIndex(s => s.id === componentId || s.component_id === componentId);
+      if (index !== -1) {
+        stocks.value[index] = { ...stocks.value[index], ...updatedComponent };
+      }
+      
+      // Clear cache to ensure fresh data on next fetch
+      baseStore.clearCache();
+      
+      return updatedComponent;
+    } catch (err) {
+      console.error('Failed to update component:', err);
+      throw err;
+    }
+  };
+
   return {
     // State
     stocks,
@@ -158,6 +193,7 @@ export const useStockStore = defineStore("stock", () => {
     fetchPurchaseHistory,
     fetchProjectUsage,
     fetchGeneralUsage,
+    createComponent,
     updateComponent
   };
 });

@@ -47,4 +47,16 @@ export default {
       ...updateData,
     });
   },
+
+  createComponent(componentData) {
+    return apiClient.post(`/webhook/api/components/create`, {
+      name: componentData.name,
+      category_id: componentData.category_id,
+      box_id: componentData.box_id || null,
+      description: componentData.description || "",
+      image_content: componentData.image_content,
+      image_type: componentData.image_type,
+      imaeg_name: componentData.imaeg_name,
+    });
+  },
 };

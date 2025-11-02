@@ -17,9 +17,10 @@
               </div>
             </div>
           </div>
-          <v-btn color="primary" prepend-icon="mdi-plus" size="large" class="add-box-btn" @click="openAddDialog">
+          <BaseButton variant="contained" color="primary" size="large" class="add-box-btn" @click="openAddDialog">
+            <v-icon class="mr-2">mdi-plus</v-icon>
             Add Box
-          </v-btn>
+          </BaseButton>
         </div>
       </v-col>
     </v-row>
@@ -27,8 +28,8 @@
     <!-- Stats Cards -->
     <v-row class="mb-8" dense>
       <v-col cols="12" sm="3" md="3" lg="2-4">
-        <v-card class="stats-card" elevation="0">
-          <v-card-text class="pa-5">
+        <BaseCard variant="default" elevation="0" class="stats-card">
+          <div class="pa-5">
             <div class="d-flex align-center justify-space-between mb-3">
               <div class="stats-icon-wrapper primary-gradient">
                 <v-icon color="white" size="24">mdi-shape</v-icon>
@@ -37,13 +38,13 @@
             </div>
             <div class="text-h5 font-weight-bold mb-1">{{ boxStore.totalBoxes || 0 }}</div>
             <div class="text-caption text-medium-emphasis">Boxes</div>
-          </v-card-text>
-        </v-card>
+          </div>
+        </BaseCard>
       </v-col>
 
       <v-col cols="12" sm="3" md="3" lg="2-4">
-        <v-card class="stats-card" elevation="0">
-          <v-card-text class="pa-5">
+        <BaseCard variant="default" elevation="0" class="stats-card">
+          <div class="pa-5">
             <div class="d-flex align-center justify-space-between mb-3">
               <div class="stats-icon-wrapper success-gradient">
                 <v-icon color="white" size="24">mdi-check-circle</v-icon>
@@ -52,13 +53,13 @@
             </div>
             <div class="text-h5 font-weight-bold mb-1">{{ boxStore.activeBoxes || 0 }}</div>
             <div class="text-caption text-medium-emphasis">Active</div>
-          </v-card-text>
-        </v-card>
+          </div>
+        </BaseCard>
       </v-col>
 
       <v-col cols="12" sm="3" md="3" lg="2-4">
-        <v-card class="stats-card" elevation="0">
-          <v-card-text class="pa-5">
+        <BaseCard variant="default" elevation="0" class="stats-card">
+          <div class="pa-5">
             <div class="d-flex align-center justify-space-between mb-3">
               <div class="stats-icon-wrapper grey-gradient">
                 <v-icon color="white" size="24">mdi-package-variant-closed</v-icon>
@@ -67,13 +68,13 @@
             </div>
             <div class="text-h5 font-weight-bold mb-1">{{ boxStore.emptyBoxes || 0 }}</div>
             <div class="text-caption text-medium-emphasis">Empty</div>
-          </v-card-text>
-        </v-card>
+          </div>
+        </BaseCard>
       </v-col>
 
       <v-col cols="12" sm="3" md="3" lg="2-4">
-        <v-card class="stats-card" elevation="0">
-          <v-card-text class="pa-5">
+        <BaseCard variant="default" elevation="0" class="stats-card">
+          <div class="pa-5">
             <div class="d-flex align-center justify-space-between mb-3">
               <div class="stats-icon-wrapper info-gradient">
                 <v-icon color="white" size="24">mdi-database</v-icon>
@@ -82,8 +83,8 @@
             </div>
             <div class="text-h5 font-weight-bold mb-1">{{ boxStore.totalComponents || 0 }}</div>
             <div class="text-caption text-medium-emphasis">Components</div>
-          </v-card-text>
-        </v-card>
+          </div>
+        </BaseCard>
       </v-col>
     </v-row>
 
@@ -91,16 +92,39 @@
     <v-row class="mb-6" align="center">
       <v-col cols="12" md="8">
         <div class="search-wrapper">
-          <v-text-field v-model="searchQuery" placeholder="Search boxes..." prepend-inner-icon="mdi-magnify" clearable
-            density="comfortable" variant="outlined" @keyup.enter="onSearch" @click:clear="onSearch" hide-details
-            class="search-field" />
-          <v-btn color="primary" @click="onSearch" height="46" width="46" class="search-btn" aria-label="Search">
+          <v-text-field 
+            v-model="searchQuery" 
+            placeholder="Search boxes..." 
+            prepend-inner-icon="mdi-magnify" 
+            clearable
+            density="comfortable" 
+            variant="outlined" 
+            @keyup.enter="onSearch" 
+            @click:clear="onSearch" 
+            hide-details
+            class="search-field" 
+          />
+          <BaseButton 
+            variant="contained" 
+            color="primary" 
+            @click="onSearch" 
+            size="large" 
+            class="search-btn"
+            aria-label="Search"
+          >
             <v-icon>mdi-magnify</v-icon>
-          </v-btn>
+          </BaseButton>
         </div>
       </v-col>
       <v-col cols="12" md="4" class="d-flex justify-end align-center ga-2">
-        <v-btn-toggle v-model="viewMode" mandatory density="comfortable" variant="outlined" divided class="view-toggle">
+        <v-btn-toggle 
+          v-model="viewMode" 
+          mandatory 
+          density="comfortable" 
+          variant="outlined" 
+          divided 
+          class="view-toggle"
+        >
           <v-btn value="grid" aria-label="Grid view">
             <v-icon>mdi-view-grid</v-icon>
           </v-btn>
@@ -112,42 +136,43 @@
     </v-row>
 
     <!-- Main Content Card -->
-    <v-card elevation="0" class="main-card">
+    <BaseCard elevation="0" class="main-card">
       <!-- Loading State -->
-      <v-row v-if="boxStore.loading && boxes.length === 0" justify="center" class="py-12">
-        <v-col cols="12" class="text-center">
-          <v-progress-circular indeterminate size="64" color="primary" width="3" />
-          <div class="mt-4 text-h6 text-medium-emphasis">Loading boxes...</div>
-        </v-col>
-      </v-row>
+      <BaseLoading 
+        v-if="boxStore.loading && boxes.length === 0" 
+        type="skeleton" 
+        :count="8" 
+        label="Loading boxes..." 
+      />
 
       <!-- Empty State -->
-      <v-row v-else-if="boxes.length === 0" class="py-12">
-        <v-col cols="12" class="text-center">
-          <div class="empty-state">
-            <v-icon size="120" color="grey-lighten-2">mdi-package-variant-closed-plus</v-icon>
-            <h3 class="text-h5 font-weight-bold mt-4 mb-2">No boxes found</h3>
-            <p class="text-body-2 text-medium-emphasis mb-6">Get started by adding your first storage box</p>
-            <v-btn color="primary" size="large" @click="openAddDialog" prepend-icon="mdi-plus">
-              Add Your First Box
-            </v-btn>
-          </div>
-        </v-col>
-      </v-row>
+      <BaseEmpty
+        v-else-if="boxes.length === 0"
+        icon="mdi-package-variant-closed-plus"
+        title="No boxes found"
+        description="Get started by adding your first storage box"
+        :action-button="true"
+        action-text="Add Your First Box"
+        @action="openAddDialog"
+      />
 
-      <!-- Grid View -->
       <!-- Grid View -->
       <v-row v-else-if="viewMode === 'grid'" class="pa-4">
         <v-col v-for="box in boxes" :key="box.box_id" cols="12" sm="6" md="4" lg="3">
-          <v-card class="box-card" elevation="0">
-            <v-card-text class="pa-4">
+          <BaseCard variant="default" elevation="0" class="box-card">
+            <div class="pa-4">
               <div class="qr-code-wrapper mx-auto mb-4">
                 <v-img :src="box.filename" class="qr-code-image" alt="Box QR Code" cover />
               </div>
 
               <div class="text-center">
                 <div class="d-flex align-center justify-center gap-2 mb-2">
-                  <v-chip :color="getSizeColor(box.box_size)" size="small" variant="tonal" class="font-weight-bold">
+                  <v-chip 
+                    :color="getSizeColor(box.box_size)" 
+                    size="small" 
+                    variant="tonal" 
+                    class="font-weight-bold"
+                  >
                     {{ box.box_size || 'N/A' }}
                   </v-chip>
                 </div>
@@ -156,8 +181,12 @@
                 <p class="text-caption text-medium-emphasis mb-2">{{ box.box_code }}</p>
 
                 <div class="box-details">
-                  <v-chip :color="box.component_count > 0 ? 'success' : 'grey'" size="small" variant="tonal"
-                    class="mb-2">
+                  <v-chip 
+                    :color="box.component_count > 0 ? 'success' : 'grey'" 
+                    size="small" 
+                    variant="tonal"
+                    class="mb-2"
+                  >
                     <v-icon size="14" class="mr-1">mdi-cube</v-icon>
                     {{ box.component_count || 0 }} components
                   </v-chip>
@@ -167,27 +196,42 @@
                   </div>
                 </div>
               </div>
-            </v-card-text>
-            <v-divider />
-            <v-card-actions class="pa-3 justify-center">
-              <v-btn color="primary" variant="tonal" size="small" @click="editBox(box)">
-                <v-icon size="18" class="mr-1">mdi-pencil</v-icon>
-                Edit
-              </v-btn>
-              <v-btn color="error" variant="tonal" size="small" @click="deleteBox(box)">
-                <v-icon size="18" class="mr-1">mdi-delete</v-icon>
-                Delete
-              </v-btn>
-            </v-card-actions>
-          </v-card>
+            </div>
+
+            <template #actions>
+              <div class="d-flex justify-center align-center gap-3 w-100">
+                <BaseButton 
+                  variant="tonal" 
+                  color="primary" 
+                  size="small" 
+                  class="action-btn-square"
+                  @click="editBox(box)"
+                >
+                  <v-icon size="16">mdi-pencil</v-icon>
+                </BaseButton>
+                <BaseButton 
+                  variant="tonal" 
+                  color="error" 
+                  size="small" 
+                  class="action-btn-square"
+                  @click="deleteBox(box)"
+                >
+                  <v-icon size="16">mdi-delete</v-icon>
+                </BaseButton>
+              </div>
+            </template>
+          </BaseCard>
         </v-col>
       </v-row>
 
       <!-- List View -->
-
-      <!-- List View -->
       <v-list v-else class="pa-4">
-        <v-list-item v-for="box in boxes" :key="box.box_id" class="box-list-item mb-3" rounded="lg">
+        <v-list-item 
+          v-for="box in boxes" 
+          :key="box.box_id" 
+          class="box-list-item mb-3" 
+          rounded="lg"
+        >
           <template #prepend>
             <div class="qr-code-wrapper-list">
               <v-img :src="box.filename" class="qr-code-image" alt="Box QR Code" cover />
@@ -200,11 +244,20 @@
 
           <v-list-item-subtitle>
             <div class="d-flex flex-wrap ga-3 mt-1">
-              <v-chip :color="getSizeColor(box.box_size)" size="x-small" variant="tonal" class="font-weight-bold">
+              <v-chip 
+                :color="getSizeColor(box.box_size)" 
+                size="x-small" 
+                variant="tonal" 
+                class="font-weight-bold"
+              >
                 Size: {{ box.box_size || 'N/A' }}
               </v-chip>
               <span class="text-caption text-medium-emphasis">{{ box.box_code }}</span>
-              <v-chip :color="box.component_count > 0 ? 'success' : 'grey'" size="x-small" variant="tonal">
+              <v-chip 
+                :color="box.component_count > 0 ? 'success' : 'grey'" 
+                size="x-small" 
+                variant="tonal"
+              >
                 {{ box.component_count || 0 }} components
               </v-chip>
               <span v-if="box.recent_additions > 0" class="text-caption">
@@ -215,13 +268,27 @@
           </v-list-item-subtitle>
 
           <template #append>
-            <div class="d-flex ga-2">
-              <v-btn color="primary" variant="tonal" size="small" @click="editBox(box)">
-                <v-icon size="18">mdi-pencil</v-icon>
-              </v-btn>
-              <v-btn color="error" variant="tonal" size="small" @click="deleteBox(box)">
-                <v-icon size="18">mdi-delete</v-icon>
-              </v-btn>
+            <div class="d-flex ga-2 align-center">
+              <BaseButton 
+                variant="tonal" 
+                color="primary" 
+                size="small" 
+                class="action-btn-square-list"
+                @click="editBox(box)" 
+                aria-label="Edit box"
+              >
+                <v-icon>mdi-pencil</v-icon>
+              </BaseButton>
+              <BaseButton 
+                variant="tonal" 
+                color="error" 
+                size="small" 
+                class="action-btn-square-list"
+                @click="deleteBox(box)" 
+                aria-label="Delete box"
+              >
+                <v-icon>mdi-delete</v-icon>
+              </BaseButton>
             </div>
           </template>
         </v-list-item>
@@ -230,25 +297,43 @@
       <!-- Pagination -->
       <v-divider v-if="totalPages > 1" class="mt-4" />
       <div v-if="totalPages > 1" class="pa-4 d-flex justify-center">
-        <v-pagination v-model="page" :length="totalPages" @update:model-value="onPageChange" :total-visible="7"
-          size="small" rounded="circle" />
+        <v-pagination 
+          v-model="page" 
+          :length="totalPages" 
+          @update:model-value="onPageChange" 
+          :total-visible="7"
+          size="small" 
+          rounded="circle" 
+        />
       </div>
-    </v-card>
+    </BaseCard>
 
     <!-- Dialogs -->
-    <box-form-dialog v-model="showAddEditDialog" :box-item="selectedBox" @success="handleBoxSuccess" />
-    <delete-confirm-dialog v-model="showDeleteDialog" :item-name="selectedBox?.box_label" @confirm="handleBoxDelete" />
+    <box-form-dialog 
+      v-model="showAddEditDialog" 
+      :box-item="selectedBox" 
+      @success="handleBoxSuccess" 
+    />
+    <delete-confirm-dialog 
+      v-model="showDeleteDialog" 
+      :item-name="selectedBox?.box_label" 
+      @confirm="handleBoxDelete" 
+    />
 
     <!-- Notifications -->
-    <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" location="top right">
-      <v-icon class="mr-2">mdi-check-circle</v-icon> {{ successMessage }}
-    </v-snackbar>
-    <v-snackbar v-model="showError" color="error" :timeout="5000" location="top right">
-      <v-icon class="mr-2">mdi-alert-circle</v-icon> {{ errorMessage }}
-      <template v-slot:actions>
-        <v-btn variant="text" @click="showError = false">Close</v-btn>
-      </template>
-    </v-snackbar>
+    <BaseSnackbar
+      v-model="showSuccessSnackbar"
+      :message="successMessage"
+      type="success"
+      :timeout="3000"
+    />
+    
+    <BaseSnackbar
+      v-model="showError"
+      :message="errorMessage"
+      type="error"
+      :timeout="5000"
+    />
   </v-container>
 </template>
 
@@ -359,6 +444,7 @@ watch(() => boxStore.error, (val) => {
     showError.value = true
   }
 })
+
 // Helper to get size color
 const getSizeColor = (size) => {
   const colorMap = {
@@ -370,11 +456,11 @@ const getSizeColor = (size) => {
   return colorMap[size] || 'grey'
 }
 
-
 onMounted(() => loadBoxes())
 </script>
 
 <style scoped>
+/* All your existing styles remain unchanged */
 .boxes-page {
   background: #fafbfc;
   min-height: 100vh;
@@ -429,11 +515,6 @@ onMounted(() => loadBoxes())
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
-.warning-gradient {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-/* QR Code wrapper for grid view */
 .qr-code-wrapper {
   width: 120px;
   height: 120px;
@@ -452,7 +533,6 @@ onMounted(() => loadBoxes())
   transform: scale(1.05);
 }
 
-/* QR Code wrapper for list view */
 .qr-code-wrapper-list {
   width: 56px;
   height: 56px;
@@ -478,6 +558,39 @@ onMounted(() => loadBoxes())
   object-fit: contain;
 }
 
+/* Action Button Styles - Grid View */
+.action-btn-square {
+  min-width: 36px !important;
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border-radius: 8px;
+}
+
+/* Action Button Styles - List View */
+.action-btn-square-list {
+  min-width: 32px !important;
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  border-radius: 6px;
+}
+
+/* Ensure icons are visible and centered */
+.action-btn-square :deep(.v-btn__content),
+.action-btn-square-list :deep(.v-btn__content) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn-square :deep(.v-icon),
+.action-btn-square-list :deep(.v-icon) {
+  margin: 0 !important;
+  opacity: 1 !important;
+}
+
+
 .search-wrapper {
   display: flex;
   gap: 12px;
@@ -491,6 +604,10 @@ onMounted(() => loadBoxes())
 .search-btn {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 46px;
+  width: 46px;
+  height: 46px;
+  padding: 0;
 }
 
 .view-toggle {
@@ -532,10 +649,6 @@ onMounted(() => loadBoxes())
   background: #f7f9fc;
   border-color: #d0d7de;
   transform: translateX(4px);
-}
-
-.empty-state {
-  padding: 60px 20px;
 }
 
 @keyframes fadeIn {

@@ -34,11 +34,8 @@
                 </v-icon>
               </v-avatar>
 
-              <!-- Upload button overlay -->
-              <v-btn icon size="small" color="primary" class="upload-btn" @click="triggerFileInput" elevation="2"
-                rounded="circle">
-                <v-icon size="16">mdi-camera</v-icon>
-              </v-btn>
+              <BaseButton icon="mdi-camera" size="small" variant="contained" color="primary" class="upload-btn"
+                @click="triggerFileInput" aria-label="Upload component image" />
             </div>
 
             <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileUpload" />
@@ -47,62 +44,71 @@
               {{ imagePreview ? 'Click camera icon to change' : 'Click camera icon to upload' }}
             </p>
 
-            <v-btn v-if="imagePreview" variant="text" size="x-small" color="error" @click="clearImage" class="mt-2">
+            <BaseButton v-if="imagePreview" variant="text" size="small" color="error" @click="clearImage" class="mt-2">
               Remove Image
-            </v-btn>
+            </BaseButton>
           </div>
 
           <!-- Form Fields -->
           <v-row>
+            <!-- Component Name -->
             <v-col cols="12">
-              <v-text-field v-model="form.name" label="Component Name *" :rules="[rules.required]" variant="outlined"
-                density="comfortable" hide-details="auto" autofocus placeholder="e.g., Arduino Uno, Resistor 10k"
-                rounded="0">
-                <template #prepend-inner>
-                  <v-icon size="20" color="primary">mdi-chip</v-icon>
-                </template>
-              </v-text-field>
+              <BaseFormField label="Component Name" required helper-text="Enter a descriptive name">
+                <v-text-field v-model="form.name" :rules="[rules.required]" variant="outlined" density="comfortable"
+                  hide-details autofocus placeholder="e.g., Arduino Uno, Resistor 10k" rounded="lg">
+                  <template #prepend-inner>
+                    <v-icon size="20" color="primary">mdi-chip</v-icon>
+                  </template>
+                </v-text-field>
+              </BaseFormField>
             </v-col>
 
-            <v-col cols="12" class="mt-2">
-              <div class="d-flex ga-2 align-center">
-                <v-autocomplete v-model="form.category_id" :items="categories" item-title="category_name"
-                  item-value="category_id" label="Category *" :rules="[rules.required]" variant="outlined"
-                  density="comfortable" hide-details="auto" style="flex: 1" placeholder="Select a category" rounded="0">
-                  <template #prepend-inner>
-                    <v-icon size="20" color="primary">mdi-shape</v-icon>
-                  </template>
-                </v-autocomplete>
-                <v-btn icon color="primary" density="comfortable" rounded="0" @click="$emit('add-category')">
-                  <v-icon size="20">mdi-plus</v-icon>
-                  <v-tooltip activator="parent" location="top">Add Category</v-tooltip>
-                </v-btn>
-              </div>
+            <!-- Category with Add Button -->
+            <v-col cols="12" class="mt-4">
+              <BaseFormField label="Category" required helper-text="Select or add a category">
+                <div class="d-flex ga-2 align-center">
+                  <v-autocomplete v-model="form.category_id" :items="categories" item-title="category_name"
+                    item-value="category_id" :rules="[rules.required]" variant="outlined" density="comfortable"
+                    hide-details style="flex: 1" placeholder="Select a category" rounded="lg">
+                    <template #prepend-inner>
+                      <v-icon size="20" color="primary">mdi-shape</v-icon>
+                    </template>
+                  </v-autocomplete>
+
+                  <BaseButton icon="mdi-plus" variant="contained" color="primary" size="default"
+                    @click="openAddCategoryDialog" aria-label="Add new category" class="add-quick-btn" />
+                </div>
+              </BaseFormField>
             </v-col>
 
-            <v-col cols="12" class="mt-2">
-              <div class="d-flex ga-2 align-center">
-                <v-autocomplete v-model="form.box_id" :items="boxes" item-title="box_label" item-value="box_id"
-                  label="Storage Box *" :rules="[rules.required]" variant="outlined" density="comfortable"
-                  hide-details="auto" style="flex: 1" placeholder="Select storage location" rounded="0">
-                  <template #prepend-inner>
-                    <v-icon size="20" color="primary">mdi-package-variant</v-icon>
-                  </template>
-                </v-autocomplete>
-                <v-btn icon color="primary" density="comfortable" rounded="0" @click="$emit('add-box')">
-                  <v-icon size="20">mdi-plus</v-icon>
-                  <v-tooltip activator="parent" location="top">Add Box</v-tooltip>
-                </v-btn>
-              </div>
+            <!-- Storage Box with Add Button -->
+            <v-col cols="12" class="mt-4">
+              <BaseFormField label="Storage Box" required helper-text="Select storage location">
+                <div class="d-flex ga-2 align-center">
+                  <v-autocomplete v-model="form.box_id" :items="boxes" item-title="box_label" item-value="box_id"
+                    :rules="[rules.required]" variant="outlined" density="comfortable" hide-details style="flex: 1"
+                    placeholder="Select storage location" rounded="lg">
+                    <template #prepend-inner>
+                      <v-icon size="20" color="primary">mdi-package-variant</v-icon>
+                    </template>
+                  </v-autocomplete>
+
+                  <BaseButton icon="mdi-plus" variant="contained" color="primary" size="default"
+                    @click="openAddBoxDialog" aria-label="Add new storage box" class="add-quick-btn" />
+                </div>
+              </BaseFormField>
             </v-col>
-            <v-col cols="12" class="mt-2">
-              <v-textarea v-model="form.description" label="Description (Optional)" variant="outlined"
-                density="comfortable" rows="3" hide-details="auto"
-                placeholder="Add any additional details about this component..." counter maxlength="500" rounded="0">
-                <template #prepend-inner>
-                  <v-icon size="20" color="primary">mdi-text</v-icon>
-                </template>
-              </v-textarea>
+
+            <!-- Description -->
+            <v-col cols="12" class="mt-4">
+              <BaseFormField label="Description" helper-text="Add any additional details">
+                <v-textarea v-model="form.description" variant="outlined" density="comfortable" rows="3" hide-details
+                  placeholder="Add any additional details about this component..." counter maxlength="500" rounded="lg">
+                  <template #prepend-inner>
+                    <v-icon size="20" color="primary">mdi-text</v-icon>
+                  </template>
+                </v-textarea>
+              </BaseFormField>
             </v-col>
           </v-row>
         </v-form>
@@ -111,20 +117,26 @@
       <v-divider />
 
       <v-card-actions class="pa-4 justify-end ga-2">
-        <v-btn variant="outlined" @click="handleClose" :disabled="loading" rounded="0">
+        <BaseButton variant="outlined" color="secondary" size="large" @click="handleClose" :disabled="loading">
           Cancel
-        </v-btn>
-        <v-btn color="primary" @click="handleSubmit" :loading="loading" variant="flat" prepend-icon="mdi-check"
-          rounded="0">
+        </BaseButton>
+        <BaseButton variant="contained" color="primary" size="large" @click="handleSubmit" :loading="loading"
+          class="px-6">
+          <v-icon class="mr-2">mdi-check</v-icon>
           {{ isEdit ? 'Update' : 'Create' }}
-        </v-btn>
+        </BaseButton>
       </v-card-actions>
     </v-card>
+
+    <category-form-dialog v-model="showCategoryDialog" @success="handleCategorySuccess" />
+    <box-form-dialog v-model="showBoxDialog" @success="handleBoxSuccess" />
   </v-dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import CategoryFormDialog from '@/components/CategoryFormDialog.vue'
+import BoxFormDialog from '@/components/BoxFormDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -133,12 +145,14 @@ const props = defineProps({
   boxes: Array
 })
 
-const emit = defineEmits(['update:modelValue', 'success', 'add-category', 'add-box'])
+const emit = defineEmits(['update:modelValue', 'success', 'category-added', 'box-added'])
 
 const formRef = ref(null)
 const fileInput = ref(null)
 const loading = ref(false)
 const imagePreview = ref(null)
+const showCategoryDialog = ref(false)
+const showBoxDialog = ref(false)
 
 const form = ref({
   name: '',
@@ -164,13 +178,11 @@ const handleFileUpload = (event) => {
   const file = event.target.files[0]
   if (!file) return
 
-  // Validate file type
   if (!file.type.startsWith('image/')) {
     alert('Please select a valid image file')
     return
   }
 
-  // Validate file size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
     alert('Image size must be less than 5MB')
     return
@@ -215,6 +227,24 @@ const resetForm = () => {
   formRef.value?.resetValidation()
 }
 
+const openAddCategoryDialog = () => {
+  showCategoryDialog.value = true
+}
+
+const handleCategorySuccess = (data) => {
+  showCategoryDialog.value = false
+  emit('category-added', data)
+}
+
+const openAddBoxDialog = () => {
+  showBoxDialog.value = true
+}
+
+const handleBoxSuccess = (data) => {
+  showBoxDialog.value = false
+  emit('box-added', data)
+}
+
 watch(() => props.componentItem, (item) => {
   if (item) {
     form.value = {
@@ -226,7 +256,6 @@ watch(() => props.componentItem, (item) => {
       image_type: item.image_type || null,
       imaeg_name: item.imaeg_name || null
     }
-    // Show existing image
     if (item.filename) {
       imagePreview.value = item.filename
     }
@@ -252,7 +281,6 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
-    // Prepare data - only include image fields if new image was uploaded
     const submitData = {
       name: form.value.name,
       category_id: form.value.category_id,
@@ -260,7 +288,6 @@ const handleSubmit = async () => {
       description: form.value.description || ''
     }
 
-    // Add image data only if a new image was uploaded
     if (form.value.image_content) {
       submitData.image_content = form.value.image_content
       submitData.image_type = form.value.image_type
@@ -312,22 +339,82 @@ const handleSubmit = async () => {
   bottom: -4px;
   right: -4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  min-width: 36px !important;
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border-radius: 50%;
 }
 
-/* Force icons to be visible - FIXED */
-:deep(.v-icon) {
+.add-quick-btn {
+  min-width: 46px !important;
+  width: 46px;
+  height: 46px;
+  padding: 0 !important;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+:deep(.component-dialog .v-icon) {
   opacity: 1 !important;
+  display: inline-flex !important;
 }
 
-:deep(.v-field__prepend-inner .v-icon) {
+:deep(.component-dialog .v-btn .v-icon) {
   opacity: 1 !important;
+  display: inline-flex !important;
 }
 
-:deep(.v-btn .v-icon) {
+:deep(.component-dialog .v-btn__content) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:deep(.component-dialog .v-btn__content .v-icon) {
   opacity: 1 !important;
+  display: inline-flex !important;
+  margin: 0 !important;
 }
 
-/* Scrollbar styling */
+:deep(.component-dialog .v-field__prepend-inner) {
+  padding-top: 8px !important;
+  padding-right: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+:deep(.component-dialog .v-field__prepend-inner .v-icon) {
+  opacity: 1 !important;
+  display: inline-flex !important;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+:deep(.upload-btn .v-icon) {
+  opacity: 1 !important;
+  display: inline-flex !important;
+  color: white !important;
+  margin: 0 !important;
+}
+
+:deep(.add-quick-btn .v-icon) {
+  opacity: 1 !important;
+  display: inline-flex !important;
+  color: white !important;
+  margin: 0 !important;
+}
+
+:deep(.base-button .v-icon) {
+  opacity: 1 !important;
+  display: inline-flex !important;
+}
+
+:deep(.base-button .v-btn__content .v-icon) {
+  opacity: 1 !important;
+  display: inline-flex !important;
+  margin: 0 !important;
+}
+
 :deep(.v-card-text) {
   overflow-y: auto;
 }

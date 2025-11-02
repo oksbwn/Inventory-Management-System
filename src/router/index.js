@@ -9,7 +9,7 @@ const routes = [
   {
     path: "/stocks",
     name: "Stocks",
-    component: () => import("@/views/Stocks.vue"),
+    component: () => import("@/views/Components.vue"),
   },
   {
     path: "/stocks/:id",

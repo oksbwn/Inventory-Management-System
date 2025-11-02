@@ -37,3 +37,28 @@ import { ref } from 'vue'
 
 const drawer = ref(true)
 </script>
+
+<style>
+.v-btn .v-icon,
+.v-field .v-icon,
+.base-button .v-icon {
+  opacity: 1 !important;
+  display: inline-flex !important;
+}
+
+.v-btn__content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.v-btn__content .v-icon {
+  opacity: 1 !important;
+}
+
+.v-field__prepend-inner,
+.v-field__append-inner {
+  display: flex !important;
+  align-items: center !important;
+}
+</style>

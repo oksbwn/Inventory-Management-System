@@ -44,7 +44,6 @@
           </div>
 
           <!-- Form Fields -->
-          <!-- ✅ REFACTORED: Using BaseFormField -->
           <v-row dense>
             <v-col cols="12">
               <BaseFormField
@@ -81,9 +80,9 @@
                   hide-details
                   @update:model-value="handleSizeChange"
                 >
-                  <template v-slot:item="{ props, item }">
+                  <template #item="{ props, item }">
                     <v-list-item v-bind="props">
-                      <template v-slot:prepend>
+                      <template #prepend>
                         <v-icon :size="getSizeIconSize(item.value)">mdi-package-variant</v-icon>
                       </template>
                     </v-list-item>
@@ -114,7 +113,6 @@
 
       <v-divider />
 
-      <!-- ✅ REFACTORED: Using BaseButton -->
       <v-card-actions class="pa-6">
         <v-spacer />
         <BaseButton 
@@ -201,17 +199,13 @@ const generateQRCode = async () => {
       id: nextBoxId.value
     })
 
-    console.log('🎨 Generating QR:', qrContent)
-
     qrCodeDataUrl.value = await QRCode.toDataURL(qrContent, {
       width: 300,
       margin: 2,
       color: { dark: '#000000', light: '#FFFFFF' }
     })
-
-    console.log('✅ QR Generated!')
   } catch (error) {
-    console.error('❌ QR Error:', error)
+    console.error('QR Generation Error:', error)
   }
 }
 
@@ -220,30 +214,23 @@ const fetchNextBoxId = async () => {
   try {
     const response = await boxStore.getNextBoxId()
     nextBoxId.value = typeof response === 'number' ? response : (response?.next_id || 1)
-    console.log('✅ Next ID:', nextBoxId.value)
-    
-    // Generate QR immediately with just the ID
     await generateQRCode()
   } catch (error) {
-    console.error('❌ Error:', error)
+    console.error('Error fetching next box ID:', error)
     nextBoxId.value = 1
   }
 }
 
 // Handle size change
 const handleSizeChange = async (newSize) => {
-  console.log('📏 Size changed:', newSize)
-  
   if (!isEdit.value && newSize && nextBoxId.value) {
     formData.value.box_code = `${newSize}-${nextBoxId.value}`
-    console.log('✅ Code generated:', formData.value.box_code)
     await generateQRCode()
   }
 }
 
 // Handle label change
 const handleLabelChange = async () => {
-  console.log('📝 Label changed:', formData.value.box_label)
   await generateQRCode()
 }
 
@@ -277,6 +264,7 @@ const handleClose = () => {
   }, 300)
 }
 
+// ✅ UPDATED: Use boxStore to create/update box
 const handleSubmit = async () => {
   const { valid } = await formRef.value.validate()
   if (!valid) return
@@ -289,18 +277,27 @@ const handleSubmit = async () => {
     if (!isEdit.value && qrCodeDataUrl.value) {
       boxData.box_qr_content = qrCodeDataUrl.value.split(',')[1]
       boxData.box_qr_file_type = 'png'
-      boxData.box_qr_filename = `QRCode`
+      boxData.box_qr_filename = 'QRCode'
+    }
+
+    if (isEdit.value) {
+      // Update existing box
+      await boxStore.updateBox(props.boxItem.box_id, boxData)
+    } else {
+      // Create new box
+      await boxStore.createBox(boxData)
     }
 
     emit('success', {
-      data: boxData,
+      message: isEdit.value ? 'Storage box updated successfully!' : 'Storage box created successfully!',
       isEdit: isEdit.value,
       id: props.boxItem?.box_id
     })
 
     handleClose()
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error saving box:', error)
+    throw error
   } finally {
     loading.value = false
   }

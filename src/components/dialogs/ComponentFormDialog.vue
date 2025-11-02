@@ -135,8 +135,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import CategoryFormDialog from '@/components/CategoryFormDialog.vue'
-import BoxFormDialog from '@/components/BoxFormDialog.vue'
+import CategoryFormDialog from '@/components/dialogs/CategoryFormDialog.vue'
+import BoxFormDialog from '@/components/dialogs/BoxFormDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean,

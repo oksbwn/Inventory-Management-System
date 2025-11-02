@@ -89,26 +89,12 @@
     <!-- Search and Filters -->
     <v-row class="mb-6" align="center">
       <v-col cols="12" md="8">
-        <v-text-field 
-          v-model="searchQuery" 
-          placeholder="Search by name, category, location..."
-          prepend-inner-icon="mdi-magnify" 
-          clearable 
-          density="comfortable" 
-          variant="outlined" 
-          hide-details
-          @keyup.enter="onSearch" 
-          @click:clear="onSearch"
-        >
+        <v-text-field v-model="searchQuery" placeholder="Search by name, category, location..."
+          prepend-inner-icon="mdi-magnify" clearable density="comfortable" variant="outlined" hide-details
+          @keyup.enter="onSearch" @click:clear="onSearch">
           <template #append-inner>
-            <BaseButton 
-              variant="contained" 
-              color="primary" 
-              size="small" 
-              @click="onSearch" 
-              :loading="stockStore.loading"
-              class="search-inner-btn"
-            >
+            <BaseButton variant="contained" color="primary" size="small" @click="onSearch" :loading="stockStore.loading"
+              class="search-inner-btn">
               Search
             </BaseButton>
           </template>
@@ -118,18 +104,9 @@
 
     <!-- Main Content -->
     <BaseCard elevation="0" class="main-card">
-      <v-data-table-server 
-        v-model:items-per-page="itemsPerPage" 
-        v-model:page="page" 
-        :headers="headers"
-        :items="stockStore.stocks" 
-        :items-length="stockStore.totalItems" 
-        :loading="stockStore.loading" 
-        item-value="id"
-        @update:options="onPageChange" 
-        density="comfortable" 
-        hover
-      >
+      <v-data-table-server v-model:items-per-page="itemsPerPage" v-model:page="page" :headers="headers"
+        :items="stockStore.stocks" :items-length="stockStore.totalItems" :loading="stockStore.loading" item-value="id"
+        @update:options="onPageChange" density="comfortable" hover>
         <template #item.name="{ item }">
           <div class="d-flex align-center ga-2">
             <v-avatar size="36" rounded="lg" class="component-avatar">
@@ -172,14 +149,8 @@
 
         <template #item.actions="{ item }">
           <div class="d-flex align-center justify-center">
-            <BaseButton 
-              size="small" 
-              color="primary" 
-              variant="tonal" 
-              class="action-btn-square" 
-              @click="viewItem(item)"
-              aria-label="View component details"
-            >
+            <BaseButton size="small" color="primary" variant="tonal" class="action-btn-square" @click="viewItem(item)"
+              aria-label="View component details">
               <v-icon>mdi-eye</v-icon>
             </BaseButton>
           </div>
@@ -187,35 +158,18 @@
       </v-data-table-server>
     </BaseCard>
 
-    <component-form-dialog 
-      v-model="showFormDialog" 
-      :component-item="selectedComponent" 
-      :categories="categories"
-      :boxes="boxes" 
-      @success="handleFormSuccess" 
-      @category-added="loadCategories" 
-      @box-added="loadBoxes" 
-    />
+    <!-- Dialogs -->
+    <component-form-dialog v-model="showFormDialog" :component-item="selectedComponent" :categories="categories"
+      :boxes="boxes" @success="handleComponentSuccess" @category-added="handleCategoryAdded"
+      @box-added="handleBoxAdded" />
 
-    <delete-confirm-dialog 
-      v-model="showDeleteDialog" 
-      :item-name="selectedComponent?.name"
-      @confirm="handleDeleteConfirm" 
-    />
+    <delete-confirm-dialog v-model="showDeleteDialog" :item-name="selectedComponent?.name"
+      @confirm="handleDeleteConfirm" />
 
-    <BaseSnackbar 
-      v-model="showSuccessSnackbar" 
-      :message="successMessage" 
-      type="success" 
-      :timeout="3000" 
-    />
-    
-    <BaseSnackbar 
-      v-model="showError" 
-      :message="errorMessage" 
-      type="error" 
-      :timeout="4000" 
-    />
+    <!-- Notifications -->
+    <BaseSnackbar v-model="showSuccessSnackbar" :message="successMessage" type="success" :timeout="3000" />
+
+    <BaseSnackbar v-model="showError" :message="errorMessage" type="error" :timeout="4000" />
   </v-container>
 </template>
 
@@ -225,8 +179,10 @@ import { useRouter } from 'vue-router'
 import { useStockStore } from '@/stores/stockStore'
 import { useBoxStore } from '@/stores/boxStore'
 import { useCategoryStore } from '@/stores/categoryStore'
-import ComponentFormDialog from '@/components/ComponentFormDialog.vue'
-import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
+
+import ComponentFormDialog from '@/components/dialogs/ComponentFormDialog.vue'
+import DeleteConfirmDialog from '@/components/dialogs/DeleteConfirmDialog.vue'
+import { formatPrice, getQuantityColor, getQuantityIcon } from '@/utils'
 
 const router = useRouter()
 const stockStore = useStockStore()
@@ -308,29 +264,12 @@ const refreshData = async () => {
   await loadStocks(true)
 }
 
-const getQuantityColor = (quantity) => {
-  if (quantity === 0) return 'error'
-  if (quantity < 10) return 'warning'
-  if (quantity < 50) return 'info'
-  return 'success'
-}
-
-const getQuantityIcon = (quantity) => {
-  if (quantity === 0) return 'mdi-close-circle'
-  if (quantity < 10) return 'mdi-alert'
-  return 'mdi-check-circle'
-}
-
 const getStatusColor = (status) => {
   return status === 'In Stock' ? 'success' : 'error'
 }
 
 const getStatusIcon = (status) => {
   return status === 'In Stock' ? 'mdi-check-circle' : 'mdi-alert-circle'
-}
-
-const formatPrice = (price) => {
-  return price ? `₹${parseFloat(price).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : 'N/A'
 }
 
 const openAddDialog = () => {
@@ -361,10 +300,51 @@ const handleDeleteConfirm = async () => {
   }
 }
 
-const handleFormSuccess = async (data) => {
-  successMessage.value = data.message || 'Component saved successfully!'
-  showSuccessSnackbar.value = true
-  await refreshData()
+const handleComponentSuccess = async (data) => {
+  try {
+    const { data: componentData, isEdit } = data
+
+    if (isEdit) {
+      await stockStore.updateComponent(selectedComponent.value.id, componentData)
+      successMessage.value = 'Component updated successfully!'
+    } else {
+      await stockStore.createComponent(componentData)
+      successMessage.value = 'Component created successfully!'
+    }
+
+    showSuccessSnackbar.value = true
+
+    await Promise.all([
+      refreshData(),
+      loadCategories(),
+      loadBoxes()
+    ])
+  } catch (error) {
+    errorMessage.value = error.message || 'Failed to save component'
+    showError.value = true
+  }
+}
+
+const handleCategoryAdded = async () => {
+  try {
+    await loadCategories()
+    successMessage.value = 'Category added successfully!'
+    showSuccessSnackbar.value = true
+  } catch (error) {
+    errorMessage.value = 'Failed to load updated categories'
+    showError.value = true
+  }
+}
+
+const handleBoxAdded = async () => {
+  try {
+    await loadBoxes()
+    successMessage.value = 'Storage box added successfully!'
+    showSuccessSnackbar.value = true
+  } catch (error) {
+    errorMessage.value = 'Failed to load updated boxes'
+    showError.value = true
+  }
 }
 
 watch(() => stockStore.error, (newError) => {
@@ -375,9 +355,16 @@ watch(() => stockStore.error, (newError) => {
 })
 
 onMounted(async () => {
-  await loadStocks()
-  await loadCategories()
-  await loadBoxes()
+  try {
+    await Promise.all([
+      loadStocks(),
+      loadCategories(),
+      loadBoxes()
+    ])
+  } catch (error) {
+    errorMessage.value = 'Failed to load initial data'
+    showError.value = true
+  }
 })
 </script>
 
@@ -481,6 +468,7 @@ onMounted(async () => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

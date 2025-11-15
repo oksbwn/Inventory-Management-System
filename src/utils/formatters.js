@@ -9,7 +9,10 @@ import { CURRENCY, QUANTITY_LEVELS } from './constants'
 export const formatPrice = (price, showSymbol = true) => {
   if (!price && price !== 0) return 'N/A'
   
-  const formatted = parseFloat(price).toLocaleString('en-IN', {
+  const parsed = parseFloat(price)
+  if (isNaN(parsed)) return 'N/A'
+  
+  const formatted = parsed.toLocaleString('en-IN', {
     maximumFractionDigits: CURRENCY.DECIMALS,
     minimumFractionDigits: CURRENCY.DECIMALS
   })

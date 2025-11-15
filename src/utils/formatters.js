@@ -53,7 +53,8 @@ export const formatDate = (date, format = 'short') => {
  * @returns {string} Formatted duration
  */
 export const formatDuration = (seconds) => {
-  if (!seconds) return '0s'
+  if (!seconds || isNaN(seconds)) return '0s'
+  if (seconds < 0) return 'N/A'
   
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)

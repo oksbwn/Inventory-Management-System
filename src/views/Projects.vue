@@ -3,87 +3,80 @@
     <!-- Page Header -->
     <v-row class="mb-8">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-          <div>
-            <div class="d-flex align-center ga-3 mb-2">
-              <v-avatar size="48" color="primary" class="header-avatar">
-                <v-icon size="28">mdi-briefcase</v-icon>
-              </v-avatar>
-              <div>
-                <h1 class="text-h4 font-weight-bold mb-1">Projects</h1>
-                <p class="text-body-2 text-medium-emphasis mb-0">
-                  Manage your {{ projectStore.totalProjects || 0 }} projects
-                </p>
-              </div>
+        <div class="d-flex align-center justify-space-between flex-wrap ga-4">
+          <div class="d-flex align-center ga-3">
+            <v-avatar size="48" color="primary" class="header-avatar">
+              <v-icon size="28">mdi-briefcase</v-icon>
+            </v-avatar>
+            <div>
+              <h1 class="text-h4 font-weight-bold mb-1">Projects</h1>
+              <p class="text-body-2 text-medium-emphasis mb-0">
+                Manage your {{ projectStore.totalProjects || 0 }} projects
+              </p>
             </div>
           </div>
-          <v-btn color="primary" prepend-icon="mdi-plus" size="large" class="add-btn" @click="openAddDialog">
+          <BaseButton 
+            variant="contained" 
+            color="primary" 
+            size="large" 
+            class="add-btn" 
+            @click="openAddDialog"
+          >
+            <v-icon class="mr-2">mdi-plus</v-icon>
             Add Project
-          </v-btn>
+          </BaseButton>
         </div>
       </v-col>
     </v-row>
 
-    <!-- Stats Cards - Optimized to 4 -->
+    <!-- Stats Cards - Using BaseStatCard ✅ -->
     <v-row class="mb-8" dense>
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card" elevation="0">
-          <v-card-text class="pa-5">
-            <div class="d-flex align-center justify-space-between mb-3">
-              <div class="stats-icon-wrapper primary-gradient">
-                <v-icon color="white" size="24">mdi-briefcase</v-icon>
-              </div>
-              <v-chip size="small" color="primary" variant="tonal">Total</v-chip>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ projectStore.totalProjects || 0 }}</div>
-            <div class="text-caption text-medium-emphasis">All Projects</div>
-          </v-card-text>
-        </v-card>
+        <BaseStatCard
+          icon="mdi-briefcase"
+          label="Total"
+          :value="projectStore.totalProjects || 0"
+          subtitle="All Projects"
+          color="primary"
+          gradient="primary"
+        />
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card hoverable" elevation="0" @click="applyStatusFilter('In Progress')">
-          <v-card-text class="pa-5">
-            <div class="d-flex align-center justify-space-between mb-3">
-              <div class="stats-icon-wrapper success-gradient">
-                <v-icon color="white" size="24">mdi-play-circle</v-icon>
-              </div>
-              <v-chip size="small" color="success" variant="tonal">Active</v-chip>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ projectStore.activeProjects || 0 }}</div>
-            <div class="text-caption text-medium-emphasis">In Progress</div>
-          </v-card-text>
-        </v-card>
+        <div @click="applyStatusFilter('In Progress')" class="clickable-stat">
+          <BaseStatCard
+            icon="mdi-play-circle"
+            label="Active"
+            :value="projectStore.activeProjects || 0"
+            subtitle="In Progress"
+            color="success"
+            gradient="success"
+          />
+        </div>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card hoverable" elevation="0" @click="applyStatusFilter('Completed')">
-          <v-card-text class="pa-5">
-            <div class="d-flex align-center justify-space-between mb-3">
-              <div class="stats-icon-wrapper info-gradient">
-                <v-icon color="white" size="24">mdi-check-circle</v-icon>
-              </div>
-              <v-chip size="small" color="blue" variant="tonal">Done</v-chip>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ projectStore.completedProjects || 0 }}</div>
-            <div class="text-caption text-medium-emphasis">Completed</div>
-          </v-card-text>
-        </v-card>
+        <div @click="applyStatusFilter('Completed')" class="clickable-stat">
+          <BaseStatCard
+            icon="mdi-check-circle"
+            label="Done"
+            :value="projectStore.completedProjects || 0"
+            subtitle="Completed"
+            color="info"
+            gradient="info"
+          />
+        </div>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card class="stats-card" elevation="0">
-          <v-card-text class="pa-5">
-            <div class="d-flex align-center justify-space-between mb-3">
-              <div class="stats-icon-wrapper youtube-gradient">
-                <v-icon color="white" size="24">mdi-youtube</v-icon>
-              </div>
-              <v-chip size="small" color="red" variant="tonal">YouTube</v-chip>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ projects.filter(p => p.is_yt_project).length }}</div>
-            <div class="text-caption text-medium-emphasis">YT Projects</div>
-          </v-card-text>
-        </v-card>
+        <BaseStatCard
+          icon="mdi-youtube"
+          label="YouTube"
+          :value="projects.filter(p => p.is_yt_project).length"
+          subtitle="YT Projects"
+          color="error"
+          gradient="error"
+        />
       </v-col>
     </v-row>
 
@@ -103,17 +96,31 @@
             hide-details
             class="search-field" 
           />
-          <v-btn color="primary" @click="onSearch" height="46" width="46" class="search-btn">
+          <BaseButton 
+            variant="contained" 
+            color="primary" 
+            @click="onSearch" 
+            size="large" 
+            class="search-btn"
+            aria-label="Search"
+          >
             <v-icon>mdi-magnify</v-icon>
-          </v-btn>
+          </BaseButton>
         </div>
       </v-col>
       <v-col cols="12" md="4" class="d-flex justify-end align-center ga-2">
-        <v-btn-toggle v-model="viewMode" mandatory density="comfortable" variant="outlined" divided class="view-toggle">
-          <v-btn value="grid">
+        <v-btn-toggle 
+          v-model="viewMode" 
+          mandatory 
+          density="comfortable" 
+          variant="outlined" 
+          divided 
+          class="view-toggle"
+        >
+          <v-btn value="grid" aria-label="Grid view">
             <v-icon>mdi-view-grid</v-icon>
           </v-btn>
-          <v-btn value="list">
+          <v-btn value="list" aria-label="List view">
             <v-icon>mdi-view-list</v-icon>
           </v-btn>
         </v-btn-toggle>
@@ -121,79 +128,169 @@
     </v-row>
 
     <!-- Main Content -->
-    <v-card elevation="0" class="main-card">
+    <BaseCard elevation="0" class="main-card">
       <!-- Loading State -->
-      <v-row v-if="projectStore.loading && projects.length === 0" justify="center" class="py-12">
-        <v-col cols="12" class="text-center">
-          <v-progress-circular indeterminate size="64" color="primary" width="3" />
-          <div class="mt-4 text-h6 text-medium-emphasis">Loading projects...</div>
-        </v-col>
-      </v-row>
+      <BaseLoading 
+        v-if="projectStore.loading && projects.length === 0" 
+        type="skeleton" 
+        :count="8" 
+        label="Loading projects..." 
+      />
 
       <!-- Empty State -->
-      <v-row v-else-if="projects.length === 0" class="py-12">
-        <v-col cols="12" class="text-center">
-          <div class="empty-state">
-            <v-icon size="120" color="grey-lighten-2">mdi-briefcase-outline</v-icon>
-            <h3 class="text-h5 font-weight-bold mt-4 mb-2">No projects found</h3>
-            <p class="text-body-2 text-medium-emphasis mb-6">
-              {{ searchQuery ? 'Try adjusting your search' : 'Get started by adding your first project' }}
-            </p>
-            <v-btn v-if="!searchQuery" color="primary" size="large" @click="openAddDialog" prepend-icon="mdi-plus">
-              Add Your First Project
-            </v-btn>
-            <v-btn v-else color="grey" size="large" @click="clearFilters" prepend-icon="mdi-filter-off-outline">
-              Clear Search
-            </v-btn>
-          </div>
-        </v-col>
-      </v-row>
+      <BaseEmpty 
+        v-else-if="projects.length === 0"
+        icon="mdi-briefcase-outline"
+        title="No projects found"
+        :description="searchQuery ? 'Try adjusting your search' : 'Get started by adding your first project'"
+      >
+        <template #action>
+          <BaseButton 
+            v-if="!searchQuery"
+            variant="contained" 
+            color="primary" 
+            size="large" 
+            @click="openAddDialog"
+          >
+            <v-icon class="mr-2">mdi-plus</v-icon>
+            Add Your First Project
+          </BaseButton>
+          <BaseButton 
+            v-else
+            variant="outlined" 
+            color="secondary" 
+            size="large" 
+            @click="clearFilters"
+          >
+            <v-icon class="mr-2">mdi-filter-off-outline</v-icon>
+            Clear Search
+          </BaseButton>
+        </template>
+      </BaseEmpty>
 
-      <!-- Grid View -->
+      <!-- Grid View - Using BaseCard ✅ -->
       <v-row v-else-if="viewMode === 'grid'" class="pa-4">
         <v-col v-for="project in projects" :key="project.project_id" cols="12" sm="6" md="4" lg="3">
-          <v-card class="project-card" elevation="0" @click="viewProjectDetails(project)">
-            <v-card-text class="pa-5">
-              <div class="d-flex align-center mb-4">
-                <v-avatar :color="project.is_yt_project ? 'red' : 'indigo'" size="56" class="mr-3">
+          <BaseCard 
+            variant="default" 
+            elevation="0" 
+            class="project-card" 
+            @click="viewProjectDetails(project)"
+          >
+            <div class="pa-4">
+              <!-- Avatar & Title -->
+              <div class="d-flex align-center mb-3">
+                <v-avatar 
+                  :color="project.is_yt_project ? 'red' : 'indigo'" 
+                  size="56" 
+                  class="mr-3"
+                >
                   <v-icon size="28" color="white">
                     {{ project.is_yt_project ? 'mdi-youtube' : 'mdi-briefcase' }}
                   </v-icon>
                 </v-avatar>
-                <div class="flex-1-1">
-                  <div class="text-h6 font-weight-bold text-truncate mb-1">{{ project.project_name }}</div>
-                  <v-chip :color="getStatusColor(project.status)" size="small" variant="tonal">
+                <div class="flex-grow-1 min-width-0">
+                  <h3 class="text-subtitle-1 font-weight-bold text-truncate mb-1">
+                    {{ project.project_name }}
+                  </h3>
+                  <v-chip 
+                    :color="getStatusColor(project.status)" 
+                    size="x-small" 
+                    variant="tonal"
+                  >
                     {{ project.status || 'Not Set' }}
                   </v-chip>
                 </div>
               </div>
 
+              <!-- Description -->
               <div v-if="project.description" class="description-preview mb-3">
                 {{ truncateText(project.description, 80) }}
               </div>
 
-              <!-- Component Stats -->
-              <div class="component-stats mb-3">
-                <div class="d-flex flex-wrap ga-2">
-                  <v-chip size="small" variant="outlined" color="indigo">
-                    <v-icon start size="16">mdi-chip</v-icon>
-                    {{ getComponentCount(project) }} Components
-                  </v-chip>
-                  <v-chip size="small" variant="outlined" color="green">
-                    <v-icon start size="16">mdi-currency-inr</v-icon>
-                    {{ formatCurrency(getTotalCost(project)) }}
-                  </v-chip>
-                </div>
+              <!-- Stats -->
+              <div class="d-flex flex-wrap ga-2 mb-3">
+                <v-chip size="x-small" variant="outlined" color="indigo">
+                  <v-icon size="14" class="mr-1">mdi-chip</v-icon>
+                  {{ getComponentCount(project) }}
+                </v-chip>
+                <v-chip size="x-small" variant="outlined" color="green">
+                  <v-icon size="14" class="mr-1">mdi-currency-inr</v-icon>
+                  {{ formatCurrency(getTotalCost(project)) }}
+                </v-chip>
               </div>
 
               <v-divider class="mb-3" />
 
-              <div class="project-meta">
-                <div class="d-flex align-center justify-space-between">
-                  <div class="text-caption d-flex align-center text-medium-emphasis">
-                    <v-icon size="16" class="mr-1">mdi-calendar</v-icon>
+              <!-- Footer -->
+              <div class="d-flex align-center justify-space-between">
+                <div class="text-caption text-medium-emphasis">
+                  <v-icon size="14" class="mr-1">mdi-calendar</v-icon>
+                  {{ formatDate(project.start_date) }}
+                </div>
+                <v-btn
+                  v-if="project.git_repository"
+                  icon
+                  size="x-small"
+                  variant="text"
+                  :href="project.git_repository"
+                  target="_blank"
+                  @click.stop
+                >
+                  <v-icon size="18" color="grey-darken-1">mdi-github</v-icon>
+                </v-btn>
+              </div>
+            </div>
+          </BaseCard>
+        </v-col>
+      </v-row>
+
+      <!-- List View - Using BaseCard ✅ -->
+      <div v-else class="pa-4">
+        <BaseCard 
+          v-for="project in projects" 
+          :key="project.project_id" 
+          variant="default" 
+          elevation="0" 
+          class="project-list-card mb-3"
+          @click="viewProjectDetails(project)"
+        >
+          <div class="pa-4 d-flex align-center justify-space-between flex-wrap ga-3">
+            <!-- Left: Avatar + Info -->
+            <div class="d-flex align-center ga-3 flex-grow-1 min-width-0">
+              <v-avatar 
+                :color="project.is_yt_project ? 'red' : 'indigo'" 
+                size="56"
+              >
+                <v-icon size="28" color="white">
+                  {{ project.is_yt_project ? 'mdi-youtube' : 'mdi-briefcase' }}
+                </v-icon>
+              </v-avatar>
+              
+              <div class="flex-grow-1 min-width-0">
+                <h3 class="text-subtitle-1 font-weight-bold mb-1 text-truncate">
+                  {{ project.project_name }}
+                </h3>
+                <div class="d-flex flex-wrap align-center ga-2">
+                  <v-chip 
+                    :color="getStatusColor(project.status)" 
+                    size="x-small" 
+                    variant="tonal"
+                  >
+                    {{ project.status || 'Not Set' }}
+                  </v-chip>
+                  <span class="text-caption text-medium-emphasis">
+                    <v-icon size="12" class="mr-1">mdi-calendar</v-icon>
                     {{ formatDate(project.start_date) }}
-                  </div>
+                  </span>
+                  <v-chip size="x-small" variant="outlined" color="indigo">
+                    <v-icon size="12" class="mr-1">mdi-chip</v-icon>
+                    {{ getComponentCount(project) }}
+                  </v-chip>
+                  <v-chip size="x-small" variant="outlined" color="green">
+                    <v-icon size="12" class="mr-1">mdi-currency-inr</v-icon>
+                    {{ formatCurrency(getTotalCost(project)) }}
+                  </v-chip>
                   <v-btn
                     v-if="project.git_repository"
                     icon
@@ -203,94 +300,19 @@
                     target="_blank"
                     @click.stop
                   >
-                    <v-icon size="20" color="grey-darken-1">mdi-github</v-icon>
+                    <v-icon size="16" color="grey-darken-1">mdi-github</v-icon>
                   </v-btn>
                 </div>
               </div>
-            </v-card-text>
-
-            <v-overlay
-              :model-value="false"
-              contained
-              class="align-center justify-center"
-              scrim="transparent"
-            >
-              <div class="overlay-content">
-                <v-icon size="40" color="white">mdi-arrow-right-circle</v-icon>
-                <div class="text-white mt-2 text-caption">View Details</div>
-              </div>
-            </v-overlay>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- List View -->
-      <v-list v-else class="pa-4">
-        <v-list-item 
-          v-for="project in projects" 
-          :key="project.project_id" 
-          class="project-list-item mb-3"
-          rounded="lg"
-          @click="viewProjectDetails(project)"
-        >
-          <template #prepend>
-            <v-avatar :color="project.is_yt_project ? 'red' : 'indigo'" size="56" class="mr-4">
-              <v-icon size="28" color="white">
-                {{ project.is_yt_project ? 'mdi-youtube' : 'mdi-briefcase' }}
-              </v-icon>
-            </v-avatar>
-          </template>
-
-          <v-list-item-title class="font-weight-bold mb-1">
-            {{ project.project_name }}
-          </v-list-item-title>
-
-          <v-list-item-subtitle>
-            <div class="d-flex flex-wrap align-center ga-3 mt-2">
-              <v-chip :color="getStatusColor(project.status)" size="x-small" variant="tonal">
-                {{ project.status || 'Not Set' }}
-              </v-chip>
-              <div class="d-flex align-center text-caption text-medium-emphasis">
-                <v-icon size="14" class="mr-1">mdi-calendar</v-icon>
-                {{ formatDate(project.start_date) }}
-              </div>
-              
-              <!-- Component Count -->
-              <v-chip size="x-small" variant="outlined" color="indigo">
-                <v-icon start size="14">mdi-chip</v-icon>
-                {{ getComponentCount(project) }}
-              </v-chip>
-              
-              <!-- Total Cost -->
-              <v-chip size="x-small" variant="outlined" color="green">
-                <v-icon start size="14">mdi-currency-inr</v-icon>
-                {{ formatCurrency(getTotalCost(project)) }}
-              </v-chip>
-              
-              <!-- Git Link -->
-              <v-btn
-                v-if="project.git_repository"
-                icon
-                size="x-small"
-                variant="text"
-                :href="project.git_repository"
-                target="_blank"
-                @click.stop
-              >
-                <v-icon size="18" color="grey-darken-1">mdi-github</v-icon>
-              </v-btn>
-              
-              <span v-if="project.description" class="text-caption text-medium-emphasis">
-                {{ truncateText(project.description, 60) }}
-              </span>
             </div>
-          </v-list-item-subtitle>
 
-          <template #append>
-            <v-icon size="24" color="grey-lighten-1">mdi-chevron-right</v-icon>
-          </template>
-        </v-list-item>
-      </v-list>
+            <!-- Right: Arrow -->
+            <v-icon size="24" color="grey-lighten-1" class="flex-shrink-0">
+              mdi-chevron-right
+            </v-icon>
+          </div>
+        </BaseCard>
+      </div>
 
       <!-- Pagination -->
       <v-divider v-if="totalPages > 1" class="mt-4" />
@@ -304,21 +326,29 @@
           rounded="circle"
         />
       </div>
-    </v-card>
+    </BaseCard>
 
-    <!-- Add Dialog Only -->
-    <ProjectFormDialog v-model="showAddEditDialog" :project-item="selectedProject" @success="handleProjectSuccess" />
+    <!-- Dialog -->
+    <ProjectFormDialog 
+      v-model="showAddEditDialog" 
+      :project-item="selectedProject" 
+      @success="handleProjectSuccess" 
+    />
 
     <!-- Notifications -->
-    <v-snackbar v-model="showSuccessSnackbar" color="success" :timeout="3000" location="top right">
-      <v-icon class="mr-2">mdi-check-circle</v-icon> {{ successMessage }}
-    </v-snackbar>
-    <v-snackbar v-model="showError" color="error" :timeout="5000" location="top right">
-      <v-icon class="mr-2">mdi-alert-circle</v-icon> {{ errorMessage }}
-      <template v-slot:actions>
-        <v-btn variant="text" @click="showError = false">Close</v-btn>
-      </template>
-    </v-snackbar>
+    <BaseSnackbar 
+      v-model="showSuccessSnackbar" 
+      :message="successMessage" 
+      type="success" 
+      :timeout="3000"
+    />
+    
+    <BaseSnackbar 
+      v-model="showError" 
+      :message="errorMessage" 
+      type="error" 
+      :timeout="5000"
+    />
   </v-container>
 </template>
 
@@ -326,7 +356,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/projectStore'
-import ProjectFormDialog from '@/components/ProjectFormDialog.vue'
+import ProjectFormDialog from '@/components/dialogs/ProjectFormDialog.vue'
+import BaseStatCard from '@/components/base/BaseStatCard.vue'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -384,20 +415,16 @@ const formatDate = (dateString) => {
   })
 }
 
-// Component and Cost helpers
 const getComponentCount = (project) => {
-  // Assuming project has components array or component_count property
   if (project.component_count !== undefined) return project.component_count
   if (project.components && Array.isArray(project.components)) return project.components.length
   return 0
 }
 
 const getTotalCost = (project) => {
-  // Assuming project has total_cost or we calculate from components
   if (project.total_cost !== undefined) return project.total_cost
   if (project.total_component_cost !== undefined) return project.total_component_cost
   
-  // Calculate from components array if available
   if (project.components && Array.isArray(project.components)) {
     return project.components.reduce((sum, comp) => {
       const quantity = comp.quantity_used || comp.quantity || 0
@@ -493,48 +520,21 @@ onMounted(() => loadProjects())
   letter-spacing: 0.5px;
 }
 
-.stats-card {
-  border: 1px solid #e8edf2;
-  border-radius: 16px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: white;
-}
-
-.stats-card.hoverable {
+/* Clickable Stats */
+.clickable-stat {
   cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.stats-card.hoverable:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-  border-color: #d0d7de;
+.clickable-stat:hover {
+  transform: scale(1.02);
 }
 
-.stats-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.clickable-stat:active {
+  transform: scale(0.98);
 }
 
-.primary-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.success-gradient {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.info-gradient {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.youtube-gradient {
-  background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
-}
-
+/* Search */
 .search-wrapper {
   display: flex;
   gap: 12px;
@@ -548,6 +548,10 @@ onMounted(() => loadProjects())
 .search-btn {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 46px;
+  width: 46px;
+  height: 46px;
+  padding: 0;
 }
 
 .view-toggle {
@@ -555,21 +559,22 @@ onMounted(() => loadProjects())
   overflow: hidden;
 }
 
+/* Main Card */
 .main-card {
   border: 1px solid #e8edf2;
   border-radius: 16px;
   background: white;
 }
 
+/* Project Card - Grid View */
 .project-card {
   border: 1px solid #e8edf2;
-  border-radius: 16px;
+  border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: white;
   height: 100%;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
 }
 
 .project-card::before {
@@ -579,10 +584,11 @@ onMounted(() => loadProjects())
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
+  border-radius: 12px;
 }
 
 .project-card:hover::before {
@@ -590,13 +596,13 @@ onMounted(() => loadProjects())
 }
 
 .project-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
   border-color: #667eea;
 }
 
 .project-card:active {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
 }
 
 .description-preview {
@@ -610,33 +616,36 @@ onMounted(() => loadProjects())
   overflow: hidden;
 }
 
-.component-stats {
-  min-height: 32px;
-}
-
-.project-list-item {
+/* Project List Card */
+.project-list-card {
   border: 1px solid #e8edf2;
+  border-radius: 12px;
   background: white;
   transition: all 0.3s ease;
   cursor: pointer;
-  padding: 16px;
 }
 
-.project-list-item:hover {
+.project-list-card:hover {
   background: #f7f9fc;
   border-color: #667eea;
-  transform: translateX(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateX(6px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-.project-list-item:active {
-  transform: translateX(4px);
+.project-list-card:active {
+  transform: translateX(3px);
 }
 
-.empty-state {
-  padding: 60px 20px;
+/* Responsive helpers */
+.min-width-0 {
+  min-width: 0;
 }
 
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -649,16 +658,12 @@ onMounted(() => loadProjects())
 }
 
 .project-card,
-.project-list-item {
+.project-list-card {
   animation: fadeIn 0.5s ease-out;
 }
 
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 960px) {
-  .project-card {
-    margin-bottom: 16px;
-  }
-  
   .search-wrapper {
     flex-direction: column;
   }
@@ -666,19 +671,11 @@ onMounted(() => loadProjects())
   .search-btn {
     width: 100%;
   }
-  
-  .stats-card {
-    margin-bottom: 12px;
-  }
 }
 
 @media (max-width: 600px) {
   .projects-page {
     padding: 16px !important;
-  }
-  
-  .component-stats .v-chip {
-    font-size: 0.7rem;
   }
 }
 </style>

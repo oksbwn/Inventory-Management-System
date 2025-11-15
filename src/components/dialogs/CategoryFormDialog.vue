@@ -2,7 +2,7 @@
   <v-dialog 
     :model-value="modelValue" 
     @update:model-value="$emit('update:modelValue', $event)" 
-    max-width="600px"
+    max-width="450px"
     persistent
     scrollable
   >
@@ -23,7 +23,7 @@
               {{ isEdit ? 'Edit Category' : 'Add New Category' }}
             </h2>
             <p class="text-caption text-medium-emphasis mb-0">
-              {{ isEdit ? 'Update category information' : 'Create a new category entry' }}
+              {{ isEdit ? 'Update category information' : 'Create a new category' }}
             </p>
           </div>
         </div>
@@ -33,30 +33,25 @@
 
       <v-card-text class="pa-6">
         <v-form ref="formRef" @submit.prevent="handleSubmit">
-          <!-- Category Icon Display -->
-          <div class="text-center mb-6">
-            <v-avatar color="primary" size="80" variant="tonal" class="category-icon-display">
-              <v-icon size="40">mdi-shape</v-icon>
-            </v-avatar>
-            <p class="text-caption text-medium-emphasis mt-3 mb-0">
-              Category Icon
-            </p>
-          </div>
-
           <!-- Form Fields -->
           <v-row dense>
             <v-col cols="12">
-              <v-text-field 
-                v-model="form.category_name" 
-                label="Category Name *" 
-                :rules="[rules.required]"
-                prepend-inner-icon="mdi-shape"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                autofocus
-                placeholder="e.g., Electronics, Hardware, Software"
-              />
+              <BaseFormField
+                label="Category Name"
+                required
+                helper-text="Enter a descriptive category name"
+              >
+                <v-text-field 
+                  v-model="form.category_name" 
+                  :rules="[rules.required]"
+                  prepend-inner-icon="mdi-shape"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details
+                  autofocus
+                  placeholder="e.g., Electronics, Hardware, Software"
+                />
+              </BaseFormField>
             </v-col>
           </v-row>
         </v-form>
@@ -66,24 +61,25 @@
 
       <v-card-actions class="pa-6">
         <v-spacer />
-        <v-btn 
-          variant="text" 
+        <BaseButton 
+          variant="outlined" 
+          color="secondary"
           @click="handleClose"
           size="large"
           :disabled="loading"
         >
           Cancel
-        </v-btn>
-        <v-btn 
+        </BaseButton>
+        <BaseButton 
+          variant="contained"
           color="primary" 
           @click="handleSubmit" 
           :loading="loading"
           size="large"
-          variant="flat"
           class="px-6"
         >
           {{ isEdit ? 'Update Category' : 'Create Category' }}
-        </v-btn>
+        </BaseButton>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -151,6 +147,7 @@ const handleSubmit = async () => {
 
   try {
     emit('success', {
+      message: isEdit.value ? 'Category updated successfully!' : 'Category created successfully!',
       data: form.value,
       isEdit: isEdit.value,
       id: props.categoryItem?.category_id
@@ -176,15 +173,5 @@ const handleSubmit = async () => {
 
 .dialog-header .text-medium-emphasis {
   color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.category-icon-display {
-  border: 3px dashed rgba(102, 126, 234, 0.3);
-  transition: all 0.3s ease;
-}
-
-.category-icon-display:hover {
-  border-color: rgba(102, 126, 234, 0.6);
-  transform: scale(1.05);
 }
 </style>

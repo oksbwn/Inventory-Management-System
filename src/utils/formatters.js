@@ -126,6 +126,7 @@ export const formatQuantity = (quantity) => {
  */
 export const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes'
+  if (bytes < 0 || isNaN(bytes)) return 'N/A'
   
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']

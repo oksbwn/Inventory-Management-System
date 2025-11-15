@@ -27,6 +27,7 @@ export const formatDate = (date, format = 'short') => {
   if (!date) return 'N/A'
   
   const dateObj = new Date(date)
+  if (isNaN(dateObj.getTime())) return 'N/A'
   
   const formats = {
     short: dateObj.toLocaleDateString('en-IN'),

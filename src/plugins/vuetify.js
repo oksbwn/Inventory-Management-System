@@ -4,6 +4,7 @@ import * as directives from 'vuetify/directives'
 import { VDataTable, VDataTableServer, VDataTableVirtual } from 'vuetify/components'
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
+import { default as designTheme } from '@/theme.js'
 
 const lightTheme = {
   dark: false,
@@ -39,13 +40,7 @@ export default createVuetify({
     VDataTableVirtual,
   },
   directives,
-  theme: {
-    defaultTheme: 'light',
-    themes: {
-      light: lightTheme,
-      dark: darkTheme,
-    },
-  },
+  theme: designTheme.theme,
   icons: {
     defaultSet: 'mdi',
   },

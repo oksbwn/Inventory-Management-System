@@ -427,8 +427,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useVendorStore } from '@/stores/vendorStore'
-import VendorFormDialog from '@/components/VendorFormDialog.vue'
-import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
+import VendorFormDialog from '@/components/dialogs/VendorFormDialog.vue'
+import DeleteConfirmDialog from '@/components/dialogs/DeleteConfirmDialog.vue'
 
 const vendorStore = useVendorStore()
 const page = ref(1)

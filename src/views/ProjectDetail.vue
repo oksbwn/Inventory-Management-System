@@ -365,7 +365,7 @@
                         <v-icon size="24" color="green">mdi-currency-inr</v-icon>
                       </div>
                       <div class="stat-content">
-                        <div class="stat-label">Cost</div>
+                        <div class="stat-label">  </div>
                         <div class="stat-value">{{ formatCurrencyShort(project.total_cost || 0) }}</div>
                       </div>
                     </div>
@@ -635,7 +635,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/projectStore'
-import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
+import DeleteConfirmDialog from '@/components/dialogs/DeleteConfirmDialog.vue'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 

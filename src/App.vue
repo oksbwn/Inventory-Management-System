@@ -15,7 +15,7 @@
     <v-navigation-drawer v-model="drawer" app>
       <v-list>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" to="/"></v-list-item>
-        <v-list-item prepend-icon="mdi-cube-outline" title="Components" to="/stocks"></v-list-item>
+        <v-list-item prepend-icon="mdi-cube-outline" title="Components" to="/components"></v-list-item>
         <v-list-item prepend-icon="mdi-shape" title="Categories" to="/categories"></v-list-item>
         <v-list-item prepend-icon="mdi-package-variant" title="Boxes" to="/boxes"></v-list-item>
         <v-list-item prepend-icon="mdi-briefcase" title="Projects" to="/projects"></v-list-item>
@@ -37,3 +37,28 @@ import { ref } from 'vue'
 
 const drawer = ref(true)
 </script>
+
+<style>
+.v-btn .v-icon,
+.v-field .v-icon,
+.base-button .v-icon {
+  opacity: 1 !important;
+  display: inline-flex !important;
+}
+
+.v-btn__content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.v-btn__content .v-icon {
+  opacity: 1 !important;
+}
+
+.v-field__prepend-inner,
+.v-field__append-inner {
+  display: flex !important;
+  align-items: center !important;
+}
+</style>

@@ -7,6 +7,7 @@
     scrollable
   >
     <v-card class="box-dialog">
+      <!-- Custom Header with Gradient -->
       <v-card-title class="dialog-header pa-6">
         <div class="d-flex align-center">
           <v-avatar :color="isEdit ? 'primary' : 'success'" size="40" class="mr-3">
@@ -45,55 +46,66 @@
           <!-- Form Fields -->
           <v-row dense>
             <v-col cols="12">
-              <v-text-field 
-                v-model="formData.box_label" 
-                label="Box Label *" 
-                :rules="[rules.required]"
-                prepend-inner-icon="mdi-label" 
-                variant="outlined" 
-                density="comfortable" 
-                hide-details="auto"
-                placeholder="e.g., Electronics Box"
-                @input="handleLabelChange"
-              />
-            </v-col>
-
-            <v-col cols="12" class="mt-4">
-              <v-select 
-                v-model="formData.box_size" 
-                label="Box Size *" 
-                :items="boxSizes" 
-                :rules="[rules.required]"
-                prepend-inner-icon="mdi-resize" 
-                variant="outlined" 
-                density="comfortable" 
-                hide-details="auto"
-                @update:model-value="handleSizeChange"
+              <BaseFormField
+                label="Box Label"
+                required
+                helper-text="Enter a descriptive name for the box"
               >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item v-bind="props">
-                    <template v-slot:prepend>
-                      <v-icon :size="getSizeIconSize(item.value)">mdi-package-variant</v-icon>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-select>
+                <v-text-field 
+                  v-model="formData.box_label" 
+                  :rules="[rules.required]"
+                  prepend-inner-icon="mdi-label" 
+                  variant="outlined" 
+                  density="comfortable" 
+                  hide-details
+                  placeholder="e.g., Electronics Box"
+                  @input="handleLabelChange"
+                />
+              </BaseFormField>
             </v-col>
 
             <v-col cols="12" class="mt-4">
-              <v-text-field 
-                v-model="formData.box_code" 
-                label="Box Code" 
-                prepend-inner-icon="mdi-barcode" 
-                variant="outlined"
-                density="comfortable" 
-                hide-details="auto" 
-                readonly
-                :placeholder="isEdit ? formData.box_code : 'Auto-generated based on size'" 
-              />
-              <p class="text-caption text-medium-emphasis mt-1 ml-2">
-                {{ isEdit ? 'Box code cannot be changed' : 'Generated automatically: SIZE-ID' }}
-              </p>
+              <BaseFormField
+                label="Box Size"
+                required
+                helper-text="Select the physical size of the storage box"
+              >
+                <v-select 
+                  v-model="formData.box_size" 
+                  :items="boxSizes" 
+                  :rules="[rules.required]"
+                  prepend-inner-icon="mdi-resize" 
+                  variant="outlined" 
+                  density="comfortable" 
+                  hide-details
+                  @update:model-value="handleSizeChange"
+                >
+                  <template #item="{ props, item }">
+                    <v-list-item v-bind="props">
+                      <template #prepend>
+                        <v-icon :size="getSizeIconSize(item.value)">mdi-package-variant</v-icon>
+                      </template>
+                    </v-list-item>
+                  </template>
+                </v-select>
+              </BaseFormField>
+            </v-col>
+
+            <v-col cols="12" class="mt-4">
+              <BaseFormField
+                label="Box Code"
+                helper-text="Auto-generated code based on size and ID"
+              >
+                <v-text-field 
+                  v-model="formData.box_code" 
+                  prepend-inner-icon="mdi-barcode" 
+                  variant="outlined"
+                  density="comfortable" 
+                  hide-details
+                  readonly
+                  :placeholder="isEdit ? formData.box_code : 'Auto-generated: SIZE-ID'" 
+                />
+              </BaseFormField>
             </v-col>
           </v-row>
         </v-form>
@@ -103,12 +115,25 @@
 
       <v-card-actions class="pa-6">
         <v-spacer />
-        <v-btn variant="text" @click="handleClose" size="large" :disabled="loading">
+        <BaseButton 
+          variant="outlined" 
+          color="secondary"
+          @click="handleClose" 
+          size="large" 
+          :disabled="loading"
+        >
           Cancel
-        </v-btn>
-        <v-btn color="primary" @click="handleSubmit" :loading="loading" size="large" variant="flat" class="px-6">
+        </BaseButton>
+        <BaseButton 
+          variant="contained"
+          color="primary" 
+          @click="handleSubmit" 
+          :loading="loading" 
+          size="large" 
+          class="px-6"
+        >
           {{ isEdit ? 'Update Box' : 'Create Box' }}
-        </v-btn>
+        </BaseButton>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -174,17 +199,13 @@ const generateQRCode = async () => {
       id: nextBoxId.value
     })
 
-    console.log('🎨 Generating QR:', qrContent)
-
     qrCodeDataUrl.value = await QRCode.toDataURL(qrContent, {
       width: 300,
       margin: 2,
       color: { dark: '#000000', light: '#FFFFFF' }
     })
-
-    console.log('✅ QR Generated!')
   } catch (error) {
-    console.error('❌ QR Error:', error)
+    console.error('QR Generation Error:', error)
   }
 }
 
@@ -193,30 +214,23 @@ const fetchNextBoxId = async () => {
   try {
     const response = await boxStore.getNextBoxId()
     nextBoxId.value = typeof response === 'number' ? response : (response?.next_id || 1)
-    console.log('✅ Next ID:', nextBoxId.value)
-    
-    // Generate QR immediately with just the ID
     await generateQRCode()
   } catch (error) {
-    console.error('❌ Error:', error)
+    console.error('Error fetching next box ID:', error)
     nextBoxId.value = 1
   }
 }
 
 // Handle size change
 const handleSizeChange = async (newSize) => {
-  console.log('📏 Size changed:', newSize)
-  
   if (!isEdit.value && newSize && nextBoxId.value) {
     formData.value.box_code = `${newSize}-${nextBoxId.value}`
-    console.log('✅ Code generated:', formData.value.box_code)
     await generateQRCode()
   }
 }
 
 // Handle label change
 const handleLabelChange = async () => {
-  console.log('📝 Label changed:', formData.value.box_label)
   await generateQRCode()
 }
 
@@ -250,6 +264,7 @@ const handleClose = () => {
   }, 300)
 }
 
+// ✅ UPDATED: Use boxStore to create/update box
 const handleSubmit = async () => {
   const { valid } = await formRef.value.validate()
   if (!valid) return
@@ -262,24 +277,32 @@ const handleSubmit = async () => {
     if (!isEdit.value && qrCodeDataUrl.value) {
       boxData.box_qr_content = qrCodeDataUrl.value.split(',')[1]
       boxData.box_qr_file_type = 'png'
-      boxData.box_qr_filename = `QRCode`
+      boxData.box_qr_filename = 'QRCode'
+    }
+
+    if (isEdit.value) {
+      // Update existing box
+      await boxStore.updateBox(props.boxItem.box_id, boxData)
+    } else {
+      // Create new box
+      await boxStore.createBox(boxData)
     }
 
     emit('success', {
-      data: boxData,
+      message: isEdit.value ? 'Storage box updated successfully!' : 'Storage box created successfully!',
       isEdit: isEdit.value,
       id: props.boxItem?.box_id
     })
 
     handleClose()
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error saving box:', error)
+    throw error
   } finally {
     loading.value = false
   }
 }
 </script>
-
 
 <style scoped>
 .box-dialog {

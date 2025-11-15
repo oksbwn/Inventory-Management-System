@@ -7,14 +7,14 @@ const routes = [
     component: () => import("@/views/Dashboard.vue"),
   },
   {
-    path: "/stocks",
-    name: "Stocks",
-    component: () => import("@/views/Stocks.vue"),
+    path: "/components",
+    name: "Components",
+    component: () => import("@/views/Components.vue"),
   },
   {
-    path: "/stocks/:id",
-    name: "StockDetail",
-    component: () => import("@/views/StockDetail.vue"),
+    path: "/components/:id",
+    name: "ComponentDetail",
+    component: () => import("@/views/ComponentDetail.vue"),
     props: true,
   },
   {

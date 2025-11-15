@@ -247,7 +247,7 @@
 
         <!-- Components -->
         <v-col cols="12" sm="6" lg="4">
-          <v-card class="module-card" elevation="3" hover :to="{ name: 'Stocks' }">
+          <v-card class="module-card" elevation="3" hover :to="{ name: 'Components' }">
             <v-card-text class="pa-6">
               <v-avatar size="72" class="mb-4 module-avatar blue-bg">
                 <v-icon color="white" size="40">mdi-chip</v-icon>
@@ -368,7 +368,7 @@ const quickActions = ref([
     title: 'Add Component',
     subtitle: 'New inventory item',
     icon: 'mdi-plus-circle',
-    route: '/stocks'
+    route: '/components'
   },
   {
     title: 'Create Project',

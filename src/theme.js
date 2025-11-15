@@ -1,0 +1,130 @@
+export const lightTheme = {
+  dark: false,
+  colors: {
+    primary: '#5E6AD2',
+    primaryLight: '#7B83E8',
+    primaryDark: '#4A55B8',
+    secondary: '#7C3AED',
+    secondaryLight: '#9F63F7',
+    secondaryDark: '#6D28D9',
+    success: '#10B981',
+    successLight: '#34D399',
+    successDark: '#059669',
+    warning: '#F59E0B',
+    warningLight: '#FBBF24',
+    warningDark: '#D97706',
+    error: '#EF4444',
+    errorLight: '#F87171',
+    errorDark: '#DC2626',
+    info: '#3B82F6',
+    infoLight: '#60A5FA',
+    infoDark: '#1D4ED8',
+    background: '#F9FAFB',
+    surface: '#FFFFFF',
+    surfaceVariant: '#F3F4F6',
+    textPrimary: '#1F2937',
+    textSecondary: '#6B7280',
+    textTertiary: '#9CA3AF',
+    textInverse: '#FFFFFF',
+    borderLight: '#E5E7EB',
+    borderDefault: '#D1D5DB',
+    borderDark: '#9CA3AF',
+    overlay: 'rgba(0, 0, 0, 0.04)',
+    hoverOverlay: 'rgba(0, 0, 0, 0.06)',
+    divider: '#E5E7EB',
+    disabled: '#D1D5DB',
+  },
+}
+
+export const vuetifyDefaults = {
+  global: {
+    ripple: true,
+  },
+  VBtn: {
+    style: 'text-transform: none;',
+    rounded: 'lg',
+    elevation: 0,
+  },
+  VCard: {
+    rounded: 'lg',
+    elevation: 1,
+  },
+  VTextField: {
+    rounded: 'lg',
+    variant: 'outlined',
+    density: 'comfortable',
+  },
+  VTextarea: {
+    rounded: 'lg',
+    variant: 'outlined',
+    density: 'comfortable',
+  },
+  VSelect: {
+    rounded: 'lg',
+    variant: 'outlined',
+    density: 'comfortable',
+  },
+  VAutocomplete: {
+    rounded: 'lg',
+    variant: 'outlined',
+    density: 'comfortable',
+  },
+  VDialog: {
+    rounded: 'lg',
+    elevation: 6,
+  },
+  VChip: {
+    rounded: 'lg',
+  },
+}
+
+const themeConfig = {
+  theme: {
+    defaultTheme: 'light',
+    themes: {
+      light: {
+        colors: {
+          primary: '#5E6AD2',
+          primaryLight: '#7B83E8',
+          primaryDark: '#4A55B8',
+          secondary: '#7C3AED',
+          secondaryLight: '#9F63F7',
+          secondaryDark: '#6D28D9',
+          success: '#10B981',
+          successLight: '#34D399',
+          successDark: '#059669',
+          warning: '#F59E0B',
+          warningLight: '#FBBF24',
+          warningDark: '#D97706',
+          error: '#EF4444',
+          errorLight: '#F87171',
+          errorDark: '#DC2626',
+          info: '#3B82F6',
+          infoLight: '#60A5FA',
+          infoDark: '#1D4ED8',
+          background: '#F9FAFB',
+          surface: '#FFFFFF',
+          surfaceVariant: '#F3F4F6',
+          textPrimary: '#1F2937',
+          textSecondary: '#6B7280',
+          textTertiary: '#9CA3AF',
+          textInverse: '#FFFFFF',
+          borderLight: '#E5E7EB',
+          borderDefault: '#D1D5DB',
+          borderDark: '#9CA3AF',
+          overlay: 'rgba(0, 0, 0, 0.04)',
+          hoverOverlay: 'rgba(0, 0, 0, 0.06)',
+          divider: '#E5E7EB',
+          disabled: '#D1D5DB',
+        },
+      },
+    },
+    variables: {
+      'font-size-root': '14px',
+      'letter-spacing-root': '0.2px',
+    },
+  },
+  defaults: vuetifyDefaults,
+}
+
+export default themeConfig

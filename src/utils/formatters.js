@@ -142,7 +142,7 @@ export const formatFileSize = (bytes) => {
  * @returns {string} Formatted percentage
  */
 export const formatPercentage = (value, total, decimals = 2) => {
-  if (!total) return '0%'
+  if (!total || isNaN(value) || isNaN(total)) return '0%'
   return `${((value / total) * 100).toFixed(decimals)}%`
 }
 

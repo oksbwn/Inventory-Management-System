@@ -253,8 +253,8 @@ const onSearch = async () => {
   await loadStocks(true)
 }
 
-const onPageChange = async (options) => {
-  const { page: currentPage, itemsPerPage: perPage } = options
+const onPageChange = async (options = {}) => {
+  const { page: currentPage = 1, itemsPerPage: perPage = 10 } = options
   page.value = currentPage
   itemsPerPage.value = perPage
   await loadStocks()
@@ -277,18 +277,25 @@ const openAddDialog = () => {
   showFormDialog.value = true
 }
 
-const viewItem = (item) => {
+const viewItem = (item = {}) => {
   const itemId = item.id || item._id || item.stockId
   if (!itemId) {
     errorMessage.value = 'Cannot view item: Missing ID'
     showError.value = true
     return
   }
-  router.push({ name: 'StockDetail', params: { id: String(itemId) } })
+  router.push({ name: 'ComponentDetail', params: { id: String(itemId) } })
 }
 
 const handleDeleteConfirm = async () => {
   try {
+    // Guard: Ensure selectedComponent exists before attempting delete
+    if (!selectedComponent.value?.id) {
+      errorMessage.value = 'Cannot delete: Component ID is missing'
+      showError.value = true
+      return
+    }
+
     await stockStore.deleteStock(selectedComponent.value.id)
     showDeleteDialog.value = false
     successMessage.value = 'Component deleted successfully!'
@@ -300,11 +307,31 @@ const handleDeleteConfirm = async () => {
   }
 }
 
-const handleComponentSuccess = async (data) => {
+/**
+ * Handle component form submission (create or update)
+ * Edit mode requires selectedComponent to be set with valid id
+ */
+const handleComponentSuccess = async (payload = {}) => {
   try {
-    const { data: componentData, isEdit } = data
+    // Safe destructuring with defaults to prevent errors
+    const { data: componentData, isEdit = false } = payload
+
+    // Guard: Validate payload data exists
+    if (!componentData) {
+      errorMessage.value = 'Invalid form data received'
+      showError.value = true
+      return
+    }
 
     if (isEdit) {
+      // Guard: Edit mode requires a pre-selected component with valid id
+      if (!selectedComponent.value?.id) {
+        console.error('Edit mode invoked without selectedComponent.id')
+        errorMessage.value = 'Cannot update: Component not selected'
+        showError.value = true
+        return
+      }
+
       await stockStore.updateComponent(selectedComponent.value.id, componentData)
       successMessage.value = 'Component updated successfully!'
     } else {

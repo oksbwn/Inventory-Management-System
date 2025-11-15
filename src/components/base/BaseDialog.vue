@@ -1,36 +1,13 @@
-<!-- 
-  BaseDialog.vue
-  ===============================
-  Unified dialog component with shared title/actions/width template.
-  Replaces all v-dialog implementations with inline props.
-  
-  Props identical to v-dialog - no breaking changes.
-  All slots and events preserved.
-  
-  Usage:
-  <BaseDialog
-    v-model="isOpen"
-    title="Confirm Action"
-    persistent
-    @confirm="handleConfirm"
-    @cancel="handleCancel"
-  >
-    <p>Are you sure you want to continue?</p>
-  </BaseDialog>
--->
-
 <template>
   <v-dialog
     v-model="isOpen"
-    :max-width="maxWidth"
+    :max-width="computedMaxWidth"
     :persistent="persistent"
     :transition="transition"
     :class="['base-dialog', `base-dialog--${size}`]"
     v-bind="$attrs"
-    @update:model-value="updateModelValue"
   >
     <v-card :rounded="rounded" :elevation="elevation" class="base-dialog__card">
-      <!-- Header / Title Section -->
       <div class="base-dialog__header">
         <div class="base-dialog__title-section">
           <slot name="header">
@@ -43,7 +20,6 @@
           </slot>
         </div>
 
-        <!-- Close Button -->
         <v-btn
           v-if="closeable"
           icon="mdi-close"
@@ -54,17 +30,14 @@
         />
       </div>
 
-      <!-- Divider -->
       <v-divider v-if="showDivider" class="base-dialog__divider" />
 
-      <!-- Content Section -->
       <div class="base-dialog__content">
         <slot>
           {{ message }}
         </slot>
       </div>
 
-      <!-- Actions / Footer Section -->
       <div class="base-dialog__actions">
         <slot name="actions">
           <v-spacer />
@@ -96,26 +69,22 @@ import { computed } from 'vue'
 import BaseButton from './BaseButton.vue'
 
 const props = defineProps({
-  // v-model for dialog state
   modelValue: {
     type: Boolean,
     default: false,
   },
 
-  // Dialog size: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   size: {
     type: String,
     default: 'md',
     validator: (v) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
   },
 
-  // Max width mapping
   maxWidth: {
-    type: String,
-    default: null, // Will be computed from size
+    type: [String, Number],
+    default: null,
   },
 
-  // Title and subtitle
   title: {
     type: String,
     default: null,
@@ -126,13 +95,11 @@ const props = defineProps({
     default: null,
   },
 
-  // Message (alternative to slot)
   message: {
     type: String,
     default: null,
   },
 
-  // Visual properties
   rounded: {
     type: [Boolean, String],
     default: 'lg',
@@ -143,7 +110,6 @@ const props = defineProps({
     default: 4,
   },
 
-  // Behavior
   persistent: {
     type: Boolean,
     default: true,
@@ -164,7 +130,6 @@ const props = defineProps({
     default: 'dialog-transition',
   },
 
-  // Action button props
   showCancel: {
     type: Boolean,
     default: true,
@@ -203,25 +168,22 @@ const isOpen = computed({
   set: (val) => emit('update:modelValue', val),
 })
 
-// Compute max-width based on size
 const computedMaxWidth = computed(() => {
-  const widthMap = {
-    xs: 'xs',    // 304px
-    sm: 'sm',    // 488px
-    md: 'md',    // 680px
-    lg: 'lg',    // 912px
-    xl: 'xl',    // 1264px
-  }
-  return props.maxWidth || widthMap[props.size] || 'md'
-})
+  if (props.maxWidth) return props.maxWidth
 
-const updateModelValue = (val) => {
-  isOpen.value = val
-}
+  const widthMap = {
+    xs: 304,
+    sm: 488,
+    md: 680,
+    lg: 912,
+    xl: 1264,
+  }
+  
+  return widthMap[props.size] || 680
+})
 
 const handleConfirm = () => {
   emit('confirm')
-  // Don't auto-close - let parent handle it
 }
 
 const handleCancel = () => {
@@ -253,7 +215,7 @@ const handleClose = () => {
 
   &__title-section {
     flex: 1;
-    min-width: 0; // Prevent overflow
+    min-width: 0;
   }
 
   &__title {
@@ -274,7 +236,7 @@ const handleClose = () => {
 
   &__close {
     flex-shrink: 0;
-    margin-right: -8px; // Align to card edge
+    margin-right: -8px;
   }
 
   &__divider {
@@ -292,7 +254,6 @@ const handleClose = () => {
     line-height: 1.5;
     color: var(--v-textPrimary);
 
-    // Content spacing
     > *:last-child {
       margin-bottom: 0;
     }

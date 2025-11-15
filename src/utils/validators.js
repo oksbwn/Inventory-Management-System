@@ -63,7 +63,15 @@ export const validateImageFile = (file) => {
  * @returns {string|true} Error message or true
  */
 export const required = (value) => {
-  return value ? true : 'This field is required'
+  if (value === null || value === undefined) {
+    return 'This field is required'
+  }
+  
+  if (typeof value === 'string' && value.trim() === '') {
+    return 'This field is required'
+  }
+  
+  return true
 }
 
 /**
@@ -124,12 +132,13 @@ export const validateObject = (obj, rules) => {
   Object.keys(rules).forEach(field => {
     const validators = Array.isArray(rules[field]) ? rules[field] : [rules[field]]
     
-    validators.forEach(validator => {
+    for (const validator of validators) {
       const result = validator(obj[field])
       if (result !== true) {
         errors[field] = result
+        break
       }
-    })
+    }
   })
   
   return errors

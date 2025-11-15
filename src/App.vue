@@ -15,7 +15,7 @@
     <v-navigation-drawer v-model="drawer" app>
       <v-list>
         <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" to="/"></v-list-item>
-        <v-list-item prepend-icon="mdi-cube-outline" title="Components" to="/stocks"></v-list-item>
+        <v-list-item prepend-icon="mdi-cube-outline" title="Components" to="/components"></v-list-item>
         <v-list-item prepend-icon="mdi-shape" title="Categories" to="/categories"></v-list-item>
         <v-list-item prepend-icon="mdi-package-variant" title="Boxes" to="/boxes"></v-list-item>
         <v-list-item prepend-icon="mdi-briefcase" title="Projects" to="/projects"></v-list-item>

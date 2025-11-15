@@ -14,6 +14,8 @@ export const generateId = () => {
  * @returns {string} Color name
  */
 export const getQuantityColor = (quantity) => {
+  if (quantity < 0) return 'error'
+  
   if (quantity === QUANTITY_LEVELS.CRITICAL) return 'error'
   if (quantity < QUANTITY_LEVELS.LOW) return 'warning'
   if (quantity < QUANTITY_LEVELS.MEDIUM) return 'info'
@@ -26,6 +28,8 @@ export const getQuantityColor = (quantity) => {
  * @returns {string} Icon name
  */
 export const getQuantityIcon = (quantity) => {
+  if (quantity < 0) return 'mdi-alert-circle'
+  
   if (quantity === QUANTITY_LEVELS.CRITICAL) return 'mdi-close-circle'
   if (quantity < QUANTITY_LEVELS.LOW) return 'mdi-alert'
   return 'mdi-check-circle'

@@ -14,8 +14,8 @@
         <v-icon size="120" color="error">mdi-alert-circle</v-icon>
         <h2 class="text-h5 font-weight-bold mt-4 mb-2">Error Loading Stock</h2>
         <p class="text-body-1 text-medium-emphasis mb-6">{{ error }}</p>
-        <v-btn color="primary" size="large" :to="{ name: 'Stocks' }" prepend-icon="mdi-arrow-left">
-          Back to Stocks
+        <v-btn color="primary" size="large" :to="{ name: 'Components' }" prepend-icon="mdi-arrow-left">
+          Back to Components
         </v-btn>
       </v-col>
     </v-row>

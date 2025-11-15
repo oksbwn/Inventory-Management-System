@@ -110,34 +110,26 @@ const computedColor = computed(() => {
   }
 
   &--success {
-    ::v-deep {
-      .v-snackbar__content {
-        color: #fff;
-      }
+    :deep(.v-snackbar__content) {
+      color: #fff;
     }
   }
 
   &--error {
-    ::v-deep {
-      .v-snackbar__content {
-        color: #fff;
-      }
+    :deep(.v-snackbar__content) {
+      color: #fff;
     }
   }
 
   &--warning {
-    ::v-deep {
-      .v-snackbar__content {
-        color: #000;
-      }
+    :deep(.v-snackbar__content) {
+      color: #000;
     }
   }
 
   &--info {
-    ::v-deep {
-      .v-snackbar__content {
-        color: #fff;
-      }
+    :deep(.v-snackbar__content) {
+      color: #fff;
     }
   }
 }

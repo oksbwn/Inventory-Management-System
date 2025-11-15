@@ -1,6 +1,6 @@
 <template>
-  <BaseCard variant="default" elevation="0" class="stat-card">
-    <div class="pa-4">
+  <v-card elevation="0" class="stat-card">
+    <v-card-text class="pa-4">
       <div class="d-flex align-center justify-space-between mb-2">
         <div class="stat-icon-wrapper" :class="`${gradient}-gradient`">
           <v-icon color="white" size="20">{{ icon }}</v-icon>
@@ -9,8 +9,8 @@
       </div>
       <div class="text-h6 font-weight-bold">{{ value }}</div>
       <div class="text-caption text-medium-emphasis">{{ subtitle }}</div>
-    </div>
-  </BaseCard>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup>
@@ -37,8 +37,8 @@ defineProps({
   },
   gradient: {
     type: String,
-    enum: ['primary', 'success', 'grey', 'info', 'warning', 'error'],
-    default: 'primary'
+    default: 'primary',
+    validator: (value) => ['primary', 'success', 'grey', 'info', 'warning', 'error'].includes(value)
   }
 })
 </script>

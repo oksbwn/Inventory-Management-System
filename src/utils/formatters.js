@@ -90,6 +90,14 @@ export const capitalize = (text) => {
  * @returns {object} { value, label, severity }
  */
 export const formatQuantity = (quantity) => {
+  if (quantity < 0) {
+    return {
+      value: quantity,
+      label: 'Invalid Quantity',
+      severity: 'error'
+    }
+  }
+  
   let severity = 'success'
   let label = 'In Stock'
   

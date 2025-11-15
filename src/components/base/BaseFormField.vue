@@ -1,41 +1,19 @@
-<!-- 
-  BaseFormField.vue
-  ===============================
-  Consistent label + helper text layout.
-  Wraps form inputs (text, select, textarea, etc.) with unified styling.
-  
-  Props and slots flexible - works with any v-input based component.
-  
-  Usage:
-  <BaseFormField
-    label="Email Address"
-    required
-    helper="Enter a valid email"
-    error-message="Invalid email format"
-  >
-    <v-text-field
-      v-model="email"
-      type="email"
-      placeholder="user@example.com"
-    />
-  </BaseFormField>
--->
-
 <template>
   <div :class="['base-form-field', `base-form-field--${variant}`, { 'base-form-field--error': hasError }]">
-    <!-- Label -->
     <label v-if="label" :for="fieldId" class="base-form-field__label">
       <span class="base-form-field__label-text">{{ label }}</span>
       <span v-if="required" class="base-form-field__required">*</span>
       <span v-if="hint" class="base-form-field__hint">({{ hint }})</span>
     </label>
 
-    <!-- Input Wrapper -->
     <div class="base-form-field__input-wrapper">
-      <slot />
+      <slot 
+        :field-id="fieldId" 
+        :handle-input="handleInput" 
+        :char-count="characterCount"
+      />
     </div>
 
-    <!-- Helper Text / Error Message -->
     <div v-if="helperText || errorMessage || $slots['helper']" class="base-form-field__support-text">
       <v-icon v-if="hasError" size="14" class="base-form-field__support-icon">
         mdi-alert-circle
@@ -56,7 +34,6 @@
       </span>
     </div>
 
-    <!-- Character Count (optional) -->
     <div v-if="showCharCount && maxLength" class="base-form-field__char-count">
       <span :class="{ 'base-form-field__char-count--warn': characterCount > maxLength * 0.8 }">
         {{ characterCount }}/{{ maxLength }}
@@ -70,7 +47,6 @@ import { computed, ref } from 'vue'
 import { useId } from 'vue'
 
 const props = defineProps({
-  // Content
   label: {
     type: String,
     default: null,
@@ -86,7 +62,6 @@ const props = defineProps({
     default: false,
   },
 
-  // Helper text
   helperText: {
     type: String,
     default: null,
@@ -102,14 +77,12 @@ const props = defineProps({
     default: true,
   },
 
-  // Visual variant
   variant: {
     type: String,
     default: 'filled',
     validator: (v) => ['filled', 'outlined', 'solo', 'plain'].includes(v),
   },
 
-  // Character counter
   maxLength: {
     type: Number,
     default: null,
@@ -120,20 +93,15 @@ const props = defineProps({
     default: false,
   },
 
-  // Field ID (for label association)
   fieldId: {
     type: String,
     default: () => useId(),
   },
 })
 
-// Computed
 const hasError = computed(() => !!props.errorMessage)
-
-// Character count tracking (optional - pass value from parent via slot)
 const characterCount = ref(0)
 
-// Update character count from input events
 const handleInput = (event) => {
   if (props.showCharCount) {
     characterCount.value = event.target?.value?.length || 0
@@ -180,7 +148,6 @@ const handleInput = (event) => {
     position: relative;
     width: 100%;
 
-    // Input field theming
     ::v-deep {
       .v-field {
         --v-field-border-color: var(--v-border-default);
@@ -242,13 +209,12 @@ const handleInput = (event) => {
     font-weight: 500;
   }
 
-  // Error state styling
   &--error {
-    &__label {
+    .base-form-field__label {
       color: var(--v-error);
     }
 
-    &__support-message {
+    .base-form-field__support-message {
       color: var(--v-error);
     }
   }

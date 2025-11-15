@@ -1,19 +1,3 @@
-<!-- 
-  BaseSelect.vue
-  ===============================
-  Unified select component with consistent styling.
-  Wraps v-select with theme-aware defaults.
-  
-  Usage:
-  <BaseSelect
-    v-model="selectedItem"
-    label="Choose Category"
-    :items="categoryOptions"
-    item-title="name"
-    item-value="id"
-  />
--->
-
 <template>
   <v-select
     v-bind="selectProps"
@@ -30,13 +14,11 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  // v-model
   modelValue: {
     type: [String, Number, Array, Object],
     default: null,
   },
 
-  // Select options
   items: {
     type: Array,
     required: true,
@@ -52,7 +34,6 @@ const props = defineProps({
     default: 'value',
   },
 
-  // Label and helper
   label: {
     type: String,
     default: null,
@@ -63,7 +44,6 @@ const props = defineProps({
     default: null,
   },
 
-  // State
   error: {
     type: Boolean,
     default: false,
@@ -89,7 +69,6 @@ const props = defineProps({
     default: false,
   },
 
-  // Visual
   variant: {
     type: String,
     default: 'outlined',
@@ -103,7 +82,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
-// Computed select props
 const selectProps = computed(() => ({
   modelValue: props.modelValue,
   items: props.items,
@@ -121,7 +99,6 @@ const selectProps = computed(() => ({
   hideDetails: !props.helperText && !props.errorMessage,
 }))
 
-// Computed select events
 const selectEvents = computed(() => ({
   'update:modelValue': (val) => {
     emit('update:modelValue', val)
@@ -133,10 +110,8 @@ const selectEvents = computed(() => ({
 <style scoped lang="scss">
 .base-select {
   &--error {
-    ::v-deep {
-      .v-field__outline {
-        --v-field-border-color: var(--v-error);
-      }
+    :deep(.v-field__outline) {
+      --v-field-border-color: var(--v-error);
     }
   }
 }

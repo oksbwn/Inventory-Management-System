@@ -57,8 +57,8 @@ export default {
   },
 
   // Fetch all available components for selection
-  getAvailableComponents() {
-    return apiClient.get("/webhook/api/components/stocks");
+  getAvailableComponents(params) {
+    return apiClient.get("/webhook/api/components/stocks", { params });
   },
 
   // Add a component usage record to a project

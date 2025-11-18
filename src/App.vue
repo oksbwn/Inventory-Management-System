@@ -29,10 +29,12 @@
     <v-main>
       <router-view></router-view>
     </v-main>
+    <NotificationSnackbar />
   </v-app>
 </template>
 
 <script setup>
+import NotificationSnackbar from '@/components/global/NotificationSnackbar.vue'
 import { ref } from 'vue'
 
 const drawer = ref(true)

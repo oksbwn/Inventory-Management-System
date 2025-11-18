@@ -87,6 +87,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useCategoryStore } from '@/stores/categoryStore'
+import { useNotification } from '@/composables/useNotification'
 
 const props = defineProps({
   modelValue: {
@@ -100,6 +102,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'success'])
+
+const categoryStore = useCategoryStore()
+const { success, error } = useNotification()
 
 const formRef = ref(null)
 const loading = ref(false)
@@ -146,19 +151,40 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
+    if (isEdit.value) {
+      await categoryStore.updateCategory(
+        props.categoryItem.category_id,
+        form.value
+      )
+      success('Category updated successfully!')
+    } else {
+      await categoryStore.createCategory(form.value)
+      success('Category created successfully!')
+    }
+
+    await categoryStore.fetchCategories()
+    
     emit('success', {
       message: isEdit.value ? 'Category updated successfully!' : 'Category created successfully!',
-      data: form.value,
       isEdit: isEdit.value,
       id: props.categoryItem?.category_id
     })
     
     handleClose()
+  } catch (err) {
+    console.error('Error submitting category:', err)
+    
+    const errorMessage = err?.response?.data?.message || 
+                        err?.message || 
+                        `Failed to ${isEdit.value ? 'update' : 'create'} category`
+    
+    error(errorMessage, 5000) // Show error for 5 seconds
   } finally {
     loading.value = false
   }
 }
 </script>
+
 
 <style scoped>
 .category-dialog {

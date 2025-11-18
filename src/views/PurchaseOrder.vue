@@ -178,7 +178,7 @@
                 </v-text-field>
               </v-col>
 
-              <!-- Total - Now Editable -->
+              <!-- Total - Editable -->
               <v-col cols="9" md="2">
                 <v-text-field v-model.number="item.total" label="Total *" type="number" min="0" step="0.01"
                   variant="outlined" density="comfortable" prefix="₹" @input="calculateFromTotal(i)"
@@ -188,7 +188,6 @@
                   </template>
                 </v-text-field>
               </v-col>
-
 
               <!-- Delete button -->
               <v-col cols="3" md="1" class="d-flex justify-center">
@@ -270,21 +269,47 @@
     <category-form-dialog v-model="categoryDialog" @success="handleCategorySuccess" />
 
     <box-form-dialog v-model="boxDialog" @success="handleBoxSuccess" />
-
-    <!-- Snackbars -->
-    <v-snackbar v-model="showSuccess" color="success" :timeout="3000" location="top right">
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-check-circle</v-icon>
-        <span>{{ successMessage }}</span>
-      </div>
-    </v-snackbar>
-
-    <v-snackbar v-model="showError" color="error" :timeout="5000" location="top right">
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-alert-circle</v-icon>
-        <span>{{ errorMessage }}</span>
-      </div>
-    </v-snackbar>
+    <!-- Confirmation Dialog -->
+    <confirm-dialog v-model="confirmDialog" title="Confirm Purchase Order" subtitle="Please review your order details"
+      :message="`You are about to create a purchase order for ${selectedVendorName} with ${form.items.length} item(s) totaling ${formatCurrency(grandTotal)}.`"
+      icon="mdi-cart-check" color="primary" confirm-text="Create Order" cancel-text="Review Order"
+      @confirm="handleConfirmSave">
+      <template #details>
+        <v-card variant="tonal" color="primary" class="mt-4" rounded="lg">
+          <v-card-text class="pa-4">
+            <div class="d-flex justify-space-between mb-2">
+              <span class="text-body-2">Vendor:</span>
+              <span class="text-body-2 font-weight-bold">{{ selectedVendorName }}</span>
+            </div>
+            <div class="d-flex justify-space-between mb-2">
+              <span class="text-body-2">Order Date:</span>
+              <span class="text-body-2 font-weight-bold">
+                {{ new Date(form.order_date).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                }) }}
+              </span>
+            </div>
+            <div class="d-flex justify-space-between mb-2">
+              <span class="text-body-2">Total Items:</span>
+              <span class="text-body-2 font-weight-bold">{{ form.items.length }}</span>
+            </div>
+            <div class="d-flex justify-space-between mb-2">
+              <span class="text-body-2">Total Quantity:</span>
+              <span class="text-body-2 font-weight-bold">{{ totalQuantity }}</span>
+            </div>
+            <v-divider class="my-3" />
+            <div class="d-flex justify-space-between">
+              <span class="text-subtitle-1 font-weight-bold">Grand Total:</span>
+              <span class="text-h6 font-weight-bold text-primary">
+                {{ formatCurrency(grandTotal) }}
+              </span>
+            </div>
+          </v-card-text>
+        </v-card>
+      </template>
+    </confirm-dialog>
   </v-container>
 </template>
 
@@ -296,10 +321,12 @@ import { useStockStore } from '@/stores/stockStore'
 import { useCategoryStore } from '@/stores/categoryStore'
 import { useBoxStore } from '@/stores/boxStore'
 import { useOrderStore } from '@/stores/orderStore'
+import { useNotification } from '@/composables/useNotification'
 import VendorFormDialog from '@/components/dialogs/VendorFormDialog.vue'
-import ComponentFormDialog from '@/components/ComponentFormDialog.vue'
-import CategoryFormDialog from '@/components/CategoryFormDialog.vue'
-import BoxFormDialog from '@/components/BoxFormDialog.vue'
+import ComponentFormDialog from '@/components/dialogs/ComponentFormDialog.vue'
+import CategoryFormDialog from '@/components/dialogs/CategoryFormDialog.vue'
+import BoxFormDialog from '@/components/dialogs/BoxFormDialog.vue'
+import ConfirmDialog from '@/components/dialogs/ConfirmDialog.vue'
 
 const router = useRouter()
 const vendorStore = useVendorStore()
@@ -307,6 +334,7 @@ const stockStore = useStockStore()
 const categoryStore = useCategoryStore()
 const boxStore = useBoxStore()
 const orderStore = useOrderStore()
+const { success, error, info } = useNotification()
 
 const orderForm = ref(null)
 const valid = ref(false)
@@ -332,22 +360,23 @@ const vendorDialog = ref(false)
 const componentDialog = ref(false)
 const categoryDialog = ref(false)
 const boxDialog = ref(false)
+const confirmDialog = ref(false)
 const currentItemIndex = ref(null)
 
 // Selected items for editing
 const selectedVendor = ref(null)
 const selectedComponent = ref(null)
 
-// Snackbar
-const showSuccess = ref(false)
-const showError = ref(false)
-const successMessage = ref('')
-const errorMessage = ref('')
-
 // Computed totals
 const totalQuantity = computed(() => form.value.items.reduce((s, i) => s + (i.quantity || 0), 0))
 const grandTotal = computed(() => form.value.items.reduce((s, i) => s + (i.total || 0), 0))
 const formatCurrency = v => `₹${(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+
+// Get selected vendor name for confirmation
+const selectedVendorName = computed(() => {
+  const vendor = vendors.value.find(v => v.vendor_id === form.value.vendor_id)
+  return vendor?.vendor_name || 'Unknown Vendor'
+})
 
 const fetchData = async () => {
   try {
@@ -357,10 +386,9 @@ const fetchData = async () => {
     ])
     components.value = componentsData
     vendors.value = vendorsData
-  } catch (error) {
-    console.error('Error fetching data:', error)
-    errorMessage.value = 'Failed to load data'
-    showError.value = true
+  } catch (err) {
+    console.error('Error fetching data:', err)
+    error('Failed to load data. Please refresh the page.')
   }
 }
 
@@ -377,13 +405,6 @@ const calculateFromTotal = i => {
   }
 }
 
-const calculateFromUnitCost = i => {
-  const item = form.value.items[i]
-  if (item.unit_cost > 0 && item.total > 0) {
-    item.quantity = Math.round((item.total || 0) / item.unit_cost)
-  }
-}
-
 // Methods
 const addOrderItem = () => {
   form.value.items.push({ id: null, category_name: '', quantity: 1, unit_cost: 0, total: 0 })
@@ -391,6 +412,7 @@ const addOrderItem = () => {
 
 const removeOrderItem = i => {
   form.value.items.splice(i, 1)
+  info('Item removed from order')
 }
 
 const onComponentChange = (cid, i) => {
@@ -430,18 +452,20 @@ const handleVendorSuccess = async ({ data }) => {
       website: data.website
     })
     await fetchData()
-    successMessage.value = 'Vendor created successfully'
-    showSuccess.value = true
-  } catch (error) {
-    console.error('Error creating vendor:', error)
-    errorMessage.value = 'Failed to create vendor'
-    showError.value = true
+    success('Vendor created successfully!')
+  } catch (err) {
+    console.error('Error creating vendor:', err)
+    error(
+      err?.response?.data?.message ||
+      err?.message ||
+      'Failed to create vendor. Please try again.'
+    )
   }
 }
 
 const handleComponentSuccess = async ({ data }) => {
   try {
-    const newComponent = await stockStore.createComponent(data)
+    await stockStore.createComponent(data)
     await fetchData()
 
     // Auto-select the new component in the current item
@@ -454,12 +478,14 @@ const handleComponentSuccess = async ({ data }) => {
       }
     }
 
-    successMessage.value = 'Component created successfully'
-    showSuccess.value = true
-  } catch (error) {
-    console.error('Error creating component:', error)
-    errorMessage.value = 'Failed to create component'
-    showError.value = true
+    success('Component created and added to order!')
+  } catch (err) {
+    console.error('Error creating component:', err)
+    error(
+      err?.response?.data?.message ||
+      err?.message ||
+      'Failed to create component. Please try again.'
+    )
   }
 }
 
@@ -467,12 +493,14 @@ const handleCategorySuccess = async ({ data }) => {
   try {
     await categoryStore.createCategory(data)
     await categoryStore.fetchCategories()
-    successMessage.value = 'Category created successfully'
-    showSuccess.value = true
-  } catch (error) {
-    console.error('Error creating category:', error)
-    errorMessage.value = 'Failed to create category'
-    showError.value = true
+    success('Category created successfully!')
+  } catch (err) {
+    console.error('Error creating category:', err)
+    error(
+      err?.response?.data?.message ||
+      err?.message ||
+      'Failed to create category. Please try again.'
+    )
   }
 }
 
@@ -483,20 +511,32 @@ const handleBoxSuccess = async ({ data }) => {
       pageSize: 1000000,
       page: 1
     })
-    successMessage.value = 'Storage box created successfully'
-    showSuccess.value = true
-  } catch (error) {
-    console.error('Error creating box:', error)
-    errorMessage.value = 'Failed to create box'
-    showError.value = true
+    success('Storage box created successfully!')
+  } catch (err) {
+    console.error('Error creating box:', err)
+    error(
+      err?.response?.data?.message ||
+      err?.message ||
+      'Failed to create box. Please try again.'
+    )
   }
 }
 
 const handleSubmit = async () => {
   const ok = await orderForm.value.validate()
-  if (!ok || !form.value.items.length) return
+  if (!ok || !form.value.items.length) {
+    error('Please fill in all required fields correctly')
+    return
+  }
 
+  // Show confirmation dialog instead of submitting directly
+  confirmDialog.value = true
+}
+
+const handleConfirmSave = async () => {
+  confirmDialog.value = false
   saving.value = true
+
   try {
     await orderStore.createOrder({
       vendor_id: form.value.vendor_id,
@@ -518,18 +558,25 @@ const handleSubmit = async () => {
       notes: '',
       items: [{ id: null, category_name: '', quantity: 1, unit_cost: 0, total: 0 }]
     }
-    
+
     // Reset form validation
     orderForm.value?.resetValidation()
-    
-    // Show success message
-    showSuccess.value = true
-    successMessage.value = 'Purchase order created successfully!'
 
-  } catch (error) {
-    console.error('Error creating order:', error)
-    showError.value = true
-    errorMessage.value = 'Failed to create purchase order'
+    // Show success message
+    success('Purchase order created successfully!')
+
+    // Redirect after a delay
+    setTimeout(() => {
+      router.push({ name: 'Orders' })
+    }, 1500)
+
+  } catch (err) {
+    console.error('Error creating order:', err)
+    error(
+      err?.response?.data?.message ||
+      err?.message ||
+      'Failed to create purchase order. Please try again.'
+    )
   } finally {
     saving.value = false
   }
@@ -546,10 +593,9 @@ onMounted(async () => {
       })
     ])
     await fetchData()
-  } catch (error) {
-    console.error('Error loading initial data:', error)
-    errorMessage.value = 'Failed to load initial data'
-    showError.value = true
+  } catch (err) {
+    console.error('Error loading initial data:', err)
+    error('Failed to load initial data. Please refresh the page.')
   }
 })
 </script>

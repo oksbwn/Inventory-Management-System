@@ -374,7 +374,10 @@ export const useProjectStore = defineStore("project", () => {
   // Fetch full list of available components to add
   const fetchAvailableComponents = async () => {
     try {
-      const response = await projectService.getAvailableComponents();
+      const response = await projectService.getAvailableComponents({
+        pageSize:100000000,
+        pageNo: 1
+      });
       availableComponents.value = response || [];
       return response;
     } catch (err) {

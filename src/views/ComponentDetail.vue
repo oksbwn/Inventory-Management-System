@@ -25,7 +25,7 @@
       <!-- Back Button -->
       <v-row class="mb-4">
         <v-col cols="12">
-          <v-btn variant="text" prepend-icon="mdi-arrow-left" :to="{ name: 'Stocks' }">
+          <v-btn variant="text" prepend-icon="mdi-arrow-left" :to="{ name: 'Components' }">
             Back to Stocks
           </v-btn>
         </v-col>

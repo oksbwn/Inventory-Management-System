@@ -208,7 +208,7 @@
                   </v-btn>
                 </div>
                 <div v-if="editingVideoField === 'description'">
-                  <QuillEditor v-model:content="videoInfo.description" :toolbar="editorToolbar" theme="snow"
+                  <QuillEditor v-model:content="videoInfo.description" :toolbar="editorToolbar" theme="snow" contentType="html"
                     style="min-height: 150px" />
                   <div class="mt-2">
                     <v-btn size="small" color="primary" @click="saveVideoField('description')">Save</v-btn>
@@ -225,7 +225,7 @@
                   </v-btn>
                 </div>
                 <div v-if="editingVideoField === 'script'">
-                  <QuillEditor v-model:content="videoInfo.script" :toolbar="editorToolbar" theme="snow"
+                  <QuillEditor v-model:content="videoInfo.script" :toolbar="editorToolbar" theme="snow" contentType="html"
                     style="min-height: 250px" />
                   <div class="mt-2">
                     <v-btn size="small" color="primary" @click="saveVideoField('script')">Save</v-btn>

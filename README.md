@@ -11,7 +11,7 @@
 
 **A modern, full-stack inventory management solution for home labs and small-scale operations**
 
-[Features](#-features) • [Demo](#-demo) • [Getting Started](#-getting-started) • [Documentation](#-documentation)
+[Features](#-features) • [Getting Started](#-getting-started)
 
 </div>
 
@@ -55,13 +55,13 @@ A comprehensive inventory tracking system built with Vue 3 and powered by n8n wo
 <div align="center">
 
 ### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](.img/Dashboard.png)
 
 ### Stock Management
-![Stock List](docs/screenshots/stocks.png)
+![Stock List](.img/Components.png)
 
 ### Detail View
-![Detail View](docs/screenshots/detail.png)
+![Detail View](.img/Component.png)
 
 </div>
 
@@ -115,61 +115,6 @@ Before you begin, ensure you have the following installed:
 **Frontend:** Vue 3, Vuetify 3, Vite, Pinia, Vue Router, Axios  
 **Backend:** n8n, PostgreSQL, Docker
 
-## 📋 Installation
-
-See full installation guide in the documentation.
-
-## 📝 Available Scripts
-
-npm run dev # Development
-npm run build # Production build
-npm run preview # Preview build
-
-text
-
 ## 🤝 Contributing
 
-Contributions welcome! Open an issue or submit a PR.
-
-## 📄 License
-
-MIT License
-
----
-
-⭐ Star this repo if you find it useful!## ✨ Features
-
-- 📦 Stock Management - Track inventory with real-time updates
-- 🏷️ Category Organization - Organize with tags
-- 📍 Storage Locations - Manage warehouse boxes
-- 🎯 Project Tracking - Link inventory to projects
-- 🤝 Vendor Management - Supplier relationships
-
-## 🏗️ Tech Stack
-
-**Frontend:** Vue 3, Vuetify 3, Vite, Pinia, Vue Router, Axios  
-**Backend:** n8n, PostgreSQL, Docker
-
-## 📋 Installation
-
-See full installation guide in the documentation.
-
-## 📝 Available Scripts
-
-npm run dev # Development
-npm run build # Production build
-npm run preview # Preview build
-
-text
-
-## 🤝 Contributing
-
-Contributions welcome! Open an issue or submit a PR.
-
-## 📄 License
-
-MIT License
-
----
-
-⭐ Star this repo if you find it useful!
+Contributions welcome! Open an issue or submit a PR

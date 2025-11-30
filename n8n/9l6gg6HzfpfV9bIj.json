@@ -1,8 +1,8 @@
 {
   "createdAt": "2025-10-22T08:50:19.845Z",
-  "updatedAt": "2025-10-22T08:58:37.000Z",
+  "updatedAt": "2025-10-26T08:23:56.000Z",
   "id": "9l6gg6HzfpfV9bIj",
-  "name": "Delete Order API",
+  "name": "Orders",
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -34,7 +34,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT \n  o.order_id,\n  o.vendor_id,\n  o.order_date,\n  o.total_cost,\n  o.delivery_date,\n  o.status,\n  v.vendor_name,\n  v.contact_email,\n  COUNT(DISTINCT op.component_id) as item_count,\n  SUM(op.quantity_ordered * op.unit_cost) as total_value\nFROM orders o\nLEFT JOIN vendors v ON v.vendor_id = o.vendor_id\nLEFT JOIN order_parts op ON op.order_id = o.order_id\nGROUP BY o.order_id, o.vendor_id, o.order_date, o.total_cost, o.delivery_date, o.status, v.vendor_name, v.contact_email\nORDER BY o.order_date DESC;",
+        "query": "SELECT \n  o.order_id,\n  o.vendor_id,\n  o.order_date,\n  o.total_cost,\n  o.delivery_date,\n  o.status,\n  v.vendor_name,\n  v.contact_email,\n  v.phone_number,\n  v.vendor_icon_content,\n  v.vendor_icon_type,\n  v.vendor_icon_name,\n  COUNT(DISTINCT op.component_id) as item_count,\n  COALESCE(SUM(op.quantity_ordered * op.unit_cost), 0) as total_value\nFROM orders o\nLEFT JOIN vendors v ON v.vendor_id = o.vendor_id\nLEFT JOIN order_parts op ON op.order_id = o.order_id\nGROUP BY \n  o.order_id, \n  o.vendor_id, \n  o.order_date, \n  o.total_cost, \n  o.delivery_date, \n  o.status, \n  v.vendor_name, \n  v.contact_email,\n  v.phone_number,\n  v.vendor_icon_content,\n  v.vendor_icon_type,\n  v.vendor_icon_name\nORDER BY o.order_date DESC;\n",
         "options": {}
       },
       "name": "Get Orders Query",
@@ -51,20 +51,6 @@
           "name": "Postgres account"
         }
       }
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        352,
-        -16
-      ],
-      "id": "e643e16a-9683-4fb6-95e7-5b7461458266"
     },
     {
       "parameters": {
@@ -107,7 +93,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT \n  o.order_id,\n  o.vendor_id,\n  o.order_date,\n  o.total_cost,\n  o.delivery_date,\n  o.status,\n  v.vendor_name,\n  v.contact_email,\n  v.phone_number,\n  (\n    SELECT json_agg(\n      json_build_object(\n        'order_part_id', op.order_part_id,\n        'component_id', op.component_id,\n        'component_name', c.name,\n        'category_name', cat.category_name,\n        'quantity_ordered', op.quantity_ordered,\n        'unit_cost', op.unit_cost,\n        'url', op.url,\n        'total', op.quantity_ordered * op.unit_cost\n      )\n    )\n    FROM order_parts op\n    LEFT JOIN components c ON c.component_id = op.component_id\n    LEFT JOIN categories cat ON cat.category_id = c.category_id\n    WHERE op.order_id = o.order_id\n  ) AS order_items\nFROM orders o\nLEFT JOIN vendors v ON v.vendor_id = o.vendor_id\nWHERE o.order_id = {{ $json.order_id }};",
+        "query": "SELECT \n  o.order_id,\n  o.vendor_id,\n  o.order_date,\n  o.total_cost,\n  o.delivery_date,\n  o.status,\n  v.vendor_name,\n  v.contact_email,\n  v.phone_number,\n  v.vendor_icon_content,\n  v.vendor_icon_type,\n  v.vendor_icon_name,\n  (\n    SELECT json_agg(\n          json_build_object(\n            'order_part_id', op.order_part_id,\n            'component_id', op.component_id,\n            'component_name', c.name,\n            'file_name', \n              'http://192.168.0.7:5678/webhook/image?filename=component_' || op.component_id || '.' || COALESCE(c.image_type, 'jpeg'),\n            'category_name', cat.category_name,\n            'quantity_ordered', op.quantity_ordered,\n            'unit_cost', op.unit_cost,\n            'url', op.url,\n            'total', op.quantity_ordered * op.unit_cost\n          )\n        )\n    FROM order_parts op\n    LEFT JOIN components c ON c.component_id = op.component_id\n    LEFT JOIN categories cat ON cat.category_id = c.category_id\n    WHERE op.order_id = o.order_id\n  ) AS order_items\nFROM orders o\nLEFT JOIN vendors v ON v.vendor_id = o.vendor_id\nWHERE o.order_id = {{ $json.order_id }};",
         "options": {}
       },
       "name": "Get Order Detail Query",
@@ -134,7 +120,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        576,
+        800,
         208
       ],
       "id": "c8aa440f-40e5-48e5-a442-669785be1419"
@@ -310,7 +296,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM orders WHERE order_id = {{ $json.order_id }};",
+        "query": "DELETE FROM orders WHERE order_id = {{$('Extract Order ID1').item.json.order_id }};",
         "options": {}
       },
       "name": "Delete Order",
@@ -367,6 +353,123 @@
         432
       ],
       "id": "85a2bcda-a48e-405d-84ee-7cad7a1ab0c6"
+    },
+    {
+      "parameters": {
+        "path": "api/orders/metadata",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Orders Metadata Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        656
+      ],
+      "id": "114236b6-0c0d-455e-bdf4-3818e0eb8b7b",
+      "webhookId": "orders-metadata-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  (SELECT COUNT(*) FROM orders) as total_orders,\n  (SELECT COUNT(*) FROM orders WHERE status = 'Pending') as pending_orders,\n  (SELECT COUNT(*) FROM orders WHERE status = 'Delivered') as delivered_orders,\n  (SELECT COALESCE(SUM(total_cost), 0) FROM orders) as total_spent;",
+        "options": {}
+      },
+      "name": "Get Stats Metadata",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        656
+      ],
+      "id": "26b02ac1-8afe-4279-bdd5-863c58bcb16b",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        576,
+        656
+      ],
+      "id": "6b443d92-fb4f-4f35-aeb8-e0c7679db46f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const metadata =$input.first().json;\nconst response = {\n  success: true,\n  metadata: {\n    totalOrders: parseInt(metadata.total_orders || 0),\n    pendingOrders: parseInt(metadata.pending_orders || 0),\n    deliveredOrders: parseInt(metadata.delivered_orders || 0),\n    totalSpent: parseFloat(metadata.total_spent || 0)\n  }\n};\n\nreturn [{ json: response }];"
+      },
+      "name": "Format Response1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        656
+      ],
+      "id": "0787c8be-c33e-484a-86ea-b1c88e54bba2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['vendor_icon_content', 'vendor_icon_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=vendor_${item.json.vendor_id}.${item.json.vendor_icon_type || 'jpeg'}`;\n\n  return { json };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        -16
+      ],
+      "id": "bbb9f34e-2394-4d20-8a16-f7992c30380f",
+      "name": "Remove Image Info"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        576,
+        -16
+      ],
+      "id": "dfd02fa7-ac50-4ad3-9b3a-3b07dd2d18bf",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['vendor_icon_content', 'vendor_icon_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=vendor_${item.json.vendor_id}.${item.json.vendor_icon_type || 'jpeg'}`;\n\n  return { json };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        208
+      ],
+      "id": "4adf8e26-a8b2-4202-a771-34b2ffb1cc61",
+      "name": "Remove Image Info1"
     }
   ],
   "connections": {
@@ -385,7 +488,7 @@
       "main": [
         [
           {
-            "node": "Respond",
+            "node": "Remove Image Info",
             "type": "main",
             "index": 0
           }
@@ -418,7 +521,7 @@
       "main": [
         [
           {
-            "node": "Respond1",
+            "node": "Remove Image Info1",
             "type": "main",
             "index": 0
           }
@@ -545,6 +648,61 @@
           }
         ]
       ]
+    },
+    "Orders Metadata Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Stats Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stats Metadata": {
+      "main": [
+        [
+          {
+            "node": "Format Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info1": {
+      "main": [
+        [
+          {
+            "node": "Respond1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -555,8 +713,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "6f2a8344-5dae-4e29-bf5b-18297e2a0e08",
-  "triggerCount": 4,
+  "versionId": "95e46765-b8a5-446a-a40f-0d859ca3fa7d",
+  "triggerCount": 5,
   "tags": [],
   "shared": [
     {

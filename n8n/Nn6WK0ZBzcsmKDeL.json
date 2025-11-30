@@ -1,75 +1,11 @@
 {
   "createdAt": "2025-10-11T16:11:16.100Z",
-  "updatedAt": "2025-10-11T17:19:59.000Z",
+  "updatedAt": "2025-10-25T11:04:50.000Z",
   "id": "Nn6WK0ZBzcsmKDeL",
   "name": "Boxes APIs",
   "active": true,
   "isArchived": false,
   "nodes": [
-    {
-      "parameters": {
-        "path": "api/components/boxes",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Boxes List Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -304,
-        688
-      ],
-      "id": "809eb657-cf86-4eb6-92a7-e1893d682aa2",
-      "webhookId": "01974f0f-5d58-41f0-92e8-1d4e8eaeafcc"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extract and default page/filter parameters\nconst q = $input.first().json.query || {};\nconst search = q.search || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\nreturn [{ json: { search, limit, offset } }];"
-      },
-      "name": "Parse Box List Params",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        688
-      ],
-      "id": "db9fc64a-c685-45df-bd9d-a2654cc483a1"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH filtered_boxes AS (\n  SELECT b.box_id, b.box_label, b.box_code,\n    COUNT(comp.component_id) AS component_count,\n    COUNT(CASE WHEN comp.date_added >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) AS recent_additions\n  FROM boxes b\n  LEFT JOIN components comp ON b.box_id = comp.box_id\n  WHERE CASE WHEN '{{ $json.search }}' != '' THEN b.box_label ILIKE '%{{ $json.search }}%' ELSE TRUE END\n  GROUP BY b.box_id, b.box_label, b.box_code\n), paginated_boxes AS (\n  SELECT * FROM filtered_boxes\n  ORDER BY box_label ASC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : '' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : '' }}\n)\nSELECT pb.*, (SELECT COUNT(*) FROM filtered_boxes) AS total_records\nFROM paginated_boxes pb;",
-        "options": {}
-      },
-      "name": "Execute Box List Query",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        144,
-        688
-      ],
-      "id": "7c1522fb-c875-4e06-8dae-eb01bbc26c42",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Box List",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        592,
-        688
-      ],
-      "id": "057aaf06-d19d-4c37-9386-d83118f97ded"
-    },
     {
       "parameters": {
         "path": "api/components/boxes/meta",
@@ -80,8 +16,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -304,
-        464
+        -864,
+        240
       ],
       "id": "f5994b11-55e9-4d10-87b6-4e32caf6bb69",
       "webhookId": "1e1f4f78-4304-42ba-8683-63ce29655eff"
@@ -96,8 +32,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        -80,
-        464
+        -640,
+        240
       ],
       "id": "9e00a5ef-d818-48aa-9f3e-df6e3856338c",
       "credentials": {
@@ -115,8 +51,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        144,
-        464
+        -416,
+        240
       ],
       "id": "3bf3618e-706f-45d5-8d3d-edebea3b79f9"
     },
@@ -129,10 +65,327 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        368,
-        464
+        -192,
+        240
       ],
       "id": "811b06a0-3530-425d-974f-43cebd240482"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE boxes \nSET \n  box_label = '{{ $json.body.box_label }}',\n  box_size = '{{ $json.body.box_size }}'\nWHERE box_id = {{ $json.body.box_id }}\nRETURNING *;\n",
+        "options": {}
+      },
+      "name": "Execute Box Update",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        16
+      ],
+      "id": "60a9661f-1385-4015-99ee-ec6f4b8a84b9",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nreturn [{ json: { success: true, message: 'Box updated', data } }];"
+      },
+      "name": "Format Box Update Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        16
+      ],
+      "id": "49d59083-8b58-4ffa-a712-adc2e2a70b41"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Box Update",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        16
+      ],
+      "id": "f2641f4d-a6a0-4f38-9ce1-1cd03ee8a85d"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/boxes/delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Boxes Delete Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        -208
+      ],
+      "id": "cc3ac6a7-2445-43b4-8282-f07fbdc7978a",
+      "webhookId": "c7a137d4-6dcf-4622-97b5-cc4d00f4ab4a"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM boxes \nWHERE box_id = {{ $json.body.box_id }}\nRETURNING box_id;\n",
+        "options": {}
+      },
+      "name": "Execute Box Delete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        -208
+      ],
+      "id": "85242e99-d2cd-4739-966c-df2cc945cf8c",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif(result && result.box_id) {\n  return [{json:{success:true, message:'Box deleted'}}];\n}\nreturn [{json:{success:false, message:'Box not deleted'}}];"
+      },
+      "name": "Format Box Delete Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        -208
+      ],
+      "id": "af682bae-c78c-4ce2-93f2-e47da5bd54a7"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Box Delete",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -208
+      ],
+      "id": "263cf5c1-9545-4ec0-8c6e-eaaac76a9637"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\nconst search = q.search || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 12;\nconst page = Number.isInteger(parseInt(q.page)) ? parseInt(q.page) : 1;\nconst offset = (page - 1) * limit;\n\nreturn [\n  {\n    json: {\n      params: {\n        search: search,\n        limit: limit,\n        offset: offset\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        784
+      ],
+      "id": "31e09ab5-fe64-45b3-ac69-dde7b189e140",
+      "name": "Parse Params2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH filtered_boxes AS (\n  SELECT \n    b.box_id,\n    b.box_label,\n    b.box_code,\n    b.box_qr_content,\n    b.box_qr_file_type,\n    b.box_qr_filename,\n    b.box_size,\n    COUNT(comp.component_id) AS component_count,\n    COUNT(CASE WHEN comp.date_added >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) AS recent_additions\n  FROM boxes b\n  LEFT JOIN components comp ON b.box_id = comp.box_id\n  WHERE \n    CASE \n      WHEN '{{ $json.params.search }}' != '' \n      THEN b.box_label ILIKE '%{{ $json.params.search }}%' OR b.box_code ILIKE '%{{ $json.params.search }}%'\n      ELSE TRUE\n    END\n  GROUP BY b.box_id, b.box_label, b.box_code, b.box_qr_content, b.box_qr_file_type, b.box_qr_filename,b.box_size\n),\ntotal_count AS (\n  SELECT COUNT(*) as total_records FROM filtered_boxes\n),\npaginated_boxes AS (\n  SELECT *\n  FROM filtered_boxes\n  ORDER BY box_label ASC\n  LIMIT {{ $json.params.limit }}\n  OFFSET {{ $json.params.offset }}\n)\nSELECT \n  pb.*,\n  tc.total_records\nFROM paginated_boxes pb\nCROSS JOIN total_count tc;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -416,
+        784
+      ],
+      "id": "e97e3036-a928-464c-8800-9113e731f098",
+      "name": "Execute a SQL query2",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        32,
+        688
+      ],
+      "id": "5fd101c4-5ceb-40d9-a56d-af320f797354",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "path": "api/components/boxes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -864,
+        784
+      ],
+      "id": "70908e4f-a924-4504-9c2b-6fa77d83cbb3",
+      "name": "api/boxes/list",
+      "webhookId": "90ba4925-1bc9-402b-83b2-e6cccaf21f78"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n  const imageBuffer = Buffer.from(data.box_qr_content.data);\n  const imageType = data.box_qr_file_type || 'jpeg';\n  const base64Image = imageBuffer.toString('base64');\n\n  // Generate filename\n  const filename = `box_${data.box_id}.${imageType}`;\n\n  return {\n    json:  {  // 'data' is the standard expected binary property name\n        data: base64Image,\n        mimeType: `image/${imageType}`,\n        fileName: filename\n      }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        880
+      ],
+      "id": "db33623a-45a7-4531-8334-9ebbf0cece15",
+      "name": "Image1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "={{ $json.mimeType }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        880
+      ],
+      "id": "d29e075f-1965-4e1c-801d-835c92266777",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/images/boxes/{{ $('Image1').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        256,
+        880
+      ],
+      "id": "ef336963-d2bb-4ebd-8cfb-30e74ed8e9a2",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Handle empty state\nif (!items || items.length === 0) {\n  return [{\n    json: {\n      boxes: [],\n      pagination: {\n        total: 0\n      }\n    }\n  }];\n}\n\n// Extract total records from first item\nconst totalRecords = items[0].json.total_records || 0;\n\n// Map and format each box item\nconst boxes = items.map(item => {\n  const boxId = item.json.box_id;\n  const fileType = item.json.box_qr_file_type || 'webp';\n  \n  // Construct filename URL for QR code\n  const filename = `http://192.168.0.7:5678/webhook/image?filename=box_${boxId}.${fileType}`;\n  \n  // Return formatted box object\n  return {\n    box_id: boxId,\n    box_label: item.json.box_label || '',\n    box_code: item.json.box_code || '',\n    component_count: parseInt(item.json.component_count) || 0,\n    recent_additions: parseInt(item.json.recent_additions) || 0,\n    filename: filename,\n    box_size: item.json.box_size,\n    box_qr_file_type: fileType\n  };\n});\n\n// Return structured response\nreturn [{\n  json: {\n    items: boxes,\n    pagination: {\n      total: totalRecords\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        688
+      ],
+      "id": "d7e754f5-a30e-4617-98a7-67d359a7453c",
+      "name": "Remove Image Info1"
+    },
+    {
+      "parameters": {
+        "path": "api/components/boxes/next-id",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -864,
+        464
+      ],
+      "id": "36e25582-4ad9-427e-bd69-a7587b945e5a",
+      "name": "api/components/boxes/next-id",
+      "webhookId": "boxes-next-id-api"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COALESCE(MAX(box_id), 0) + 1 AS next_id FROM boxes;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -640,
+        464
+      ],
+      "id": "b7ef3374-9fb0-48dd-8682-f47a1e4d3a80",
+      "name": "Get Next Box ID",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nif (!items || items.length === 0) {\n  return [{\n    json: {\n      next_id: 1\n    }\n  }];\n}\n\nconst nextId = items[0].json.next_id || 1;\n\nreturn [{\n  json: {\n    next_id: nextId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        464
+      ],
+      "id": "9688c1a8-e85c-4cad-a66c-0bb3eff5cdae",
+      "name": "Format Next ID"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        464
+      ],
+      "id": "beb83f25-613f-477e-adf3-465ee78b5055",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/boxes/update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "UPDATE",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        16
+      ],
+      "id": "f3f24674-112a-4c8b-8518-a1d97ec80d54",
+      "webhookId": "cb251394-f6bc-4ae3-abfd-6df8436bb2ac"
     },
     {
       "parameters": {
@@ -145,7 +398,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -304,
+        -864,
         -432
       ],
       "id": "d70f7e1e-eb2b-4824-ab48-140657a3eb54",
@@ -154,14 +407,14 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO boxes (box_label, box_code) VALUES ('{{ $json.body.box_label }}', '{{ $json.body.box_code }}') RETURNING *;",
+        "query": "INSERT INTO boxes (\n  box_label,\n  box_code,\n  box_size,\n  box_qr_content,\n  box_qr_file_type,\n  box_qr_filename\n) VALUES (\n  '{{ $json.body.box_label }}',\n  '{{ $json.body.box_code }}',\n  '{{ $json.body.box_size }}',\n  decode('{{ $json.body.box_qr_content }}', 'base64'),\n  '{{ $json.body.box_qr_file_type }}',\n  '{{ $json.body.box_qr_filename }}'\n) RETURNING *;\n",
         "options": {}
       },
       "name": "Execute Box Insert",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        -80,
+        -640,
         -432
       ],
       "id": "0e969824-3953-413c-811a-a28dd52d43be",
@@ -180,7 +433,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        144,
+        -416,
         -432
       ],
       "id": "83b33938-d691-4e81-b309-a867fedc70a9"
@@ -194,253 +447,13 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        368,
+        -192,
         -432
       ],
       "id": "3852affa-51c3-4668-adfd-346e44e3b3a7"
-    },
-    {
-      "parameters": {
-        "path": "api/components/boxes",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Boxes List Webhook1",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -304,
-        -208
-      ],
-      "id": "151e120d-f9fc-4aa9-80a5-609026d89e65",
-      "webhookId": "6a376a46-f5b4-4369-aecb-bed1f3836c2e"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extract and default page/filter parameters\nconst q = $input.first().json.query || {};\nconst search = q.search || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\nreturn [{ json: { search, limit, offset } }];"
-      },
-      "name": "Parse Box List Params1",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        -208
-      ],
-      "id": "d2ee9f4f-82ec-4349-8290-5eb84f28b1fb"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH filtered_boxes AS (\n  SELECT b.box_id, b.box_label, b.box_code,\n    COUNT(comp.component_id) AS component_count,\n    COUNT(CASE WHEN comp.date_added >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) AS recent_additions\n  FROM boxes b\n  LEFT JOIN components comp ON b.box_id = comp.box_id\n  WHERE CASE WHEN '{{ $json.search }}' != '' THEN b.box_label ILIKE '%{{ $json.search }}%' ELSE TRUE END\n  GROUP BY b.box_id, b.box_label, b.box_code\n), paginated_boxes AS (\n  SELECT * FROM filtered_boxes\n  ORDER BY box_label ASC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : '' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : '' }}\n)\nSELECT pb.*, (SELECT COUNT(*) FROM filtered_boxes) AS total_records\nFROM paginated_boxes pb;",
-        "options": {}
-      },
-      "name": "Execute Box List Query1",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        144,
-        -208
-      ],
-      "id": "7cbc4cbe-939c-46df-9cf9-fc3f1b35de6f",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all();\nconst total = rows[0]?.json?.total_records || 0;\nconst items = rows.map(row => {\n  const json = {...row.json};\n  delete json.total_records;\n  return json;\n});\nreturn [{ json: { items, total } }];"
-      },
-      "name": "Format Box List Response1",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        368,
-        -208
-      ],
-      "id": "4244125d-9a90-4722-959d-bfa946588b0a"
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Box List1",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        592,
-        -208
-      ],
-      "id": "6897aae1-db8b-4a8b-8306-2f1f9d9b3a02"
-    },
-    {
-      "parameters": {
-        "httpMethod": "PUT",
-        "path": "api/components/boxes/:id",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Boxes Update Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -304,
-        240
-      ],
-      "id": "f3f24674-112a-4c8b-8518-a1d97ec80d54",
-      "webhookId": "cb251394-f6bc-4ae3-abfd-6df8436bb2ac"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE boxes SET box_label = '{{ $json.body.box_label }}', box_code = '{{ $json.body.box_code }}' WHERE box_id = {{ $json.params.id }} RETURNING *;",
-        "options": {}
-      },
-      "name": "Execute Box Update",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        240
-      ],
-      "id": "60a9661f-1385-4015-99ee-ec6f4b8a84b9",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const data = $input.first().json;\nreturn [{ json: { success: true, message: 'Box updated', data } }];"
-      },
-      "name": "Format Box Update Response",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        144,
-        240
-      ],
-      "id": "49d59083-8b58-4ffa-a712-adc2e2a70b41"
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Box Update",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        368,
-        240
-      ],
-      "id": "f2641f4d-a6a0-4f38-9ce1-1cd03ee8a85d"
-    },
-    {
-      "parameters": {
-        "httpMethod": "DELETE",
-        "path": "api/components/boxes/:id",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Boxes Delete Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -304,
-        16
-      ],
-      "id": "cc3ac6a7-2445-43b4-8282-f07fbdc7978a",
-      "webhookId": "c7a137d4-6dcf-4622-97b5-cc4d00f4ab4a"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "DELETE FROM boxes WHERE box_id = {{ $json.params.id }} RETURNING *;",
-        "options": {}
-      },
-      "name": "Execute Box Delete",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        16
-      ],
-      "id": "85242e99-d2cd-4739-966c-df2cc945cf8c",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const result = $input.first().json;\nif(result && result.box_id) {\n  return [{json:{success:true, message:'Box deleted'}}];\n}\nreturn [{json:{success:false, message:'Box not deleted'}}];"
-      },
-      "name": "Format Box Delete Response",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        144,
-        16
-      ],
-      "id": "af682bae-c78c-4ce2-93f2-e47da5bd54a7"
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Box Delete",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        368,
-        16
-      ],
-      "id": "263cf5c1-9545-4ec0-8c6e-eaaac76a9637"
     }
   ],
   "connections": {
-    "Boxes List Webhook": {
-      "main": [
-        [
-          {
-            "node": "Parse Box List Params",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Box List Params": {
-      "main": [
-        [
-          {
-            "node": "Execute Box List Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Box List Query": {
-      "main": [
-        [
-          {
-            "node": "Respond Box List",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Boxes Meta Webhook": {
       "main": [
         [
@@ -468,94 +481,6 @@
         [
           {
             "node": "Respond Box Meta",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Boxes Create Webhook": {
-      "main": [
-        [
-          {
-            "node": "Execute Box Insert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Box Insert": {
-      "main": [
-        [
-          {
-            "node": "Format Box Insert Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Box Insert Response": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Boxes List Webhook1": {
-      "main": [
-        [
-          {
-            "node": "Parse Box List Params1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Box List Params1": {
-      "main": [
-        [
-          {
-            "node": "Execute Box List Query1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Box List Query1": {
-      "main": [
-        [
-          {
-            "node": "Format Box List Response1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Box List Response1": {
-      "main": [
-        [
-          {
-            "node": "Respond Box List1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Boxes Update Webhook": {
-      "main": [
-        [
-          {
-            "node": "Execute Box Update",
             "type": "main",
             "index": 0
           }
@@ -616,6 +541,154 @@
           }
         ]
       ]
+    },
+    "Parse Params2": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query2": {
+      "main": [
+        [
+          {
+            "node": "Image1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Remove Image Info1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/boxes/list": {
+      "main": [
+        [
+          {
+            "node": "Parse Params2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/boxes/next-id": {
+      "main": [
+        [
+          {
+            "node": "Get Next Box ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Next Box ID": {
+      "main": [
+        [
+          {
+            "node": "Format Next ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Next ID": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE": {
+      "main": [
+        [
+          {
+            "node": "Execute Box Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Boxes Create Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Box Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Box Insert": {
+      "main": [
+        [
+          {
+            "node": "Format Box Insert Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Box Insert Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -626,7 +699,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "17fd9cd7-a84f-4a54-8b0e-e8a6081578b3",
+  "versionId": "25403a10-c0fa-4839-9a00-fd07cc516456",
   "triggerCount": 6,
   "tags": [],
   "shared": [

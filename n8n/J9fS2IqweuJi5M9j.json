@@ -1,6 +1,6 @@
 {
   "createdAt": "2025-10-11T19:27:07.787Z",
-  "updatedAt": "2025-10-11T19:38:44.000Z",
+  "updatedAt": "2025-10-25T07:25:06.000Z",
   "id": "J9fS2IqweuJi5M9j",
   "name": "Vendors",
   "active": true,
@@ -8,227 +8,16 @@
   "nodes": [
     {
       "parameters": {
-        "path": "api/components/vendors",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Vendors List Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        48
-      ],
-      "id": "33abed49-5c2d-4db6-b758-4d9aa6806920",
-      "webhookId": "d8b3e824-ea19-4244-94dc-b4caf310a949"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extract and default page/filter parameters\nconst q = $input.first().json.query || {};\nconst search = q.search || '';\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\nreturn [{ json: { search, limit, offset } }];"
-      },
-      "name": "Parse Vendor List Params",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        224,
-        48
-      ],
-      "id": "9a4a827c-2783-4db2-9ef0-c49d8d894181"
-    },
-    {
-      "parameters": {
         "operation": "executeQuery",
-        "query": "WITH filtered_vendors AS (\n  SELECT vendor_id, vendor_name, website, contact_email, phone_number\n  FROM vendors\n  WHERE CASE WHEN '{{ $json.search }}' != '' THEN vendor_name ILIKE '%{{ $json.search }}%' ELSE TRUE END\n),\npaginated_vendors AS (\n  SELECT * FROM filtered_vendors\n  ORDER BY vendor_name ASC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : '' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : '' }}\n)\nSELECT *, (SELECT COUNT(*) FROM filtered_vendors) AS total_records\nFROM paginated_vendors;\n",
-        "options": {}
-      },
-      "name": "Execute Vendor List Query",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        448,
-        48
-      ],
-      "id": "50dd1949-142a-48b2-acce-cddb4cd5eff6",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Vendor List",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        672,
-        48
-      ],
-      "id": "e299c708-7b13-4e31-a370-a5e1f012b928"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "api/components/vendors",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Vendors Create Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        272
-      ],
-      "id": "737e01f3-154f-4dc4-81ce-f7d98ebf2f56",
-      "webhookId": "b86368a1-df89-4a10-a0f6-047c15425ef2"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH filtered_vendors AS (\n  SELECT vendor_id, vendor_name, website, contact_email, phone_number\n  FROM vendors\n  WHERE CASE WHEN '{{ $json.search }}' != '' THEN vendor_name ILIKE '%{{ $json.search }}%' ELSE TRUE END\n),\npaginated_vendors AS (\n  SELECT * FROM filtered_vendors\n  ORDER BY vendor_name ASC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : '' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : '' }}\n)\nSELECT *, (SELECT COUNT(*) FROM filtered_vendors) AS total_records\nFROM paginated_vendors;\n",
-        "options": {}
-      },
-      "name": "Execute Vendor Insert",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        224,
-        272
-      ],
-      "id": "f3fd5f6d-0124-4002-a891-cb31f0eb237f",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const data = $input.first().json;\nreturn [{ json: { success: true, message: 'Vendor created', data } }];"
-      },
-      "name": "Format Vendor Insert Response",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        448,
-        272
-      ],
-      "id": "6ae4080c-3dcf-4a2e-95e3-f4110e149c77"
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Vendor Create",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        672,
-        272
-      ],
-      "id": "8931a659-85cb-43a9-9ced-32614a2c63ac"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "api/components/vendors",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Vendors Create Webhook1",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        -176
-      ],
-      "id": "dc0c673a-6c4d-409f-b6d3-ddc58cd98274",
-      "webhookId": "70303ab8-cf74-4df6-b9c0-66c39dd0cac8"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO vendors (vendorname, website, contactemail, phonenumber, vendoriconname, vendoricontype, vendoriconcontent)\nVALUES (\n  '{{ $json.body.vendorname }}', '{{ $json.body.website }}', '{{ $json.body.contactemail }}', '{{ $json.body.phonenumber }}',\n  '{{ $json.body.vendoriconname }}', '{{ $json.body.vendoricontype }}', decode('{{ $json.body.vendoriconcontent }}', 'base64')\n)\nRETURNING *;",
-        "options": {}
-      },
-      "name": "Execute Vendor Insert1",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        224,
-        -176
-      ],
-      "id": "65bbefa8-bebd-4c67-99eb-0c7433c7c3e9",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const data = $input.first().json;\nreturn [{ json: { success: true, message: 'Vendor created', data } }];"
-      },
-      "name": "Format Vendor Insert Response1",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        448,
-        -176
-      ],
-      "id": "717e48ba-514f-401a-b0c6-eaee83ef415f"
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Vendor Create1",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        672,
-        -176
-      ],
-      "id": "2e4a0588-3ef5-4ff6-9bb0-aa83c3b2433f"
-    },
-    {
-      "parameters": {
-        "httpMethod": "PUT",
-        "path": "api/components/vendors/:id",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Vendors Update Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        1168
-      ],
-      "id": "ceaf0646-5243-49f2-b688-dc7328a10cad",
-      "webhookId": "626b2a1c-d971-4261-b87d-3e00153412ad"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE vendors SET\n  vendor_name = '{{ $json.body.vendor_name }}',\n  website = '{{ $json.body.website }}',\n  contact_email = '{{ $json.body.contact_email }}',\n  phone_number = '{{ $json.body.phone_number }}',\n  vendor_icon_name = '{{ $json.body.vendor_icon_name }}',\n  vendor_icon_type = '{{ $json.body.vendor_icon_type }}',\n  vendor_icon_content = decode('{{ $json.body.vendor_icon_content }}', 'base64')\nWHERE vendor_id = {{ $json.params.id }}\nRETURNING *;\n",
+        "query": "UPDATE vendors SET\n  vendor_name = '{{ $json.body.vendor_name }}',\n  website = '{{ $json.body.website }}',\n  contact_email = '{{ $json.body.contact_email }}',\n  phone_number = '{{ $json.body.phone_number }}',\n  vendor_icon_name = '{{ $json.body.vendor_icon_name }}',\n  vendor_icon_type = '{{ $json.body.vendor_icon_type }}',\n  vendor_icon_content = decode('{{ $json.body.vendor_icon_content }}', 'base64')\nWHERE vendor_id = {{ $json.body.vendor_id }}\nRETURNING *;\n",
         "options": {}
       },
       "name": "Execute Vendor Update",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        1168
+        160,
+        608
       ],
       "id": "51063782-6a83-4a76-8018-dad13196eecc",
       "credentials": {
@@ -246,8 +35,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        1168
+        384,
+        608
       ],
       "id": "2f1ea46c-efe9-4e1f-bb7a-3a36a30c84d8"
     },
@@ -260,42 +49,38 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        1168
+        608,
+        608
       ],
       "id": "4fe4cd5f-0332-47d8-85a9-bb81a105d888"
     },
     {
       "parameters": {
-        "httpMethod": "DELETE",
-        "path": "api/components/vendors/:id",
-        "responseMode": "responseNode",
-        "options": {}
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst search = (q.search || \" \").trim(); // Ensure it's always a string\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 100000;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        search,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
       },
-      "name": "Vendors Delete Webhook",
-      "type": "n8n-nodes-base.webhook",
+      "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
-        944
+        160,
+        928
       ],
-      "id": "326dd0fb-3344-4e05-8044-b1f17df89eaa",
-      "webhookId": "e40c94ea-7c39-4d24-b162-5dfd986c39a6"
+      "id": "eba15563-b8fe-4dda-b2cb-02e8fe474ee8",
+      "name": "Parse Params4"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM vendors WHERE vendor_id = {{ $json.params.id }} RETURNING *;\n",
+        "query": "SELECT \n  *\nFROM public.vendors\nWHERE \n  vendor_name ILIKE '%{{ $json.params.search }}%'\n  OR contact_email ILIKE '%{{ $json.params.search }}%'\n  OR website ILIKE '%{{ $json.params.search }}%'\nORDER BY vendor_name ASC \nLIMIT {{ $json.params.limit }} \nOFFSET {{ $json.params.offset }}\n",
         "options": {}
       },
-      "name": "Execute Vendor Delete",
       "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
+      "typeVersion": 2.6,
       "position": [
-        224,
-        944
+        384,
+        928
       ],
-      "id": "6838edf2-6f8a-4ebe-b19c-874df82f3e03",
+      "id": "bf08b130-6525-41b5-be5c-0830b3d2c027",
+      "name": "Execute a SQL query4",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -305,16 +90,156 @@
     },
     {
       "parameters": {
-        "jsCode": "const result = $input.first().json;\nif (result && result.vendorid) {\n  return [{ json: { success: true, message: 'Vendor deleted' } }];\n}\nreturn [{ json: { success: false, message: 'Vendor not deleted' } }];"
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        832,
+        832
+      ],
+      "id": "eaec72b9-b865-413c-a254-487138a04fd2",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n  const imageBuffer = Buffer.from(data.vendor_icon_content.data);\n  const imageType = data.vendor_icon_type || 'jpeg';\n  const base64Image = imageBuffer.toString('base64');\n\n  // Generate filename\n  const filename = `vendor_${data.vendor_id}.${imageType}`;\n\n  return {\n    json:  {  // 'data' is the standard expected binary property name\n        data: base64Image,\n        mimeType: `image/${imageType}`,\n        fileName: filename\n      }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        1024
+      ],
+      "id": "d567fe1c-c251-4c4c-8a79-5070b267e2d8",
+      "name": "Image2"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "={{ $json.mimeType }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        1024
+      ],
+      "id": "0a1a27a7-49ba-4bc2-a579-38224eba4832",
+      "name": "Convert to File2"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/images/vendors/{{ $('Image2').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        1024
+      ],
+      "id": "b6a2180e-bb4d-4c71-ab3a-035f29681f2d",
+      "name": "Read/Write Files from Disk2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['vendor_icon_content', 'vendor_icon_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=vendor_${item.json.vendor_id}.${item.json.vendor_icon_type || 'jpeg'}`;\n\n  return { json };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        832
+      ],
+      "id": "8560ed4e-bc10-4f3b-935a-d9c0ea523ea6",
+      "name": "Image3"
+    },
+    {
+      "parameters": {
+        "path": "api/components/vendors",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        928
+      ],
+      "id": "002f2181-c7b2-446b-a100-bbb9415ddd15",
+      "name": "api/components/vendors",
+      "webhookId": "90ba4925-1bc9-402b-83b2-e6cccaf21f78"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/vendors/update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "UPDATE api/components/vendors/:id",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        608
+      ],
+      "id": "ceaf0646-5243-49f2-b688-dc7328a10cad",
+      "webhookId": "626b2a1c-d971-4261-b87d-3e00153412ad"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get incoming data from POST body\nconst items = $input.all();\nconst body = (items[0] && items[0].json && items[0].json.body) ? items[0].json.body : {};\n\n// Extract vendor ID from body\nconst vendorId = parseInt(body.vendor_id || body.vendorId || body.id) || 0;\n\n// Validate\nif (!vendorId) {\n  throw new Error('Vendor ID is required in request body');\n}\n\nreturn [\n  {\n    json: {\n      params: {\n        id: vendorId\n      }\n    }\n  }\n];"
+      },
+      "name": "Parse Vendor Delete Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        384
+      ],
+      "id": "ef82a62c-0ef6-4525-a546-482f4f6b9f72"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM vendors WHERE vendor_id = {{ $json.params.id }} RETURNING *;",
+        "options": {}
+      },
+      "name": "Execute Vendor Delete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        384,
+        384
+      ],
+      "id": "c9acc4c5-f08d-4cef-a25d-a9559cdedb5f",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (result && result.vendor_id) {\n  return [{ json: { success: true, message: 'Vendor deleted successfully' } }];\n}\nreturn [{ json: { success: false, message: 'Vendor not found or could not be deleted' } }];"
       },
       "name": "Format Vendor Delete Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        944
+        608,
+        384
       ],
-      "id": "2eb79ea8-5642-4be3-a146-21b5bf60dd90"
+      "id": "efa66b1f-ee25-4ab6-801b-f618532a709b"
     },
     {
       "parameters": {
@@ -325,10 +250,27 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        944
+        832,
+        384
       ],
-      "id": "80808887-8f6b-4254-b1bc-9bca2a994ecc"
+      "id": "a64fdca3-84ad-49e8-8d2d-03613b349fc7"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/vendors/delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "DELETE api/components/vendors/delete",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        384
+      ],
+      "id": "a7b9ecd0-6b26-43d5-901d-4785a6991422",
+      "webhookId": "vendor-delete"
     },
     {
       "parameters": {
@@ -336,30 +278,30 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "name": "Vendors Meta Webhook",
+      "name": "api/components/vendors/meta",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        720
+        -64,
+        160
       ],
-      "id": "56c3a0d0-07ce-41c1-a233-087afedfe339",
+      "id": "e8a5121c-2b17-4019-b30c-fb9ec9d55d7d",
       "webhookId": "cd73121d-5d53-4cf5-a503-628c5b9e70eb"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT COUNT(*) AS total_vendors FROM vendors;\n",
+        "query": "WITH vendor_stats AS (\n  SELECT \n    COUNT(DISTINCT v.vendor_id) as total_vendors,\n    COUNT(CASE WHEN v.vendor_icon_name IS NOT NULL THEN 1 END) as vendors_with_icon,\n    COUNT(CASE WHEN v.website IS NOT NULL AND v.website != '' THEN 1 END) as vendors_with_website,\n    COUNT(CASE WHEN v.contact_email IS NOT NULL AND v.contact_email != '' THEN 1 END) as vendors_with_email\n  FROM vendors v\n),\norder_stats AS (\n  SELECT\n    COUNT(*) as total_orders,\n    SUM(total_cost) as total_spent,\n    MAX(order_date) as last_order_date\n  FROM orders\n),\ntop_vendor AS (\n  SELECT\n    v.vendor_id,\n    v.vendor_name,\n    COUNT(o.order_id) as order_count,\n    SUM(o.total_cost) as total_spent,\n    CASE \n      WHEN v.vendor_icon_name IS NOT NULL \n      THEN CONCAT('http://192.168.0.7:5678/webhook/image?filename=', v.vendor_icon_name)\n      ELSE NULL\n    END as vendor_icon\n  FROM vendors v\n  LEFT JOIN orders o ON v.vendor_id = o.vendor_id\n  GROUP BY v.vendor_id, v.vendor_name, v.vendor_icon_name\n  ORDER BY order_count DESC, total_spent DESC\n  LIMIT 1\n),\nrecent_purchase AS (\n  SELECT\n    v.vendor_name,\n    o.order_date,\n    o.total_cost,\n    CASE \n      WHEN v.vendor_icon_name IS NOT NULL \n      THEN CONCAT('http://192.168.0.7:5678/webhook/image?filename=', v.vendor_icon_name)\n      ELSE NULL\n    END as vendor_icon\n  FROM orders o\n  JOIN vendors v ON o.vendor_id = v.vendor_id\n  ORDER BY o.order_date DESC\n  LIMIT 1\n)\nSELECT \n  (SELECT row_to_json(vendor_stats.*) FROM vendor_stats) as vendor_stats,\n  (SELECT row_to_json(order_stats.*) FROM order_stats) as order_stats,\n  (SELECT row_to_json(top_vendor.*) FROM top_vendor) as top_vendor,\n  (SELECT row_to_json(recent_purchase.*) FROM recent_purchase) as recent_purchase;",
         "options": {}
       },
       "name": "Execute Vendors Meta Query",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        720
+        160,
+        160
       ],
-      "id": "aa2d5ec4-ac19-4c8f-8951-6871a1676e11",
+      "id": "26ab9533-7fa1-4200-b064-aa336005aa41",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -369,16 +311,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const meta = $input.first().json;\nreturn [{ json: { totalVendors: parseInt(meta.total_vendors || 0) } }];"
+        "jsCode": "const data = $input.first().json;\nconst vendorStats = data.vendor_stats || {};\nconst orderStats = data.order_stats || {};\nconst topVendor = data.top_vendor || {};\nconst recentPurchase = data.recent_purchase || {};\n\nconst total = parseInt(vendorStats.total_vendors || 0);\nconst withIcon = parseInt(vendorStats.vendors_with_icon || 0);\nconst withWebsite = parseInt(vendorStats.vendors_with_website || 0);\nconst withEmail = parseInt(vendorStats.vendors_with_email || 0);\n\nreturn [{\n  json: {\n    summary: {\n      totalVendors: total,\n      vendorsWithIcon: withIcon,\n      vendorsWithWebsite: withWebsite,\n      vendorsWithEmail: withEmail\n    },\n    completeness: {\n      iconCompletion: total > 0 ? Math.round((withIcon / total) * 100) : 0,\n      websiteCompletion: total > 0 ? Math.round((withWebsite / total) * 100) : 0,\n      emailCompletion: total > 0 ? Math.round((withEmail / total) * 100) : 0\n    },\n    purchases: {\n      totalOrders: parseInt(orderStats.total_orders || 0),\n      totalSpent: parseFloat(orderStats.total_spent || 0),\n      lastOrderDate: orderStats.last_order_date || null\n    },\n    topVendor: {\n      vendorId: topVendor.vendor_id || null,\n      vendorName: topVendor.vendor_name || null,\n      orderCount: parseInt(topVendor.order_count || 0),\n      totalSpent: parseFloat(topVendor.total_spent || 0),\n      vendorIcon: topVendor.vendor_icon || null\n    },\n    recentPurchase: {\n      vendorName: recentPurchase.vendor_name || null,\n      orderDate: recentPurchase.order_date || null,\n      totalCost: parseFloat(recentPurchase.total_cost || 0),\n      vendorIcon: recentPurchase.vendor_icon || null\n    }\n  }\n}];"
       },
       "name": "Format Vendors Meta",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        720
+        384,
+        160
       ],
-      "id": "74f670f6-19e8-4ba4-a58f-4a03fd968796"
+      "id": "41afe7f2-af4f-4d80-97c1-3792d9534f2f"
     },
     {
       "parameters": {
@@ -389,41 +331,42 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        720
+        608,
+        160
       ],
-      "id": "46643ff1-9ce2-4392-917b-3e37e5a8e7df"
+      "id": "b7052ab5-3e04-4b01-82c3-749f1484df13"
     },
     {
       "parameters": {
-        "path": "api/components/vendors/:id",
+        "httpMethod": "POST",
+        "path": "api/components/vendors",
         "responseMode": "responseNode",
         "options": {}
       },
-      "name": "Vendor Get By ID Webhook",
+      "name": "ADD api/components/vendors",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        496
+        -64,
+        -32
       ],
-      "id": "60b81621-d4ba-49c5-b281-aedcd620a737",
-      "webhookId": "44dcd0fc-b836-464f-8f30-dfd8db86df88"
+      "id": "de48b8f8-70fd-4981-b814-db7341a84816",
+      "webhookId": "70303ab8-cf74-4df6-b9c0-66c39dd0cac8"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT vendor_id, vendor_name, website, contact_email, phone_number, vendor_icon_name, vendor_icon_type\nFROM vendors\nWHERE vendor_id = {{ $json.params.id }} LIMIT 1;\n",
+        "query": "INSERT INTO public.vendors (\n  vendor_name,\n  website,\n  contact_email,\n  phone_number,\n  vendor_icon_name,\n  vendor_icon_type,\n  vendor_icon_content\n)\nVALUES (\n  '{{ $json.body.vendor_name }}',\n  '{{ $json.body.website }}',\n  '{{ $json.body.contact_email }}',\n  '{{ $json.body.phone_number }}',\n  '{{ $json.body.vendor_icon_name }}',\n  '{{ $json.body.vendor_icon_type }}',\n  decode('{{ $json.body.vendor_icon_content }}', 'base64')\n)\nRETURNING \n  vendor_id,\n  vendor_name,\n  website,\n  contact_email,\n  phone_number,\n  vendor_icon_name,\n  vendor_icon_type,\n  vendor_icon_content,\n  CASE \n    WHEN vendor_icon_name IS NOT NULL \n    THEN CONCAT('http://192.168.0.7:5678/webhook/image?filename=', vendor_icon_name)\n    ELSE NULL\n  END as filename;",
         "options": {}
       },
-      "name": "Execute Vendor Get By ID Query",
+      "name": "Execute Vendor Insert",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        496
+        160,
+        -32
       ],
-      "id": "4186d91e-c1e1-42a3-b81a-2f8fa1b48b05",
+      "id": "241e4c02-7411-4797-85d9-0ccfb4a46fec",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -433,143 +376,33 @@
     },
     {
       "parameters": {
-        "jsCode": "const vendor = $input.first().json || null;\nif (vendor) {\n return [{ json: { success: true, data: vendor } }];\n} else {\n return [{ json: { success: false, message: 'Vendor not found' } }];\n}"
+        "jsCode": "const data = $input.first().json;\nreturn [{ \n  json: { \n    success: true, \n    message: 'Vendor created successfully', \n    vendor: data \n  } \n}];"
       },
-      "name": "Format Vendor Get By ID Response",
+      "name": "Format Vendor Insert Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        496
+        384,
+        -32
       ],
-      "id": "04663f90-6648-462f-b731-a5e44430b32f"
+      "id": "0b31d9bc-6ad8-475d-a3a3-550a4280e043"
     },
     {
       "parameters": {
         "respondWith": "allIncomingItems",
         "options": {}
       },
-      "name": "Respond Vendor Get By ID",
+      "name": "Respond Vendor Create",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        496
+        608,
+        -32
       ],
-      "id": "cbad7ee6-ebd8-4f75-b6c6-4b350eae62f3"
+      "id": "8c19a118-6f3b-4948-8cb0-149dcf1d0c02"
     }
   ],
   "connections": {
-    "Vendors List Webhook": {
-      "main": [
-        [
-          {
-            "node": "Parse Vendor List Params",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Vendor List Params": {
-      "main": [
-        [
-          {
-            "node": "Execute Vendor List Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Vendor List Query": {
-      "main": [
-        [
-          {
-            "node": "Respond Vendor List",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Vendors Create Webhook": {
-      "main": [
-        [
-          {
-            "node": "Execute Vendor Insert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Vendor Insert": {
-      "main": [
-        [
-          {
-            "node": "Format Vendor Insert Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Vendor Insert Response": {
-      "main": [
-        [
-          {
-            "node": "Respond Vendor Create",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Vendors Create Webhook1": {
-      "main": [
-        [
-          {
-            "node": "Execute Vendor Insert1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Vendor Insert1": {
-      "main": [
-        [
-          {
-            "node": "Format Vendor Insert Response1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Vendor Insert Response1": {
-      "main": [
-        [
-          {
-            "node": "Respond Vendor Create1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Vendors Update Webhook": {
-      "main": [
-        [
-          {
-            "node": "Execute Vendor Update",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Execute Vendor Update": {
       "main": [
         [
@@ -592,7 +425,89 @@
         ]
       ]
     },
-    "Vendors Delete Webhook": {
+    "Parse Params4": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query4": {
+      "main": [
+        [
+          {
+            "node": "Image3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Image2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image2": {
+      "main": [
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File2": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/vendors": {
+      "main": [
+        [
+          {
+            "node": "Parse Params4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE api/components/vendors/:id": {
+      "main": [
+        [
+          {
+            "node": "Execute Vendor Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Vendor Delete Params": {
       "main": [
         [
           {
@@ -625,7 +540,18 @@
         ]
       ]
     },
-    "Vendors Meta Webhook": {
+    "DELETE api/components/vendors/delete": {
+      "main": [
+        [
+          {
+            "node": "Parse Vendor Delete Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/vendors/meta": {
       "main": [
         [
           {
@@ -658,33 +584,33 @@
         ]
       ]
     },
-    "Vendor Get By ID Webhook": {
+    "ADD api/components/vendors": {
       "main": [
         [
           {
-            "node": "Execute Vendor Get By ID Query",
+            "node": "Execute Vendor Insert",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Execute Vendor Get By ID Query": {
+    "Execute Vendor Insert": {
       "main": [
         [
           {
-            "node": "Format Vendor Get By ID Response",
+            "node": "Format Vendor Insert Response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Vendor Get By ID Response": {
+    "Format Vendor Insert Response": {
       "main": [
         [
           {
-            "node": "Respond Vendor Get By ID",
+            "node": "Respond Vendor Create",
             "type": "main",
             "index": 0
           }
@@ -698,8 +624,8 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "aeb86c0f-e3df-4350-a301-7789eec894fd",
-  "triggerCount": 7,
+  "versionId": "df784ab9-5e77-463e-b40c-15c668cfd57a",
+  "triggerCount": 5,
   "tags": [],
   "shared": [
     {

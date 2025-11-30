@@ -42,13 +42,29 @@ export default {
       params: { project_id },
     });
   },
-
+  getVideoTimeline(project_id) {
+    return apiClient.get(
+      "/webhook/api/components/projects/video/status-timeline",
+      {
+        params: { project_id },
+      }
+    );
+  },
   // Update video details
   updateVideo(project_id, data) {
     return apiClient.post("/webhook/api/components/projects/video/update", {
       project_id,
       ...data,
     });
+  },
+  updateVideoStatus(video_id, data) {
+    return apiClient.post(
+      "/webhook/api/components/projects/video/updatestatus",
+      {
+        video_id,
+        ...data,
+      }
+    );
   },
   getComponentsUsed(projectId) {
     return apiClient.get("/webhook/api/components/projects/components", {

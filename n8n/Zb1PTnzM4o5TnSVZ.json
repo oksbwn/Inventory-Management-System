@@ -1,75 +1,11 @@
 {
   "createdAt": "2025-10-11T18:45:07.947Z",
-  "updatedAt": "2025-10-12T10:43:29.000Z",
+  "updatedAt": "2025-11-30T12:01:10.000Z",
   "id": "Zb1PTnzM4o5TnSVZ",
-  "name": "Projects APIs",
+  "name": "Projects",
   "active": true,
   "isArchived": false,
   "nodes": [
-    {
-      "parameters": {
-        "path": "api/components/projects",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "name": "Projects List Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        0
-      ],
-      "id": "b98e0077-4ab2-42cc-ab83-3eeaafe241a2",
-      "webhookId": "e5ffe472-0e71-4bee-a6ab-348fb10613b8"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extract and default page/filter parameters\nconst q = $input.first().json.query || {};\nconst search = q.search || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.page)) ? parseInt(q.page) : 1;\nconst offset = (pageNo - 1) * limit;\nreturn [{ json: { search, limit, offset } }];"
-      },
-      "name": "Parse Project List Params",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        224,
-        0
-      ],
-      "id": "dc53214f-0111-4941-9430-e54a22d51f2d"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH filtered_projects AS (\n  SELECT project_id, project_name, start_date, end_date, status, description, is_yt_project, git_repository\n  FROM projects\n  WHERE CASE WHEN '{{ $json.search }}' != '' THEN project_name ILIKE '%{{ $json.search }}%' ELSE TRUE END\n),\npaginated_projects AS (\n  SELECT * FROM filtered_projects\n  ORDER BY project_name ASC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : '' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : '' }}\n)\nSELECT *, (SELECT COUNT(*) FROM filtered_projects) AS total_records\nFROM paginated_projects;\n",
-        "options": {}
-      },
-      "name": "Execute Project List Query",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [
-        448,
-        0
-      ],
-      "id": "3bd9e1e0-aef0-449a-bd3b-5ca72ec10744",
-      "credentials": {
-        "postgres": {
-          "id": "4FO2SonFHtGTPCP2",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "name": "Respond Project List",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        672,
-        0
-      ],
-      "id": "83068227-d2ce-437c-a319-f50fcdad87a3"
-    },
     {
       "parameters": {
         "path": "api/components/projects/meta",
@@ -80,8 +16,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        896
+        -736,
+        2224
       ],
       "id": "836126c2-9d48-41ca-bdeb-223fff943d87",
       "webhookId": "8ffca88c-5fd1-4e90-80dd-8c3cdd965c2f"
@@ -96,8 +32,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        896
+        -512,
+        2224
       ],
       "id": "df8c6252-b70d-4209-8746-73286da9059b",
       "credentials": {
@@ -115,8 +51,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        896
+        -288,
+        2224
       ],
       "id": "b8a1f2fa-f652-4a6b-a729-3bbe2855965c"
     },
@@ -129,10 +65,74 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        896
+        -64,
+        2224
       ],
       "id": "89e2b490-5c80-44e4-ba4c-92e1d90c5168"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and default page/filter parameters\nconst q = $input.first().json.query || {};\nconst search = q.search || \"\";\nconst status = q.status || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 12;\nconst pageNo = Number.isInteger(parseInt(q.page)) ? parseInt(q.page) : 1;\nconst offset = (pageNo - 1) * limit;\nreturn [{ json: { search, status, limit, offset } }];"
+      },
+      "name": "Parse Project List Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        -16
+      ],
+      "id": "81b1ba1b-88a5-4158-831d-ff38e04b33ad"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond Project List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "83934ca4-261c-4b92-86bf-d0c088a416e2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH filtered_projects AS (\n  SELECT \n    p.project_id, \n    p.project_name, \n    p.start_date, \n    p.end_date, \n    p.status, \n    p.description, \n    p.is_yt_project, \n    p.git_repository\n  FROM projects p\n  WHERE \n    CASE \n      WHEN '{{ $json.search }}' != '' THEN p.project_name ILIKE '%{{ $json.search }}%' \n      ELSE TRUE \n    END\n    AND CASE \n      WHEN '{{ $json.status }}' != '' THEN p.status = '{{ $json.status }}' \n      ELSE TRUE \n    END\n),\nproject_stats AS (\n  SELECT \n    fp.*,\n    -- Count of components used in this project\n    COALESCE(COUNT(DISTINCT pc.component_id), 0) as component_count,\n    \n    -- Total cost: sum of (quantity_used * latest unit_cost for each component)\n    COALESCE(\n      SUM(\n        pc.quantity_used * COALESCE(\n          (\n            SELECT op.unit_cost \n            FROM order_parts op \n            WHERE op.component_id = pc.component_id \n            ORDER BY op.order_part_id DESC \n            LIMIT 1\n          ), \n          0\n        )\n      ), \n      0\n    ) as total_cost\n  FROM filtered_projects fp\n  LEFT JOIN project_components pc ON fp.project_id = pc.project_id\n  GROUP BY \n    fp.project_id, \n    fp.project_name, \n    fp.start_date, \n    fp.end_date, \n    fp.status, \n    fp.description, \n    fp.is_yt_project, \n    fp.git_repository\n),\npaginated_projects AS (\n  SELECT * FROM project_stats\n  ORDER BY project_id DESC\n  {{ $json.limit ? 'LIMIT ' + $json.limit : 'LIMIT 12' }}\n  {{ $json.offset ? 'OFFSET ' + $json.offset : 'OFFSET 0' }}\n)\nSELECT \n  *,\n  (SELECT COUNT(*) FROM filtered_projects) AS total_records\nFROM paginated_projects;\n",
+        "options": {}
+      },
+      "name": "PostgreSQL - Get Projects",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -16
+      ],
+      "id": "fd119484-8902-4faf-88d1-4f4207f76ec0",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "api/components/projects",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Get Projects",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        -16
+      ],
+      "id": "1b9f29df-db65-4af7-a841-4bca9d9d7053",
+      "webhookId": "e5ffe472-0e71-4bee-a6ab-348fb10613b8"
     },
     {
       "parameters": {
@@ -145,26 +145,39 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        1120
+        -736,
+        208
       ],
-      "id": "1b44ba0e-c9c3-4b0e-8617-904fd7380cf0",
+      "id": "0909dfb6-f2ba-4e29-b80c-94609791a796",
       "webhookId": "ab0c16f4-8777-471f-b714-325c79144acc"
     },
     {
       "parameters": {
+        "jsCode": "// Validate and sanitize input data\nconst body = $input.first().json.body || {};\n\n// Required fields validation\nif (!body.project_name || body.project_name.trim() === '') {\n  throw new Error('Project name is required');\n}\n\n// Escape single quotes for SQL safety\nfunction escapeSql(str) {\n  if (!str) return null;\n  return String(str).replace(/'/g, \"''\");\n}\n\nfunction formatDate(date) {\n  if (!date) return null;\n  const d = new Date(date);\n  return d.toISOString().split('T')[0]; // YYYY-MM-DD\n}\n\n// Sanitize and prepare data\nconst projectData = {\n  project_name: escapeSql(body.project_name.trim()),\n  start_date: formatDate(body.start_date),\n  end_date: formatDate(body.end_date),\n  status: 'Created',\n  description: escapeSql(body.project_name.trim()),\n  is_yt_project: body.is_yt_project === true || body.is_yt_project === 'true',\n  git_repository: body.git_repository ? escapeSql(body.git_repository.trim()) : null\n};\n\nreturn [{ json: projectData }];"
+      },
+      "name": "Validate & Prepare Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        208
+      ],
+      "id": "7ee0f047-bca4-4730-b779-f12e5d565d16"
+    },
+    {
+      "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO projects (project_name, start_date, end_date, status, description, is_yt_project, git_repository)\nVALUES (\n  '{{ $json.body.project_name }}', '{{ $json.body.start_date }}', '{{ $json.body.end_date }}', \n  '{{ $json.body.status }}', '{{ $json.body.description }}', '{{ $json.body.is_yt_project }}', '{{ $json.body.git_repository }}'\n)\nRETURNING *;\n",
+        "query": "INSERT INTO projects (\n  project_name, \n  start_date, \n  end_date, \n  status, \n  description, \n  is_yt_project, \n  git_repository\n)\nVALUES (\n  '{{ $json.project_name }}',\n  {{ $json.start_date ? \"'\" + $json.start_date + \"'\" : \"NULL\" }},\n  {{ $json.end_date ? \"'\" + $json.end_date + \"'\" : \"NULL\" }},\n  '{{ $json.status }}',\n  '{{ $json.description }}',\n  {{ $json.is_yt_project }},\n  {{ $json.git_repository ? \"'\" + $json.git_repository + \"'\" : \"NULL\" }}\n)\nRETURNING *;",
         "options": {}
       },
       "name": "Execute Project Insert",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        1120
+        -288,
+        208
       ],
-      "id": "32098bae-b29e-48cc-9994-e4212b993186",
+      "id": "2dfbe606-63a9-4625-af82-47ce8d268cd3",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -174,16 +187,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\nreturn [{ json: { success: true, message: 'Project created', data } }];"
+        "jsCode": "const data = $input.first().json;\n\nreturn [{ \n  json: { \n    success: true, \n    message: 'Project created successfully', \n    project: data \n  } \n}];"
       },
-      "name": "Format Project Insert Response",
+      "name": "Format Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        1120
+        -64,
+        208
       ],
-      "id": "4c5eac95-e5db-49ad-9ec4-f56d453f0ee5"
+      "id": "4569fda9-6b15-4f59-9afd-2bb6849c885b"
     },
     {
       "parameters": {
@@ -194,15 +207,15 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        1120
+        160,
+        208
       ],
-      "id": "f33c2354-3323-4c59-b537-6e838545850e"
+      "id": "76536e09-6f18-47fe-873c-a7e275eb79e5"
     },
     {
       "parameters": {
-        "httpMethod": "DELETE",
-        "path": "api/components/projects/:id",
+        "httpMethod": "POST",
+        "path": "api/components/projects/delete",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -210,26 +223,39 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        672
+        -736,
+        432
       ],
-      "id": "d14ba33d-1f47-4119-a8e2-8a4f8bef6192",
+      "id": "4b3533e3-31f7-4972-b001-b7e920bce719",
       "webhookId": "b7f95b49-1f6b-4661-ab87-73a61326bf2c"
     },
     {
       "parameters": {
+        "jsCode": "// Validate project_id from request body\nconst body = $input.first().json.body || {};\nconst projectId = parseInt(body.project_id);\n\nif (!projectId || isNaN(projectId)) {\n  throw new Error('Valid project_id is required');\n}\n\nreturn [{ json: { project_id: projectId } }];"
+      },
+      "name": "Validate Project ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        432
+      ],
+      "id": "055cc38b-a0d6-44f1-a6d4-3318e89dcba5"
+    },
+    {
+      "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM projects WHERE project_id = {{ $json.params.id }} RETURNING *;\n",
+        "query": "DELETE FROM projects WHERE project_id = {{ $json.project_id }} RETURNING *;",
         "options": {}
       },
       "name": "Execute Project Delete",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        672
+        -288,
+        432
       ],
-      "id": "d96ee683-5dbf-4002-b0c8-87f6c2218c0e",
+      "id": "7fc5f31e-e79e-447b-b798-5b474319c55d",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -239,61 +265,61 @@
     },
     {
       "parameters": {
-        "jsCode": "const result = $input.first().json;\nif (result && result.projectid) {\n  return [{ json: { success: true, message: 'Project deleted' } }];\n}\nreturn [{ json: { success: false, message: 'Project not deleted' } }];"
+        "jsCode": "const result = $input.first().json;\n\n// Check if project was deleted (RETURNING clause returns the deleted row)\nif (result && result.project_id) {\n  return [{ \n    json: { \n      success: true, \n      message: 'Project deleted successfully',\n      deletedProject: result\n    } \n  }];\n}\n\n// No row returned means project wasn't found\nreturn [{ \n  json: { \n    success: false, \n    message: 'Project not found or already deleted' \n  } \n}];"
       },
-      "name": "Format Project Delete Response",
+      "name": "Format Delete Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        672
+        -64,
+        432
       ],
-      "id": "d5160a64-5261-4b5b-a433-5ef81319d05b"
+      "id": "1864bdc1-cf46-4312-bead-da2781c87956"
     },
     {
       "parameters": {
         "respondWith": "allIncomingItems",
         "options": {}
       },
-      "name": "Respond Project Delete",
+      "name": "Respond to Webhook1",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        672
+        160,
+        432
       ],
-      "id": "159a2617-ec93-4abc-b7f4-26457027c4d5"
+      "id": "2aaa1105-02df-41e7-bdba-253122347303"
     },
     {
       "parameters": {
-        "path": "api/components/projects/:id",
+        "path": "api/components/projects/single",
         "responseMode": "responseNode",
         "options": {}
       },
-      "name": "Project Get By ID Webhook",
+      "name": "Get Single Project Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        448
+        -736,
+        656
       ],
-      "id": "07946a8c-4794-4ed7-a063-78b2ef913357",
-      "webhookId": "7541b056-c248-456f-9468-90a884ff7012"
+      "id": "16962f60-d51b-4821-9498-cb56d431d9f5",
+      "webhookId": "single-project-webhook-id"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM projects WHERE project_id = {{ $json.params.id }} LIMIT 1;\n",
+        "query": "WITH project_stats AS (\n  SELECT \n    p.*,\n    COALESCE(COUNT(DISTINCT pc.component_id), 0) as component_count,\n    COALESCE(\n      SUM(\n        pc.quantity_used * COALESCE(\n          (\n            SELECT op.unit_cost \n            FROM order_parts op \n            WHERE op.component_id = pc.component_id \n            ORDER BY op.order_part_id DESC \n            LIMIT 1\n          ), \n          0\n        )\n      ), \n      0\n    ) as total_cost\n  FROM projects p\n  LEFT JOIN project_components pc ON p.project_id = pc.project_id\n  WHERE p.project_id = {{ $json.project_id }}\n  GROUP BY \n    p.project_id,\n    p.project_name,\n    p.start_date,\n    p.end_date,\n    p.status,\n    p.description,\n    p.is_yt_project,\n    p.git_repository\n)\nSELECT * FROM project_stats;",
         "options": {}
       },
-      "name": "Execute Project Get By ID Query",
+      "name": "Get Project Details",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        448
+        -288,
+        656
       ],
-      "id": "0d2f330c-00bb-4826-83c2-b544b3b4422a",
+      "id": "3093b280-6320-473d-add4-98e3f4403b79",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -303,30 +329,43 @@
     },
     {
       "parameters": {
-        "jsCode": "const project = $input.first().json || null;\nif (project) {\n  return [{ json: { success: true, data: project } }];\n} else {\n  return [{ json: { success: false, message: 'Project not found' } }];\n}\n"
+        "jsCode": "// Get project_id from query parameter\nconst query = $input.first().json.query || {};\nconst projectId = parseInt(query.id);\n\nif (!projectId || isNaN(projectId)) {\n  throw new Error('Valid project id is required');\n}\n\nreturn [{ json: { project_id: projectId } }];"
       },
-      "name": "Format Project Get By ID Response",
+      "name": "Validate Project ID1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        448
+        -512,
+        656
       ],
-      "id": "d4065a40-f06a-4d55-92f9-73ab4309eb59"
+      "id": "1197e65b-84d3-4dbc-a770-71e1a161675a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (result && result.project_id) {\n  return [{ \n    json: { \n      success: true,\n      project: result\n    } \n  }];\n}\n\nreturn [{ \n  json: { \n    success: false, \n    message: 'Project not found' \n  } \n}];"
+      },
+      "name": "Format Response1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        656
+      ],
+      "id": "3a77f2ac-ceb4-4833-93c1-7e11a7cf330b"
     },
     {
       "parameters": {
         "respondWith": "allIncomingItems",
         "options": {}
       },
-      "name": "Respond Project Get By ID",
+      "name": "Respond to Webhook2",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        448
+        160,
+        656
       ],
-      "id": "1b93a0f5-4e1e-4253-b95e-c338d2a93126"
+      "id": "bdd49743-dc20-466b-b3ee-8ff6982aa21b"
     },
     {
       "parameters": {
@@ -335,30 +374,43 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "name": "Projects Update Webhook1",
+      "name": "Projects Update Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        224
+        -736,
+        1776
       ],
-      "id": "98c69a88-d5be-4c61-b7ab-db99cc64f765",
-      "webhookId": "5e9a8734-a4ee-42b7-bf05-26f30d2759e8"
+      "id": "45949f84-23bd-4166-a29b-3dc5a862eae1",
+      "webhookId": "update-project-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and sanitize input data\nconst body = $input.first().json.body || {};\n\n// Required: project_id\nconst projectId = parseInt(body.project_id);\nif (!projectId || isNaN(projectId)) {\n  throw new Error('Valid project_id is required');\n}\n\n// Escape single quotes for SQL safety\nfunction escapeSql(str) {\n  if (!str) return null;\n  return String(str).replace(/'/g, \"''\");\n}\n\nfunction formatDate(date) {\n  if (!date) return null;\n  const d = new Date(date);\n  return d.toISOString().split('T')[0];\n}\n\n// Build update fields dynamically\nconst updates = [];\nconst data = { project_id: projectId };\n\nif (body.project_name !== undefined) {\n  data.project_name = escapeSql(body.project_name.trim());\n  updates.push(`project_name = '${data.project_name}'`);\n}\n\nif (body.start_date !== undefined) {\n  data.start_date = formatDate(body.start_date);\n  updates.push(`start_date = ${data.start_date ? \"'\" + data.start_date + \"'\" : \"NULL\"}`);\n}\n\nif (body.end_date !== undefined) {\n  data.end_date = formatDate(body.end_date);\n  updates.push(`end_date = ${data.end_date ? \"'\" + data.end_date + \"'\" : \"NULL\"}`);\n}\n\nif (body.status !== undefined) {\n  data.status = escapeSql(body.status);\n  updates.push(`status = '${data.status}'`);\n}\n\nif (body.description !== undefined) {\n  data.description = body.description ? escapeSql(body.description) : null;\n  updates.push(`description = ${data.description ? \"'\" + data.description + \"'\" : \"NULL\"}`);\n}\n\nif (body.is_yt_project !== undefined) {\n  data.is_yt_project = body.is_yt_project === true || body.is_yt_project === 'true';\n  updates.push(`is_yt_project = ${data.is_yt_project}`);\n}\n\nif (body.git_repository !== undefined) {\n  data.git_repository = body.git_repository ? escapeSql(body.git_repository.trim()) : null;\n  updates.push(`git_repository = ${data.git_repository ? \"'\" + data.git_repository + \"'\" : \"NULL\"}`);\n}\n\nif (updates.length === 0) {\n  throw new Error('No fields to update');\n}\n\ndata.updateClause = updates.join(', ');\nreturn [{ json: data }];"
+      },
+      "name": "Validate & Prepare Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1776
+      ],
+      "id": "29427a77-fd77-4eab-a91e-cb071264f822"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE projects\nSET project_name = '{{ $json.body.project_name }}',\n    start_date = '{{ $json.body.start_date }}',\n    end_date = '{{ $json.body.end_date }}',\n    status = '{{ $json.body.status }}',\n    description = '{{ $json.body.description }}',\n    is_yt_project = {{ $json.body.is_yt_project }},\n    git_repository = '{{ $json.body.git_repository }}'\nWHERE project_id = {{ $json.body.project_id }}\nRETURNING *;",
+        "query": "UPDATE projects\nSET {{ $json.updateClause }}\nWHERE project_id = {{ $json.project_id }}\nRETURNING *;",
         "options": {}
       },
-      "name": "Execute Project Update1",
+      "name": "Execute Project Update",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        224,
-        224
+        -288,
+        1776
       ],
-      "id": "798316e1-d843-4229-85e7-8a5be4cac3db",
+      "id": "13a0e80c-5737-4819-b9f1-f7dac74cdc5a",
       "credentials": {
         "postgres": {
           "id": "4FO2SonFHtGTPCP2",
@@ -368,66 +420,498 @@
     },
     {
       "parameters": {
-        "jsCode": "const result = $input.first().json;\nreturn [{ json: { success: true, message: 'Project updated', data: result } }];"
+        "jsCode": "const data = $input.first().json;\n\nif (data && data.project_id) {\n  return [{ \n    json: { \n      success: true, \n      message: 'Project updated successfully', \n      project: data \n    } \n  }];\n}\n\nreturn [{ \n  json: { \n    success: false, \n    message: 'Project not found' \n  } \n}];"
       },
-      "name": "Format Project Update Response1",
+      "name": "Format Update Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        224
+        -64,
+        1776
       ],
-      "id": "60352762-47cf-4c50-9bc8-445df4b598d8"
+      "id": "f510ad26-8686-4692-85b3-b0e8880192d7"
     },
     {
       "parameters": {
         "respondWith": "allIncomingItems",
         "options": {}
       },
-      "name": "Respond Project Update1",
+      "name": "Respond to Webhook3",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        672,
-        224
+        160,
+        1776
       ],
-      "id": "a826810e-9e1a-409b-842b-86d949000c1f"
+      "id": "3708ba27-ecad-432c-b9cb-594394005cfa"
+    },
+    {
+      "parameters": {
+        "path": "api/components/projects/video",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Get Video Details Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        880
+      ],
+      "id": "5e718169-18b9-40a5-8837-031d7edb8bdc",
+      "webhookId": "video-get-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  v.video_id, v.title, v.description AS description, v.script, v.status AS video_status, v.publish_date, v.youtube_video_id\nFROM video v\nWHERE v.projects_id = {{ $json.project_id }}\nORDER BY v.publish_date DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "name": "Fetch Video Details",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        880
+      ],
+      "id": "559decc9-969f-4d96-9ea7-e76afab52987",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $input.first().json.query || {};\nconst projectId = parseInt(query.project_id);\n\nif (!projectId || isNaN(projectId)) {\n  throw new Error('Valid project_id is required');\n}\n\nreturn [{ json: { project_id: projectId } }];"
+      },
+      "name": "Validate Project ID2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        880
+      ],
+      "id": "a1049bc0-e90f-4e4c-9a7f-b59a7149bf29"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (!result || result.length === 0) {\n  return [{ json: { success: false, message: 'Video not found for project.' } }];\n}\n\n// Handle both single object and array\nconst items = Array.isArray(result) ? result : [result];\nconst firstItem = items[0];\n\n// Format publish_date for HTML date input (YYYY-MM-DD)\nconst formattedVideo = {\n  ...firstItem,\n  publish_date: firstItem.publish_date ? \n    new Date(firstItem.publish_date).toISOString().split('T')[0] : \n    null\n};\n\nreturn [{ json: { \n  success: true, \n  video: formattedVideo \n} }];\n"
+      },
+      "name": "Format Response2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        880
+      ],
+      "id": "8b3fa579-f3e7-4f9c-96cd-812ffe24cc51"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        880
+      ],
+      "id": "3853c2ac-e082-4447-8071-432710d53ad9"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/projects/video/update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Update Video Details Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        1104
+      ],
+      "id": "21cacdc3-1a9e-4564-977c-3c8d9e48a088",
+      "webhookId": "video-update-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE video SET {{ $json.updateClause }} WHERE projects_id = {{ $json.project_id }} RETURNING *;\n",
+        "options": {}
+      },
+      "name": "Execute Video Update",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        1104
+      ],
+      "id": "f677a94f-e787-4e31-ae94-2b11c86a75d2",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validation and sanitization\nconst body = $input.first().json.body || {};\n\nconst project_id = parseInt(body.project_id);\nif (!project_id || isNaN(project_id)) {\n  throw new Error('Valid project_id is required');\n}\n\nfunction escapeSql(str) {\n  if (!str) return null;\n  return String(str).replace(/'/g, \"''\");\n}\n\nfunction formatDate(date) {\n  if (!date) return null;\n  const d = new Date(date);\n  return d.toISOString().split('T')[0];\n}\n\n// Dynamic fields (accept single or multiple fields)\nconst updates = [];\n\nif (body.title !== undefined) updates.push(`title = '${escapeSql(body.title)}'`);\nif (body.description !== undefined) updates.push(`description = ${body.description ? `'${escapeSql(body.description)}'` : 'NULL'}`);\nif (body.script !== undefined) updates.push(`script = ${body.script ? `'${escapeSql(body.script)}'` : 'NULL'}`);\nif (body.status !== undefined) updates.push(`status = '${escapeSql(body.status)}'`);\nif (body.publish_date !== undefined) updates.push(`publish_date = ${body.publish_date ? `'${formatDate(body.publish_date)}'` : 'NULL'}`);\nif (body.youtube_video_id !== undefined) updates.push(`youtube_video_id = ${body.youtube_video_id ? `'${escapeSql(body.youtube_video_id)}'` : 'NULL'}`);\n\nif (updates.length === 0) throw new Error('No fields to update');\n\nreturn [{ json: { project_id, updateClause: updates.join(', ') } }];\n"
+      },
+      "name": "Validate & Prepare Update1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1104
+      ],
+      "id": "6b5a2442-c9c5-4489-b11c-f3d1947d3d85"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (result && Array.isArray(result) && result.length) {\n  return [{ json: { success: true, message: 'Video updated', video: result[0] } }];\n}\nreturn [{ json: { success: false, message: 'Video not updated' } }];\n"
+      },
+      "name": "Format Update Response1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        1104
+      ],
+      "id": "4f819fba-c8fa-4c23-b20c-26d062e75d9b"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook5",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1104
+      ],
+      "id": "feb3d631-9e2c-4b4f-97ef-6e9a4350fa00"
+    },
+    {
+      "parameters": {
+        "path": "api/components/projects/components",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Get Components Used Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        1552
+      ],
+      "id": "ec1e4a36-99cd-4b76-83d3-7a8f5ff5b077",
+      "webhookId": "get-components-used-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH purchased_cte AS (\n    SELECT component_id, SUM(quantity_ordered) AS purchased\n    FROM order_parts\n    GROUP BY component_id\n),\nused_cte AS (\n    SELECT component_id, SUM(quantity_used) AS used\n    FROM (\n        SELECT component_id, quantity_used FROM project_components\n        UNION ALL\n        SELECT component_id, quantity_used FROM general_usage\n    ) AS combined_usage\n    GROUP BY component_id\n),\navg_price_cte AS (\n    SELECT component_id, AVG(unit_cost) AS avg_unit_price\n    FROM order_parts\n    GROUP BY component_id\n),\ntotal_items_cte AS (\n    SELECT COUNT(1) AS total_items\n    FROM components\n    WHERE name ILIKE '%{{ $json.params.name }}%'\n)\nSELECT \n     pc.quantity_used,\n    c.name,\n    c.component_id AS ID,\n    c.description,\n    c.date_added,\n    c.image_content,\n    c.image_type,\n    b.box_code,\n    c.category_id,\n    b.box_label,\n    ct.category_name,\n    b.box_id,\n    COALESCE(purchased_cte.purchased, 0) AS purchased,\n    COALESCE(used_cte.used, 0) AS used,\n    COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) AS stock,\n    total_items_cte.total_items AS totalItems,\n    COALESCE(avg_price_cte.avg_unit_price, 0) AS avg_unit_price,\n    CASE WHEN COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) > 0 THEN 'In Stock' ELSE 'No Stock' END AS status\nFROM project_components pc\nJOIN  components c ON pc.component_id = c.component_id\nLEFT JOIN purchased_cte ON purchased_cte.component_id = c.component_id\nLEFT JOIN used_cte ON used_cte.component_id = c.component_id\nLEFT JOIN avg_price_cte ON avg_price_cte.component_id = c.component_id\nLEFT JOIN boxes b ON b.box_id = c.box_id\nLEFT JOIN categories ct ON ct.category_id = c.category_id\nCROSS JOIN total_items_cte\nWHERE pc.project_id = {{ $json.project_id }};\n",
+        "options": {}
+      },
+      "name": "Fetch Project Components",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        1552
+      ],
+      "id": "5d6c6c22-c123-41de-8340-5f9229065c88",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond with Components",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1552
+      ],
+      "id": "8ba89263-ddd8-4634-8951-81bba55757d0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $input.first().json.query || {};\nconst projectId = parseInt(query.project_id);\n\nif (!projectId || isNaN(projectId)) {\n  throw new Error('Valid project_id is required');\n}\n\nreturn [{ json: { project_id: projectId } }];"
+      },
+      "name": "Validate Project ID3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1552
+      ],
+      "id": "2fe53e6a-614e-4c53-94d8-02728a06e392"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/projects/components/add",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Add Component Usage Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        2000
+      ],
+      "id": "d849009e-d1bc-4528-b3aa-530fb3dfa942",
+      "webhookId": "add-component-usage-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst projectId = parseInt(body.project_id);\nconst componentId = parseInt(body.component_id);\nconst quantity = parseInt(body.quantity_used);\n\nif (!projectId || isNaN(projectId)) {\n  throw new Error('Valid project_id is required');\n}\nif (!componentId || isNaN(componentId)) {\n  throw new Error('Valid component_id is required');\n}\nif (!quantity || isNaN(quantity) || quantity <= 0) {\n  throw new Error('Valid quantity_used is required and must be > 0');\n}\n\nreturn [{ json: { project_id: projectId, component_id: componentId, quantity_used: quantity } }];"
+      },
+      "name": "Validate Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        2000
+      ],
+      "id": "91252fcc-c932-4863-8510-531cfd73f81e"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO project_components (project_id, component_id, quantity_used)\nVALUES ({{ $json.project_id }}, {{ $json.component_id }}, {{ $json.quantity_used }})\nRETURNING *;",
+        "options": {}
+      },
+      "name": "Insert Component Usage",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        2000
+      ],
+      "id": "c5827f15-97f7-4ac4-b36b-1b30ee826faa",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (result && result.project_id) {\n  return [{ json: { success: true, message: 'Component added', data: result } }];\n}\nreturn [{ json: { success: false, message: 'Failed to add component' } }];"
+      },
+      "name": "Format Response3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        2000
+      ],
+      "id": "6e981abf-c6e5-4776-a177-722458970a17"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook6",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        2000
+      ],
+      "id": "c252e45a-8a39-4d82-8c42-7d834cdf3811"
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['image_content', 'image_type'];\nconst items = $input.all();\n\nif (!items.length) {\n  return [];\n}\n\nreturn items.map(item => {\n  const json = { ...item.json };\n  keysToRemove.forEach(k => delete json[k]);\n\n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=component_${item.json.id}.${item.json.image_type || 'jpeg'}`;\n\n  return { json };\n});\n"
+      },
+      "name": "Format Update Response2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        1552
+      ],
+      "id": "d9d91ec7-260c-4baa-b2dd-aae393b9c4c6"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/projects/video/updatestatus",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Update Video Status Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        2448
+      ],
+      "id": "173fec3e-2b6d-44bd-95ae-97cfa02e8210",
+      "webhookId": "video-status-update-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validation and sanitization\nconst body = $input.first().json.body || {};\n\nconst video_id = parseInt(body.video_id);\nif (!video_id || isNaN(video_id)) {\n  throw new Error('Valid video_id is required');\n}\n\nif (!body.video_status) {\n  throw new Error('status is required');\n}\n\nfunction escapeSql(str) {\n  if (!str) return null;\n  return String(str).replace(/'/g, \"''\");\n}\n\nfunction formatDate(date) {\n  if (!date) return null;\n  const d = new Date(date);\n  return d.toISOString();\n}\n\nconst status = escapeSql(body.video_status);\nconst date_changed = body.date_changed ? formatDate(body.date_changed) : null;\n\nreturn [{ \n  json: { \n    video_id, \n    status, \n    date_changed \n  } \n}];"
+      },
+      "name": "Validate & Prepare Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        2448
+      ],
+      "id": "0a0ce66b-9994-41d1-8b64-b04b662d18d5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH status_insert AS (\n  INSERT INTO videostatus (video_id, status, date_changed)\n  VALUES (\n    {{ $json.video_id }},\n    '{{ $json.status }}',\n    {{ $json.date_changed ? `'${$json.date_changed}'` : 'NOW()' }}\n  )\n  RETURNING *\n)\nUPDATE video \nSET status = '{{ $json.status }}' \nFROM status_insert\nWHERE video.video_id = {{ $json.video_id }}\nRETURNING video.*, status_insert.*;\n",
+        "options": {}
+      },
+      "name": "Insert Video Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        2448
+      ],
+      "id": "c3f538f3-763b-47ac-bce8-160a0db63ee7",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nif (result && Array.isArray(result) && result.length) {\n  return [{ json: { \n    success: true, \n    message: 'Video status recorded', \n    status_record: result[0] \n  } }];\n}\nreturn [{ json: { \n  success: false, \n  message: 'Status not recorded' \n} }];"
+      },
+      "name": "Format Status Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        2448
+      ],
+      "id": "52140aaf-e962-4d7f-b119-6c8d23752f35"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook7",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        2448
+      ],
+      "id": "00ae1790-aa4f-4dbc-adfa-ca4686fc415e"
+    },
+    {
+      "parameters": {
+        "path": "api/components/projects/video/status-timeline",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Video Status Timeline Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        1328
+      ],
+      "webhookId": "video-status-timeline-webhook",
+      "id": "8fae52a6-1e87-4993-aeb8-218852d68fe6"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT v.video_id, vs.status_id, vs.status, vs.date_changed\nFROM video v\nJOIN videostatus vs ON v.video_id = vs.video_id\nWHERE v.projects_id = {{ $json.project_id }}\nORDER BY vs.date_changed DESC\nLIMIT 10;",
+        "options": {}
+      },
+      "name": "Get Status Timeline",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        1328
+      ],
+      "id": "632a36cd-64cd-4bff-9219-69ef0ab77982",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.all().map(item => item.json);  // Get ALL rows\n\nif (!results || results.length === 0) {\n  return [{ json: { success: true, timeline: [] } }];\n}\n\nconsole.log('Results length:', results.length);  // Debug log\n\nconst formatted = results\n  .map(item => ({\n    ...item,\n    date_formatted: item.date_changed ? new Date(item.date_changed).toISOString().split('T')[0] : null\n  }))\n  .reverse();\n\nconsole.log('Final timeline length:', formatted.length);  // Debug log\nconsole.log('Final timeline:', formatted);\n\nreturn [{ json: { success: true, timeline: formatted } }];\n"
+      },
+      "name": "Format Timeline Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        1328
+      ],
+      "id": "79f31efa-51e6-4f8f-a6e7-2b88ccf09b52"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.query || {};\nconst project_id = parseInt(body.project_id);\nif (!project_id || isNaN(project_id)) {\n  throw new Error('Valid project_id is required');\n}\nreturn [{ json: { project_id } }];"
+      },
+      "name": "Validate Project ID4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1328
+      ],
+      "id": "2cd15328-8a98-4466-8e48-9211d2834230"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "name": "Respond to Webhook8",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1328
+      ],
+      "id": "951f0366-005b-481f-93f3-581b56e003b4"
     }
   ],
   "connections": {
-    "Projects List Webhook": {
-      "main": [
-        [
-          {
-            "node": "Parse Project List Params",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Project List Params": {
-      "main": [
-        [
-          {
-            "node": "Execute Project List Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Project List Query": {
-      "main": [
-        [
-          {
-            "node": "Respond Project List",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Projects Meta Webhook": {
       "main": [
         [
@@ -461,7 +945,51 @@
         ]
       ]
     },
+    "Parse Project List Params": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - Get Projects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - Get Projects": {
+      "main": [
+        [
+          {
+            "node": "Respond Project List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Projects": {
+      "main": [
+        [
+          {
+            "node": "Parse Project List Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Projects Create Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Prepare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Prepare Data": {
       "main": [
         [
           {
@@ -476,14 +1004,14 @@
       "main": [
         [
           {
-            "node": "Format Project Insert Response",
+            "node": "Format Response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Project Insert Response": {
+    "Format Response": {
       "main": [
         [
           {
@@ -498,6 +1026,17 @@
       "main": [
         [
           {
+            "node": "Validate Project ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Project ID": {
+      "main": [
+        [
+          {
             "node": "Execute Project Delete",
             "type": "main",
             "index": 0
@@ -509,84 +1048,370 @@
       "main": [
         [
           {
-            "node": "Format Project Delete Response",
+            "node": "Format Delete Response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Project Delete Response": {
+    "Format Delete Response": {
       "main": [
         [
           {
-            "node": "Respond Project Delete",
+            "node": "Respond to Webhook1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Project Get By ID Webhook": {
+    "Get Single Project Webhook": {
       "main": [
         [
           {
-            "node": "Execute Project Get By ID Query",
+            "node": "Validate Project ID1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Execute Project Get By ID Query": {
+    "Get Project Details": {
       "main": [
         [
           {
-            "node": "Format Project Get By ID Response",
+            "node": "Format Response1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Project Get By ID Response": {
+    "Validate Project ID1": {
       "main": [
         [
           {
-            "node": "Respond Project Get By ID",
+            "node": "Get Project Details",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Projects Update Webhook1": {
+    "Format Response1": {
       "main": [
         [
           {
-            "node": "Execute Project Update1",
+            "node": "Respond to Webhook2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Execute Project Update1": {
+    "Projects Update Webhook": {
       "main": [
         [
           {
-            "node": "Format Project Update Response1",
+            "node": "Validate & Prepare Update",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Project Update Response1": {
+    "Validate & Prepare Update": {
       "main": [
         [
           {
-            "node": "Respond Project Update1",
+            "node": "Execute Project Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Project Update": {
+      "main": [
+        [
+          {
+            "node": "Format Update Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Update Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video Details Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Project ID2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Project ID2": {
+      "main": [
+        [
+          {
+            "node": "Fetch Video Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Video Details": {
+      "main": [
+        [
+          {
+            "node": "Format Response2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Video Details Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Prepare Update1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Prepare Update1": {
+      "main": [
+        [
+          {
+            "node": "Execute Video Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Video Update": {
+      "main": [
+        [
+          {
+            "node": "Format Update Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Update Response1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Components Used Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Project ID3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Project ID3": {
+      "main": [
+        [
+          {
+            "node": "Fetch Project Components",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Project Components": {
+      "main": [
+        [
+          {
+            "node": "Format Update Response2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Component Usage Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Request": {
+      "main": [
+        [
+          {
+            "node": "Insert Component Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Component Usage": {
+      "main": [
+        [
+          {
+            "node": "Format Response3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Update Response2": {
+      "main": [
+        [
+          {
+            "node": "Respond with Components",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Video Status Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Prepare Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Prepare Status": {
+      "main": [
+        [
+          {
+            "node": "Insert Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Video Status": {
+      "main": [
+        [
+          {
+            "node": "Format Status Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Status Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Status Timeline Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Project ID4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Project ID4": {
+      "main": [
+        [
+          {
+            "node": "Get Status Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status Timeline": {
+      "main": [
+        [
+          {
+            "node": "Format Timeline Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Timeline Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook8",
             "type": "main",
             "index": 0
           }
@@ -599,9 +1424,37 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": {},
-  "versionId": "e58af9c7-cb18-4327-b352-555e43ee990b",
-  "triggerCount": 6,
+  "pinData": {
+    "Projects Delete Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "192.168.0.7:5678",
+            "connection": "keep-alive",
+            "content-length": "28",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+            "accept": "application/json, text/plain, */*",
+            "content-type": "application/json",
+            "origin": "http://localhost:5173",
+            "referer": "http://localhost:5173/",
+            "accept-encoding": "gzip, deflate",
+            "accept-language": "en-US,en;q=0.9"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "params": {
+              "project_id": 17
+            }
+          },
+          "webhookUrl": "http://0.0.0.0:5678/webhook/api/components/projects/delete",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "97cbb10a-409d-48ef-9219-3ee57bf0ca0e",
+  "triggerCount": 12,
   "tags": [],
   "shared": [
     {

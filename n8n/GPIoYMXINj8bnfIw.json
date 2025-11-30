@@ -1,19 +1,19 @@
 {
   "createdAt": "2025-10-12T12:32:03.646Z",
-  "updatedAt": "2025-10-12T13:12:43.000Z",
+  "updatedAt": "2025-10-30T16:24:10.000Z",
   "id": "GPIoYMXINj8bnfIw",
-  "name": "Single Stock Detail API",
+  "name": "Components",
   "active": true,
   "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\nconst name = q.name || \"\";\nconst limit = Number.isInteger(parseInt(q.pageSize)) ? parseInt(q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.pageNo)) ? parseInt(q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        name,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
+        "jsCode": "// Get all incoming items\nconst items = $input.all();\n\n// Extract query from the first item, or use an empty object\nconst q = (items[0] && items[0].json && items[0].json.query) ? items[0].json.query : {};\n\n// Safely parse and default parameters\n// CHANGED: Use 'search' instead of 'name' to match frontend\nconst search = q.search || q.name || \"\";\nconst limit = Number.isInteger(parseInt(q.itemsPerPage || q.pageSize)) ? parseInt(q.itemsPerPage || q.pageSize) : 10;\nconst pageNo = Number.isInteger(parseInt(q.page || q.pageNo)) ? parseInt(q.page || q.pageNo) : 1;\nconst offset = (pageNo - 1) * limit;\n\n// Return a single item with params for the next node\nreturn [\n  {\n    json: {\n      params: {\n        search,\n        limit,\n        offset\n      }\n    }\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
+        48,
         96
       ],
       "id": "476a6959-7d4e-485b-ad55-b283ed3d91a9",
@@ -24,7 +24,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        0,
+        -176,
         192
       ],
       "id": "128d2ea7-adf6-4710-9118-b243570bcd01",
@@ -33,13 +33,13 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH purchased_cte AS (\n    SELECT component_id, SUM(quantity_ordered) AS purchased\n    FROM order_parts\n    GROUP BY component_id\n),\nused_cte AS (\n    SELECT component_id, SUM(quantity_used) AS used\n    FROM (\n        SELECT component_id, quantity_used FROM project_components\n        UNION ALL\n        SELECT component_id, quantity_used FROM general_usage\n    ) AS combined_usage\n    GROUP BY component_id\n),\navg_price_cte AS (\n    SELECT component_id, AVG(unit_cost) AS avg_unit_price\n    FROM order_parts\n    GROUP BY component_id\n),\ntotal_items_cte AS (\n    SELECT COUNT(1) AS total_items\n    FROM components\n    WHERE name ILIKE '%{{ $json.params.name }}%'\n)\nSELECT \n    c.name,\n    c.component_id AS ID,\n    c.description,\n    c.date_added,\n    c.image_content,\n    c.image_type,\n    b.box_code,\n    c.category_id,\n    b.box_label,\n    ct.category_name,\n    b.box_id,\n    COALESCE(purchased_cte.purchased, 0) AS purchased,\n    COALESCE(used_cte.used, 0) AS used,\n    COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) AS stock,\n    total_items_cte.total_items AS totalItems,\n    COALESCE(avg_price_cte.avg_unit_price, 0) AS avg_unit_price,\n    CASE WHEN COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) > 0 THEN 'In Stock' ELSE 'No Stock' END AS status\nFROM \n    components c\nLEFT JOIN purchased_cte ON purchased_cte.component_id = c.component_id\nLEFT JOIN used_cte ON used_cte.component_id = c.component_id\nLEFT JOIN avg_price_cte ON avg_price_cte.component_id = c.component_id\nLEFT JOIN boxes b ON b.box_id = c.box_id\nLEFT JOIN categories ct ON ct.category_id = c.category_id\nCROSS JOIN total_items_cte\nWHERE \n    c.name ILIKE '%{{ $json.params.name }}%'\nLIMIT {{ $json.params.limit }}\nOFFSET {{ $json.params.offset }}\n",
+        "query": "WITH purchased_cte AS (\n    SELECT component_id, SUM(quantity_ordered) AS purchased\n    FROM order_parts\n    GROUP BY component_id\n),\nused_cte AS (\n    SELECT component_id, SUM(quantity_used) AS used\n    FROM (\n        SELECT component_id, quantity_used FROM project_components\n        UNION ALL\n        SELECT component_id, quantity_used FROM general_usage\n    ) AS combined_usage\n    GROUP BY component_id\n),\navg_price_cte AS (\n    SELECT component_id, AVG(unit_cost) AS avg_unit_price\n    FROM order_parts\n    GROUP BY component_id\n),\ntotal_items_cte AS (\n    SELECT COUNT(1) AS total_items\n    FROM components c\n    LEFT JOIN categories ct ON ct.category_id = c.category_id\n    LEFT JOIN boxes b ON b.box_id = c.box_id\n    WHERE \n        c.name ILIKE '%{{ $json.params.search }}%'\n        OR ct.category_name ILIKE '%{{ $json.params.search }}%'\n        OR b.box_label ILIKE '%{{ $json.params.search }}%'\n)\nSELECT \n    c.name,\n    c.component_id AS ID,\n    c.description,\n    c.date_added,\n    c.image_content,\n    c.image_type,\n    b.box_code,\n    c.category_id,\n    b.box_label,\n    ct.category_name,\n    b.box_id,\n    COALESCE(purchased_cte.purchased, 0) AS purchased,\n    COALESCE(used_cte.used, 0) AS used,\n    COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) AS stock,\n    total_items_cte.total_items AS totalItems,\n    COALESCE(avg_price_cte.avg_unit_price, 0) AS avg_unit_price,\n    CASE \n        WHEN COALESCE(purchased_cte.purchased, 0) - COALESCE(used_cte.used, 0) > 0 \n        THEN 'In Stock' \n        ELSE 'No Stock' \n    END AS status\nFROM \n    components c\nLEFT JOIN purchased_cte ON purchased_cte.component_id = c.component_id\nLEFT JOIN used_cte ON used_cte.component_id = c.component_id\nLEFT JOIN avg_price_cte ON avg_price_cte.component_id = c.component_id\nLEFT JOIN boxes b ON b.box_id = c.box_id\nLEFT JOIN categories ct ON ct.category_id = c.category_id\nCROSS JOIN total_items_cte\nWHERE \n    c.name ILIKE '%{{ $json.params.search }}%'\n    OR ct.category_name ILIKE '%{{ $json.params.search }}%'\n    OR b.box_label ILIKE '%{{ $json.params.search }}%'\nORDER BY c.name\nLIMIT {{ $json.params.limit }}\nOFFSET {{ $json.params.offset }}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        448,
+        272,
         96
       ],
       "id": "03b6398e-9237-42d4-a21e-cb150f3e3e54",
@@ -58,7 +58,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        496,
         0
       ],
       "id": "3c9ee4fa-51bf-4b9f-b98f-120c9aecab52",
@@ -71,7 +71,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        496,
         192
       ],
       "id": "5cfce6ac-ccfb-4e05-8083-6d195288feb8",
@@ -89,7 +89,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        896,
+        720,
         192
       ],
       "id": "3f4f68e0-9fbd-4182-acb0-87c707d680ef",
@@ -104,7 +104,7 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        1120,
+        944,
         192
       ],
       "id": "2c08fb0f-487a-4701-a775-e183dfa9d071",
@@ -118,7 +118,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        896,
+        720,
         0
       ],
       "id": "7bf0ffa2-909a-444b-b200-c75e41c4b36b",
@@ -142,7 +142,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        0,
+        -176,
         0
       ],
       "id": "17c54329-4efb-4522-81d8-6e6e4c1540d5",
@@ -158,7 +158,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        224,
+        48,
         416
       ],
       "id": "4a6c4bbd-1a61-46d4-8c67-95048e61949f",
@@ -178,7 +178,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        448,
+        272,
         416
       ],
       "id": "3d20b408-b9f5-421b-9acc-dfe7c2196c6a",
@@ -202,7 +202,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        0,
+        -176,
         416
       ],
       "id": "a32d52e6-0010-4098-afc3-b2f636274d7f",
@@ -229,7 +229,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
+        -176,
         640
       ],
       "id": "56e0c661-0dc7-4d2f-87e9-5ac494ca59f3",
@@ -243,7 +243,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
+        48,
         640
       ],
       "id": "d68a7cbe-b420-4eae-bfad-5af82748f002"
@@ -258,7 +258,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        448,
+        272,
         640
       ],
       "id": "30bc1e38-0be4-412f-bc42-e71d9a39853c",
@@ -277,7 +277,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        896,
+        720,
         640
       ],
       "id": "e5148165-cb2b-4b23-acf0-ed41d73c16c7"
@@ -291,7 +291,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1120,
+        944,
         640
       ],
       "id": "7ea8c4c7-455e-48c5-af77-ac10b9879891"
@@ -303,11 +303,459 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        496,
         640
       ],
       "id": "ae9db593-b463-43ee-bd85-54a4ff58e5cf",
       "name": "Remove Image Info1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    c.name,\n    c.component_id AS ID,\n    c.description,\n    c.date_added,\n    c.image_content,\n    c.image_type,\n    ct.category_name\nFROM components c\nLEFT JOIN categories ct ON ct.category_id = c.category_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        864
+      ],
+      "id": "948ac8cf-b1a8-4492-b430-b9242a75daf5",
+      "name": "Execute a SQL query2",
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const keysToRemove = ['image_content', 'image_type'];\n\nreturn $input.all().map(item => {\n  const json = {...item.json};\n  keysToRemove.forEach(k => delete json[k]);\n  \n  // Optionally recalculate or add the filename from existing properties\n  json.filename = `http://192.168.0.7:5678/webhook/image?filename=component_${item.json.id}.${item.json.image_type || 'jpeg'}`;\n\n  return { json };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        864
+      ],
+      "id": "223ec271-a387-4106-83c3-b49655d7c1be",
+      "name": "Remove Image Info2"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        496,
+        864
+      ],
+      "id": "8e509b0a-898f-4709-922d-0bc562f52904",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "path": "api/components/all",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -176,
+        864
+      ],
+      "id": "14fb14da-d7eb-4b53-8db4-c3a025b2bb58",
+      "name": "api/components/stocks1",
+      "webhookId": "9334e9e8-4b8c-4cca-9d97-6f20c4d9e004"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/purchase-history",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "dcc90e64-ec63-4296-8304-0547e7321131",
+      "name": "Purchase History",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1088
+      ],
+      "webhookId": "1531155f-2ed3-4934-9d4b-3b831fe26af2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  op.order_part_id,\n  op.order_id,\n  op.quantity_ordered,\n  op.unit_cost,\n  op.url,\n  o.order_date,\n  o.delivery_date,\n  o.status as order_status,\n  v.vendor_id,\n  v.vendor_name,\n  v.contact_email,\n  v.phone_number,\n  (op.quantity_ordered * op.unit_cost) as total_cost\nFROM order_parts op\nINNER JOIN orders o ON op.order_id = o.order_id\nINNER JOIN vendors v ON o.vendor_id = v.vendor_id\nWHERE op.component_id = {{ $json.body.component_id }}\nORDER BY o.order_date DESC",
+        "options": {}
+      },
+      "id": "cbb77840-889f-497c-b4b4-d5dd36156b07",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1088
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all items into an array\nconst items = [];\nfor (const item of $input.all()) {\n  items.push(item.json);\n}\n\n// Wrap the array in an object with a 'data' property\nreturn { items  };\n"
+      },
+      "id": "7b3cf21b-4d37-4c46-b4cb-a42cf205e142",
+      "name": "Format as Array",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        1088
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "2effc97b-95e9-43cf-a2ae-d277f2166044",
+      "name": "Respond to Webhook3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        496,
+        1088
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/project-usage",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b60559c5-3282-489a-a1a4-be1b97ba4cf7",
+      "name": "Project Usage Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1312
+      ],
+      "webhookId": "aaab4a0c-7b6d-4551-8b9d-d23c21c78b92"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  pc.project_id,\n  pc.component_id,\n  pc.quantity_used,\n  pc.date,\n  p.project_name,\n  p.status as project_status,\n  p.start_date,\n  p.end_date,\n  p.is_yt_project,\n  p.git_repository\nFROM project_components pc\nINNER JOIN projects p ON pc.project_id = p.project_id\nWHERE pc.component_id = {{ $json.body.component_id }}\nORDER BY pc.date DESC",
+        "options": {}
+      },
+      "id": "adf36c0f-9ae9-4450-b2c6-1ce94c378c5b",
+      "name": "Postgres1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1312
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "47b420d3-3548-4218-ba42-24a58c754e5d",
+      "name": "Respond to Webhook4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        272,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/general-usage",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "fe5353f0-acc2-4851-ba56-0857b29822d2",
+      "name": "General Usage Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1536
+      ],
+      "webhookId": "1c1af5a0-0edd-4f4a-b1d4-2e19ede79ae7"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  usage_id,\n  component_id,\n  quantity_used,\n  usage_date,\n  purpose\nFROM general_usage\nWHERE component_id = {{ $json.body.component_id }}\nORDER BY usage_date DESC",
+        "options": {}
+      },
+      "id": "f3038509-67dc-4264-a564-154fc28f36cc",
+      "name": "Postgres2",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1536
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "48992505-fa26-4c70-ace2-7a748da34720",
+      "name": "Respond to Webhook5",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        272,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.sql }}",
+        "options": {}
+      },
+      "id": "d6e0f7b1-d033-4e36-ad37-98bc14febba9",
+      "name": "Postgres3",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        272,
+        1760
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "374e5b69-2039-456c-b1a7-fef6294c760d",
+      "name": "Respond to Webhook6",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        1760
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ba2b7d71-85c5-4991-98c8-c6891752e09c",
+      "name": "Component Update",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1760
+      ],
+      "webhookId": "aaab4a0c-7b6d-4551-8b9d-d23c21c78b92"
+    },
+    {
+      "parameters": {
+        "jsCode": "const componentId = $json.body.component_id;\nconst updates = [];\n\n// Only add fields that are actually present in the request\nif ($json.body.name !== undefined && $json.body.name !== null) {\n  const sanitized = String($json.body.name).replace(/'/g, \"''\");\n  updates.push(`name = '${sanitized}'`);\n}\n\nif ($json.body.category_id !== undefined && $json.body.category_id !== null) {\n  updates.push(`category_id = ${$json.body.category_id}`);\n}\n\nif ($json.body.box_id !== undefined && $json.body.box_id !== null) {\n  updates.push(`box_id = ${$json.body.box_id}`);\n}\n\nif ($json.body.description !== undefined && $json.body.description !== null) {\n  const sanitized = String($json.body.description).replace(/'/g, \"''\");\n  updates.push(`description = '${sanitized}'`);\n}\n\n// Handle image update - only if all three are present\nif ($json.body.image_content && $json.body.image_type && $json.body.imaeg_name) {\n  updates.push(`image_content = decode('${$json.body.image_content}', 'base64')`);\n  updates.push(`image_type = '${$json.body.image_type}'`);\n  const sanitizedName = String($json.body.imaeg_name).replace(/'/g, \"''\");\n  updates.push(`imaeg_name = '${sanitizedName}'`);\n}\n\n// Check if there are any updates\nif (updates.length === 0) {\n  throw new Error('No fields to update');\n}\n\n// Build SQL - FIXED: Construct proper data URL with image/ prefix\nconst sql = `UPDATE components \nSET ${updates.join(', ')}\nWHERE component_id = ${componentId}\nRETURNING \n  component_id, \n  name, \n  category_id, \n  box_id, \n  description, \n  date_added,\n  'data:image/' || image_type || ';base64,' || encode(image_content, 'base64') as filename,\n  image_type, \n  imaeg_name`;\n\nreturn { json: { sql } };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1760
+      ],
+      "id": "02b4b034-47d6-4244-8e78-9a48a7d68d74",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.all()[0].json;\n\nconsole.log('Database result:', result);\n\n// Return the updated component\nreturn {\n  json: result[0] || result\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        1760
+      ],
+      "id": "21c6a0e7-3525-4971-84dd-556af25ae8fe",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql }}",
+        "options": {}
+      },
+      "id": "951ea4f0-707b-453e-aaa9-e344a7b85d4c",
+      "name": "Postgres - Create Component",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        272,
+        1984
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "4FO2SonFHtGTPCP2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/components/create",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "adc8026c-1a93-49a5-8432-6b060ae096c5",
+      "name": "Component Create Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1984
+      ],
+      "webhookId": "create-component-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract data from request body\nconst body = $json.body;\n\n// Validate required fields\nif (!body.name || !body.category_id) {\n  throw new Error('Required fields missing: name and category_id are mandatory');\n}\n\n// Sanitize string values to prevent SQL injection\nconst sanitizeName = String(body.name).replace(/'/g, \"''\");\nconst sanitizeDescription = body.description ? String(body.description).replace(/'/g, \"''\") : '';\n\n// Build INSERT query with RETURNING clause\nlet sql = `INSERT INTO components (\n  name,\n  category_id,\n  box_id,\n  description`;\n\n// Add image columns if image data is provided\nif (body.image_content && body.image_type && body.imaeg_name) {\n  sql += `,\n  image_content,\n  image_type,\n  imaeg_name`;\n}\n\nsql += `\n) VALUES (\n  '${sanitizeName}',\n  ${body.category_id},\n  ${body.box_id || 'NULL'},\n  '${sanitizeDescription}'`;\n\n// Add image values if provided\nif (body.image_content && body.image_type && body.imaeg_name) {\n  const sanitizeImageName = String(body.imaeg_name).replace(/'/g, \"''\");\n  sql += `,\n  decode('${body.image_content}', 'base64'),\n  '${body.image_type}',\n  '${sanitizeImageName}'`;\n}\n\nsql += `\n)\nRETURNING \n  component_id,\n  name,\n  category_id,\n  box_id,\n  description,\n  date_added,\n  CASE \n    WHEN image_content IS NOT NULL THEN 'data:image/' || image_type || ';base64,' || encode(image_content, 'base64')\n    ELSE NULL\n  END as filename,\n  image_type,\n  imaeg_name`;\n\nreturn { json: { sql } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1984
+      ],
+      "id": "f7418230-ec96-4068-bd96-402769b5bbae",
+      "name": "Build Create SQL"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.all()[0].json;\n\nconsole.log('Database create result:', result);\n\n// Return the newly created component\nreturn {\n  json: result[0] || result\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        1984
+      ],
+      "id": "753d9e87-28ec-4165-a7f2-bc08f72e824c",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "b9bd1a3a-822b-4175-86bb-170be1da74a0",
+      "name": "Respond to Webhook7",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        1984
+      ]
     }
   ],
   "connections": {
@@ -469,6 +917,204 @@
           }
         ]
       ]
+    },
+    "Execute a SQL query2": {
+      "main": [
+        [
+          {
+            "node": "Remove Image Info2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Image Info2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/components/stocks1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Purchase History": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "Format as Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format as Array": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Project Usage Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "General Usage Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Component Update": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Postgres3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Create Component": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Component Create Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Create SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Create SQL": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Create Component",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -478,9 +1124,35 @@
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "pinData": {},
-  "versionId": "ebd8b2f0-c879-499e-adf2-77aca04665b2",
-  "triggerCount": 3,
+  "pinData": {
+    "Purchase History": [
+      {
+        "json": {
+          "headers": {
+            "host": "192.168.0.7:5678",
+            "connection": "keep-alive",
+            "content-length": "19",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+            "accept": "application/json, text/plain, */*",
+            "content-type": "application/json",
+            "origin": "http://localhost:5173",
+            "referer": "http://localhost:5173/",
+            "accept-encoding": "gzip, deflate",
+            "accept-language": "en-US,en;q=0.9"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "component_id": 73
+          },
+          "webhookUrl": "http://0.0.0.0:5678/webhook/api/components/purchase-history",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "6a6f41ca-8673-4640-bb68-ac8b3bf20e4d",
+  "triggerCount": 9,
   "tags": [],
   "shared": [
     {

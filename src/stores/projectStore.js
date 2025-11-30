@@ -328,7 +328,6 @@ export const useProjectStore = defineStore("project", () => {
       const response = await projectService.getVideoByProjectId(projectId);
 
       if (response[0].success) {
-        console.log(response[0].video);
         videoInfo.value = response[0].video;
       } else {
         videoInfo.value = {};
@@ -345,6 +344,32 @@ export const useProjectStore = defineStore("project", () => {
   const updateVideo = async (projectId, updateData) => {
     try {
       const response = await projectService.updateVideo(projectId, updateData);
+      if (response.data?.success) {
+        videoInfo.value = response.data.video;
+      }
+      return response;
+    } catch (err) {
+      console.error("Failed to update video info:", err);
+      throw err;
+    }
+  };
+  const fetchVideoStatusTimeline = async (projectId) => {
+    try {
+      const response = await projectService.getVideoTimeline(projectId);
+      return response[0].timeline || [];
+    } catch (error) {
+      console.error("Failed to fetch video status timelinef:", error);
+      return [];
+    }
+  };
+
+  // Update video info for a project
+  const updateVideoStatus = async (videoId, updateData) => {
+    try {
+      const response = await projectService.updateVideoStatus(
+        videoId,
+        updateData
+      );
       if (response.data?.success) {
         videoInfo.value = response.data.video;
       }
@@ -375,8 +400,8 @@ export const useProjectStore = defineStore("project", () => {
   const fetchAvailableComponents = async () => {
     try {
       const response = await projectService.getAvailableComponents({
-        pageSize:100000000,
-        pageNo: 1
+        pageSize: 100000000,
+        pageNo: 1,
       });
       availableComponents.value = response || [];
       return response;
@@ -444,6 +469,7 @@ export const useProjectStore = defineStore("project", () => {
     videoInfo,
     fetchVideoByProjectId,
     updateVideo,
+    updateVideoStatus,
     componentsUsed,
     availableComponents,
     loadingComponents,
@@ -452,5 +478,6 @@ export const useProjectStore = defineStore("project", () => {
     fetchComponentsUsed,
     fetchAvailableComponents,
     addComponentToProject,
+    fetchVideoStatusTimeline,
   };
 });

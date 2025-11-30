@@ -209,7 +209,7 @@
                 </div>
                 <div v-if="editingVideoField === 'description'">
                   <QuillEditor v-model:content="videoInfo.description" :toolbar="editorToolbar" theme="snow"
-                    style="min-height: 150px" />
+                    contentType="html" style="min-height: 150px" />
                   <div class="mt-2">
                     <v-btn size="small" color="primary" @click="saveVideoField('description')">Save</v-btn>
                   </div>
@@ -226,7 +226,7 @@
                 </div>
                 <div v-if="editingVideoField === 'script'">
                   <QuillEditor v-model:content="videoInfo.script" :toolbar="editorToolbar" theme="snow"
-                    style="min-height: 250px" />
+                    contentType="html" style="min-height: 250px" />
                   <div class="mt-2">
                     <v-btn size="small" color="primary" @click="saveVideoField('script')">Save</v-btn>
                   </div>
@@ -234,8 +234,9 @@
                 <div v-else v-html="videoInfo.script || '<em>No script provided</em>'" class="rich-content" />
               </div>
 
-              <v-select v-model="videoInfo.status" :items="videoStatusOptions" label="Video Status" variant="outlined"
-                density="comfortable" @update:model-value="saveVideoField('status')" aria-label="Video Status" />
+              <v-select v-model="videoInfo.video_status" :items="videoStatusOptions" label="Video Status"
+                variant="outlined" density="comfortable" @update:model-value="saveVideoStatus('video_status')"
+                aria-label="Video Status" />
 
               <v-text-field v-model="videoInfo.publish_date" type="date" label="Publish Date" variant="outlined"
                 density="comfortable" @blur="saveVideoField('publish_date')" aria-label="Publish Date" />
@@ -338,7 +339,78 @@
               </div>
             </v-card-text>
           </v-card>
+          <v-card v-if="project.is_yt_project" elevation="0" class="content-card mb-6 video-timeline-card">
+            <v-card-title class="pa-6 pb-4">
+              <div class="d-flex align-center">
+                <v-icon size="24" class="mr-2" color="purple">mdi-history</v-icon>
+                <span class="text-h6 font-weight-bold">Video Status Timeline</span>
+                <v-chip v-if="videoStatusTimeline.length" size="small" color="purple" variant="flat" class="ml-2">
+                  {{ videoStatusTimeline.length }}
+                </v-chip>
+              </div>
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text class="pa-6 pa-md-8">
+              <!-- Timeline Header -->
+              <div class="timeline-header mb-6">
+                <div class="d-flex align-center gap-3">
+                  <div class="timeline-badge">
+                    <v-icon size="20" color="white">mdi-record-circle-outline</v-icon>
+                  </div>
+                  <div>
+                    <div class="timeline-count">{{ videoStatusTimeline.length }} status updates</div>
+                    <div class="timeline-current">
+                      Latest:
+                      <v-chip :color="getStatusColor(videoStatusTimeline[0]?.status)" size="small" variant="elevated"
+                        class="ml-1">
+                        {{ videoStatusTimeline[0]?.status }}
+                      </v-chip>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Enhanced Timeline -->
+              <div class="enhanced-timeline">
+                <v-timeline side="end" density="compact" class="status-timeline-enhanced">
+                  <v-timeline-item v-for="(item, index) in videoStatusTimeline" :key="item.status_id"
+                    :dot-color="getStatusColor(item.status)" size="small" :icon="getStatusIcon(item.status)"
+                    :class="{ 'latest-item': index === 0 }">
+                    <div class="timeline-item-content">
+                      <div class="status-row">
+                        <div class="status-details">
+                          <span class="status-label">{{ item.status }}</span>
+                          <v-icon :color="getStatusColor(item.status)" size="16" class="status-icon ml-1">
+                            {{ getStatusIcon(item.status) }}
+                          </v-icon>
+                        </div>
+                        <span class="status-time">
+                          {{ formatTimelineDate(item.date_changed) }}
+                        </span>
+                      </div>
+                      <div class="status-date text-caption text-medium-emphasis">
+                        {{ item.date_formatted }}
+                      </div>
+                    </div>
+                  </v-timeline-item>
+
+                  <v-timeline-item v-if="videoStatusTimeline.length === 0" dot-color="grey-lighten-1" size="small"
+                    icon="mdi-timeline-outline">
+                    <div class="text-center py-4">
+                      <v-icon size="40" color="grey-lighten-1" class="mb-2">mdi-timeline-plus-outline</v-icon>
+                      <div class="text-h6 font-weight-medium text-medium-emphasis mb-1">No updates</div>
+                      <div class="text-caption">Status changes will appear here</div>
+                    </div>
+                  </v-timeline-item>
+                </v-timeline>
+              </div>
+            </v-card-text>
+          </v-card>
+
         </v-col>
+
+
+
       </v-row>
 
       <!-- COMPONENTS SECTION WITH COMPACT HEADER -->
@@ -365,7 +437,7 @@
                         <v-icon size="24" color="green">mdi-currency-inr</v-icon>
                       </div>
                       <div class="stat-content">
-                        <div class="stat-label">  </div>
+                        <div class="stat-label"> </div>
                         <div class="stat-value">{{ formatCurrencyShort(project.total_cost || 0) }}</div>
                       </div>
                     </div>
@@ -470,8 +542,6 @@
                   </v-card>
                 </div>
               </v-expand-transition>
-
-              <!-- Added Items - Compact List -->
               <v-expand-transition>
                 <div v-if="addedItems.length > 0" class="added-items-compact mb-4">
                   <div class="items-badge">
@@ -675,6 +745,7 @@ const addingComponent = ref(false)
 const submittingAll = ref(false)
 const addedItems = ref([])
 const addComponentForm = ref(null)
+const videoStatusTimeline = ref([]);
 
 // Constants
 const statusOptions = ['Planning', 'In Progress', 'Testing', 'Completed', 'On Hold', 'Cancelled']
@@ -921,6 +992,18 @@ const saveVideoField = async (field) => {
   }
 }
 
+const saveVideoStatus = async (field) => {
+  try {
+    await projectStore.updateVideoStatus(videoInfo.value.video_id, { [field]: videoInfo.value[field] })
+    successMessage.value = 'Video info updated successfully'
+    showSuccess.value = true
+    editingVideoField.value = null
+  } catch (err) {
+    errorMessage.value = err.message || 'Failed to update video info'
+    showError.value = true
+  }
+
+}
 // Data Loading Functions
 const loadProject = async () => {
   loading.value = true
@@ -949,6 +1032,9 @@ const loadVideoInfo = async (projectId) => {
   try {
     const video = await projectStore.fetchVideoByProjectId(projectId)
     videoInfo.value = video || {}
+
+    videoStatusTimeline.value = await projectStore.fetchVideoStatusTimeline(projectId);
+
   } catch {
     videoInfo.value = {}
   }
@@ -1001,6 +1087,29 @@ onMounted(() => {
   loadProject()
   loadAvailableComponents()
 })
+
+const getStatusIcon = (status) => {
+  const icons = {
+    'Draft': 'mdi-file-outline',
+    'In Review': 'mdi-eye-check-outline',
+    'Published': 'mdi-check-circle',
+    'Archived': 'mdi-archive'
+  };
+  return icons[status] || 'mdi-help-circle';
+};
+// Add to your script setup
+const formatTimelineDate = (dateString) => {
+  if (!dateString) return 'Never';
+  const date = new Date(dateString);
+  return date.toLocaleString('en-IN', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  });
+};
+
 </script>
 
 <style scoped>
@@ -1420,6 +1529,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1443,9 +1553,145 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+/* ✅ FIXED: No scrollbars in timeline */
+.video-timeline-card {
+  background: linear-gradient(135deg, #fdfbff 0%, #f8f9ff 100%);
+  border: 1px solid #e8f0fe;
+  border-radius: 16px;
+  overflow: hidden; /* ✅ Contain all children */
+}
+
+/* Timeline Header - Fixed */
+.timeline-header {
+  background: rgba(156, 39, 176, 0.05);
+  border: 1px solid rgba(156, 39, 176, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px; /* ✅ Reduced gap */
+  box-sizing: border-box;
+}
+
+/* ✅ FIXED: Scroll container */
+.enhanced-timeline {
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden; /* ✅ Prevent horizontal scroll */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+  padding: 0 8px; /* ✅ Reduced padding */
+}
+
+/* Enhanced Timeline - Fixed spacing */
+.status-timeline-enhanced {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.status-timeline-enhanced .v-timeline-item {
+  margin-bottom: 4px !important; /* ✅ Tighter spacing */
+}
+
+/* Timeline Item Content - Fixed width */
+.timeline-item-content {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 14px; /* ✅ Reduced padding */
+  margin: 2px 8px 2px 0 !important; /* ✅ Fixed margins */
+  border-left: 4px solid transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  max-width: 100%; /* ✅ Prevent overflow */
+  box-sizing: border-box;
+}
+
+/* Status Row - Fixed flex */
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  flex-wrap: nowrap; /* ✅ Prevent wrapping */
+}
+
+.status-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0; /* ✅ Allow shrinking */
+}
+
+.status-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  white-space: nowrap; /* ✅ No text wrap */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-time {
+  font-weight: 500;
+  color: #9c27b0;
+  font-size: 0.85rem;
+  white-space: nowrap; /* ✅ No text wrap */
+  flex-shrink: 0;
+}
+
+/* ✅ FIXED: Webkit scrollbars */
+.enhanced-timeline::-webkit-scrollbar {
+  width: 4px;
+  height: 0; /* ✅ No horizontal scrollbar */
+}
+
+.enhanced-timeline::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.enhanced-timeline::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.enhanced-timeline::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Card Text Container - Fixed */
+.v-card-text {
+  padding: 0 16px 16px !important; /* ✅ Consistent padding */
+  overflow: hidden;
+}
+
+/* Timeline Dots - Fixed positioning */
+.status-timeline-enhanced .v-timeline-item__dot {
+  border-width: 3px !important;
+  z-index: 2;
+  position: relative;
+}
+
+.status-timeline-enhanced .v-timeline__line {
+  width: 2px !important;
+  left: 20px !important; /* ✅ Fixed line position */
+}
+
+/* Responsive Fix */
+@media (max-width: 960px) {
+  .timeline-item-content {
+    margin: 2px 4px 2px 0 !important;
+    padding: 8px 12px;
+  }
+  
+  .status-label {
+    font-size: 0.9rem;
+  }
+}
+
+
 </style>
